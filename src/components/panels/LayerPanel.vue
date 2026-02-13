@@ -87,16 +87,16 @@ function onSelect(id: string, e: MouseEvent): void {
 .layer-item.selected { background: rgba(91, 91, 240, 0.15); color: #a0a0ff; }
 
 .layer-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   opacity: 0.5;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
 }
 
 .layer-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

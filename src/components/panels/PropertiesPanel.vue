@@ -2,6 +2,7 @@
 .properties-panel
   template(v-if="resolved")
     .section-title 属性
+    //- ── 位置 ──
     .prop-group
       .prop-label 位置
       .prop-row
@@ -11,6 +12,7 @@
         .prop-field
           span.label Y
           input.input(type="number" :value="resolved.y" @change="e => set({ y: num(e) })" @blur="onEditEnd")
+    //- ── 尺寸 ──
     .prop-group
       .prop-label 尺寸
       .prop-row
@@ -20,6 +22,21 @@
         .prop-field
           span.label H
           input.input(type="number" :value="resolved.height" @change="e => set({ height: num(e) })" @blur="onEditEnd")
+    //- ── 变换 ──
+    .prop-group
+      .prop-label 变换
+      .prop-row
+        .prop-field
+          span.label 旋转
+          input.input(type="number" :value="resolved.rotation" @change="e => set({ rotation: num(e) })" @blur="onEditEnd")
+      .prop-row
+        .prop-field
+          span.label 缩放X
+          input.input(type="number" :value="resolved.scaleX" step="0.1" @change="e => set({ scaleX: num(e) })" @blur="onEditEnd")
+        .prop-field
+          span.label 缩放Y
+          input.input(type="number" :value="resolved.scaleY" step="0.1" @change="e => set({ scaleY: num(e) })" @blur="onEditEnd")
+    //- ── 外观 ──
     .prop-group
       .prop-label 外观
       .prop-row
@@ -30,6 +47,13 @@
         .prop-field
           span.label 填充
           input.color-input(type="color" :value="resolved.fill" @input="e => set({ fill: str(e) })" @change="onEditEnd")
+      .prop-row
+        .prop-field
+          span.label 描边
+          input.color-input(type="color" :value="resolved.stroke" @input="e => set({ stroke: str(e) })" @change="onEditEnd")
+        .prop-field
+          span.label 宽度
+          input.input(type="number" :value="resolved.strokeWidth" min="0" @change="e => set({ strokeWidth: num(e) })" @blur="onEditEnd")
       .prop-row
         .prop-field
           span.label 圆角

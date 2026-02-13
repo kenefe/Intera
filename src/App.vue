@@ -109,16 +109,16 @@ onUnmounted(() => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.toolbar-tools { display: flex; gap: 2px; }
+.toolbar-tools { display: flex; gap: 4px; }
 
 .tool-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   color: rgba(255, 255, 255, 0.5);

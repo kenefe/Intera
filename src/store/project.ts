@@ -233,7 +233,9 @@ export const useProjectStore = defineStore('project', () => {
 
   /** 带弹簧动画的状态切换 (不自动快照 — 预览模式下由 Patch 触发) */
   function transitionToState(groupId: string, stateId: string): void {
+    // 优先精确查找; groupId 无效时从 stateId 反查所属 group
     const group = states.findGroup(groupId)
+      ?? project.stateGroups.find(g => g.displayStates.some(s => s.id === stateId))
     if (!group) return
     const fromId = group.activeDisplayStateId
     group.activeDisplayStateId = stateId
