@@ -15,6 +15,12 @@ const DRAW_TOOLS: Record<string, LayerType> = {
   frame: 'frame',
 }
 
+const TYPE_LABEL: Record<string, string> = {
+  rectangle: '矩形',
+  ellipse: '椭圆',
+  frame: '容器',
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  composable
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -47,7 +53,8 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
     if (!layerType || drawId) return  // 防重入: 正在绘制时忽略第二次 down
     const pos = toLocal(e)
     originX = pos.x; originY = pos.y
-    const layer = project.addLayer(layerType, null, undefined, layerType)
+    const n = Object.values(project.project.layers).filter(l => l.type === layerType).length + 1
+    const layer = project.addLayer(layerType, null, undefined, `${TYPE_LABEL[layerType] ?? layerType} ${n}`)
     project.updateLayerProps(layer.id, { x: pos.x, y: pos.y, width: 1, height: 1 })
     drawId = layer.id
     canvas.select([layer.id])

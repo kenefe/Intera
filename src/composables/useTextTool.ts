@@ -30,7 +30,8 @@ export function useTextTool(viewportRef: Ref<HTMLElement | undefined>) {
       ? (e.clientY - r.top) / canvas.zoom
       : (e.clientY - r.top - canvas.panY) / canvas.zoom
 
-    const layer = project.addLayer('text', null, undefined, 'Text')
+    const n = Object.values(project.project.layers).filter(l => l.type === 'text').length + 1
+    const layer = project.addLayer('text', null, undefined, `文本 ${n}`)
     project.updateLayerProps(layer.id, { x, y, width: 100, height: 24 })
     layer.text = 'Text'
     layer.fontSize = 16

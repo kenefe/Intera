@@ -1,7 +1,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  useLayerInteraction —— 图层选择与拖拽
-//  职责: select 工具下点击选中、拖拽移动
-//  状态感知: 默认状态改基础，非默认创建覆盖
+//  职责: select 工具下的点击选中、多选、拖拽移动
+//  核心: 多选时拖拽同时移动所有选中图层
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import type { Ref } from 'vue'
@@ -9,14 +9,12 @@ import { useCanvasStore } from '@store/canvas'
 import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
 
-// ── 从指针事件中查找图层 ID (利用 DOM 事件委托) ──
+// ── DOM 查找 ──
 
 function findLayerId(e: PointerEvent): string | null {
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-layer-id]')
   return el?.dataset.layerId ?? null
 }
-
-// ── 从指针事件中查找画板状态 ID ──
 
 function findStateId(e: PointerEvent): string | null {
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-state-id]')
@@ -32,14 +30,32 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
   const editor = useEditorStore()
   const project = useProjectStore()
 
-  let dragId: string | null = null
+  // ── 拖拽状态 ──
+
+  let dragIds: string[] = []
   let startX = 0, startY = 0
-  let layerX0 = 0, layerY0 = 0
+  let layerStarts = new Map<string, { x: number; y: number }>()
+  let didDrag = false
+  let pendingSingle: string | null = null
+
+  // ── 状态感知写入 ──
+
+  function writeXY(lid: string, x: number, y: number): void {
+    const group = project.project.stateGroups[0]
+    const isDefault = group?.displayStates[0]?.id === group?.activeDisplayStateId
+    if (isDefault) {
+      project.updateLayerProps(lid, { x, y })
+    } else if (group?.activeDisplayStateId) {
+      project.setOverride(group.activeDisplayStateId, lid, { x, y })
+    }
+  }
 
   function down(e: PointerEvent): void {
     if (editor.tool !== 'select') return
+    didDrag = false
+    pendingSingle = null
 
-    // 点击画板 → 切换到该画板的状态 (无论是否命中图层)
+    // 点击画板 → 切换到该画板的状态
     const clickedStateId = findStateId(e)
     const group = project.project.stateGroups[0]
     if (clickedStateId && group && group.activeDisplayStateId !== clickedStateId) {
@@ -49,37 +65,56 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
     const id = findLayerId(e)
     if (!id) { canvas.clearSelection(); return }
 
-    // 多选: Shift/Cmd 切换，否则单选
-    if (e.shiftKey || e.metaKey) canvas.toggleSelection(id)
-    else canvas.select([id])
+    // ── 选区逻辑 ──
+    if (e.shiftKey || e.metaKey) {
+      canvas.toggleSelection(id)
+    } else if (canvas.selectedLayerIds.includes(id)) {
+      // 已选中 → 延迟单选到 up (允许拖拽多选)
+      pendingSingle = id
+    } else {
+      canvas.select([id])
+    }
 
-    // 使用当前活动状态的解析属性作为拖拽起点
+    // ── 准备拖拽所有选中图层 ──
     const stateId = group?.activeDisplayStateId
-    const resolved = stateId ? project.states.getResolvedProps(stateId, id) : null
-    if (!resolved) return
+    if (!stateId) return
+
     project.snapshot()
-    dragId = id
-    startX = e.clientX; startY = e.clientY
-    layerX0 = resolved.x; layerY0 = resolved.y
-  }
+    dragIds = [...canvas.selectedLayerIds]
+    startX = e.clientX
+    startY = e.clientY
 
-  function move(e: PointerEvent): void {
-    if (!dragId) return
-    const z = canvas.zoom
-    const nx = layerX0 + (e.clientX - startX) / z
-    const ny = layerY0 + (e.clientY - startY) / z
-
-    // 状态感知: 默认状态 → 改基础; 非默认 → 创建覆盖
-    const group = project.project.stateGroups[0]
-    const isDefault = group?.displayStates[0]?.id === group?.activeDisplayStateId
-    if (isDefault) {
-      project.updateLayerProps(dragId, { x: nx, y: ny })
-    } else if (group?.activeDisplayStateId) {
-      project.setOverride(group.activeDisplayStateId, dragId, { x: nx, y: ny })
+    layerStarts.clear()
+    for (const lid of dragIds) {
+      const resolved = project.states.getResolvedProps(stateId, lid)
+      if (resolved) layerStarts.set(lid, { x: resolved.x, y: resolved.y })
     }
   }
 
-  function up(): void { dragId = null }
+  function move(e: PointerEvent): void {
+    if (dragIds.length === 0) return
+    didDrag = true
+    pendingSingle = null
+
+    const z = canvas.zoom
+    const dx = (e.clientX - startX) / z
+    const dy = (e.clientY - startY) / z
+
+    for (const lid of dragIds) {
+      const start = layerStarts.get(lid)
+      if (start) writeXY(lid, start.x + dx, start.y + dy)
+    }
+  }
+
+  function up(): void {
+    // 无拖拽 + 已选中 → 单选 (取消其他)
+    if (pendingSingle && !didDrag) {
+      canvas.select([pendingSingle])
+    }
+    dragIds = []
+    layerStarts.clear()
+    pendingSingle = null
+  }
 
   return { down, move, up }
 }

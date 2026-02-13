@@ -42,19 +42,30 @@ const worldStyle = computed(() => ({
   transformOrigin: '0 0',
 }))
 
-// ── 滚轮缩放 (以鼠标位置为中心) ──
-
-const ZOOM_FACTOR = 1.08
+// ── 滚轮/触控板 → 缩放 or 平移 ──
+//
+// macOS 触控板捏合 → ctrlKey: true → 缩放
+// 触控板双指滚动   → ctrlKey: false → 平移
+// 鼠标 Ctrl+滚轮   → ctrlKey: true → 缩放
 
 function onWheel(e: WheelEvent): void {
-  const rect = viewportRef.value!.getBoundingClientRect()
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top
-  const z = canvas.zoom * (e.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR)
-  canvas.setPan(
-    mx - (mx - canvas.panX) * (z / canvas.zoom),
-    my - (my - canvas.panY) * (z / canvas.zoom),
-  )
-  canvas.setZoom(z)
+  if (e.ctrlKey || e.metaKey) {
+    // ── 缩放 (捏合手势 / Ctrl+滚轮) ──
+    const rect = viewportRef.value!.getBoundingClientRect()
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top
+    const step = e.deltaMode === 1 ? e.deltaY * 0.05 : e.deltaY * 0.005
+    const z = canvas.zoom * Math.exp(-step)
+    canvas.setPan(
+      mx - (mx - canvas.panX) * (z / canvas.zoom),
+      my - (my - canvas.panY) * (z / canvas.zoom),
+    )
+    canvas.setZoom(z)
+  } else {
+    // ── 平移 (双指滚动 / 鼠标滚轮) ──
+    const dx = e.deltaMode === 1 ? e.deltaX * 16 : e.deltaX
+    const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY
+    canvas.setPan(canvas.panX - dx, canvas.panY - dy)
+  }
 }
 
 // ── 空格 + 拖拽平移 ──
