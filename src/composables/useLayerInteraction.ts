@@ -38,15 +38,16 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
 
   function down(e: PointerEvent): void {
     if (editor.tool !== 'select') return
-    const id = findLayerId(e)
-    if (!id) { canvas.clearSelection(); return }
 
-    // 点击画板内图层 → 自动切换到该画板的状态
+    // 点击画板 → 切换到该画板的状态 (无论是否命中图层)
     const clickedStateId = findStateId(e)
     const group = project.project.stateGroups[0]
     if (clickedStateId && group && group.activeDisplayStateId !== clickedStateId) {
       group.activeDisplayStateId = clickedStateId
     }
+
+    const id = findLayerId(e)
+    if (!id) { canvas.clearSelection(); return }
 
     // 多选: Shift/Cmd 切换，否则单选
     if (e.shiftKey || e.metaKey) canvas.toggleSelection(id)

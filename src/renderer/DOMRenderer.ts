@@ -4,17 +4,18 @@
 //  一个图层一个 div，嵌套结构映射 DOM 树
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import type { AnimatableProps } from '@engine/scene/types'
+import type { AnimatableProps, LayerType } from '@engine/scene/types'
 import type { Renderer, InteractionHandler, InteractionEvent, InteractionEventType } from './types'
 
 // ── CSS 映射 ──
 
-function applyProps(el: HTMLElement, p: AnimatableProps): void {
+function applyProps(el: HTMLElement, p: AnimatableProps, type?: LayerType): void {
   const s = el.style
   s.width = `${p.width}px`
   s.height = `${p.height}px`
   s.opacity = String(p.opacity)
-  s.borderRadius = `${p.borderRadius}px`
+  // 椭圆: 永远 50% 圆角; 其他: 使用属性值
+  s.borderRadius = type === 'ellipse' ? '50%' : `${p.borderRadius}px`
   s.backgroundColor = p.fill
   s.transform = [
     `translate(${p.x}px, ${p.y}px)`,
@@ -46,6 +47,7 @@ export class DOMRenderer implements Renderer {
   private world: HTMLElement | null = null
   private els = new Map<string, HTMLElement>()
   private props = new Map<string, AnimatableProps>()
+  private types = new Map<string, LayerType>()
   private handlers = new Set<InteractionHandler>()
   private vp = { zoom: 1, panX: 0, panY: 0 }
 
@@ -72,13 +74,14 @@ export class DOMRenderer implements Renderer {
 
   // ── 图层操作 ──
 
-  createLayer(id: string, initial: AnimatableProps): void {
+  createLayer(id: string, type: LayerType, initial: AnimatableProps): void {
     const el = document.createElement('div')
     el.style.cssText = LAYER_CSS
     el.dataset.layerId = id
     this.els.set(id, el)
     this.props.set(id, { ...initial })
-    applyProps(el, initial)
+    this.types.set(id, type)
+    applyProps(el, initial, type)
     this.world?.appendChild(el)
   }
 
@@ -87,13 +90,14 @@ export class DOMRenderer implements Renderer {
     const cur = this.props.get(id)
     if (!el || !cur) return
     Object.assign(cur, partial)
-    applyProps(el, cur)
+    applyProps(el, cur, this.types.get(id))
   }
 
   removeLayer(id: string): void {
     this.els.get(id)?.remove()
     this.els.delete(id)
     this.props.delete(id)
+    this.types.delete(id)
   }
 
   setLayerOrder(ids: string[]): void {

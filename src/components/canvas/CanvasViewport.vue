@@ -8,6 +8,7 @@
 )
   .canvas-world(:style="worldStyle")
     ArtboardGrid
+  SelectionOverlay
 </template>
 
 <script setup lang="ts">
@@ -24,6 +25,7 @@ import { useDrawTool } from '@/composables/useDrawTool'
 import { useTextTool } from '@/composables/useTextTool'
 import { useKeyboard } from '@/composables/useKeyboard'
 import ArtboardGrid from './ArtboardGrid.vue'
+import SelectionOverlay from './SelectionOverlay.vue'
 
 const canvas = useCanvasStore()
 const viewportRef = ref<HTMLElement>()

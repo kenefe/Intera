@@ -170,7 +170,7 @@ function syncLayers(): void {
     if (rendered.has(id)) {
       renderer.updateLayer(id, merged)
     } else {
-      renderer.createLayer(id, merged as AnimatableProps)
+      renderer.createLayer(id, layers[id].type, merged as AnimatableProps)
       rendered.add(id)
     }
   }

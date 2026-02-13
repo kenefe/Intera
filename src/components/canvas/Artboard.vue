@@ -52,7 +52,7 @@ function syncLayers(): void {
     if (rendered.has(id)) {
       renderer.updateLayer(id, resolved)
     } else {
-      renderer.createLayer(id, resolved)
+      renderer.createLayer(id, layers[id].type, resolved)
       rendered.add(id)
     }
   }

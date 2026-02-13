@@ -3,7 +3,7 @@
 //  DOM 实现在前，WebGPU 未来可替换
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import type { AnimatableProps } from '@engine/scene/types'
+import type { AnimatableProps, LayerType } from '@engine/scene/types'
 
 /** 交互事件类型 */
 export type InteractionEventType =
@@ -39,7 +39,7 @@ export interface Renderer {
   destroy(): void
 
   // ── 图层操作 ──
-  createLayer(id: string, props: AnimatableProps): void
+  createLayer(id: string, type: LayerType, props: AnimatableProps): void
   updateLayer(id: string, props: Partial<AnimatableProps>): void
   removeLayer(id: string): void
   setLayerOrder(ids: string[]): void

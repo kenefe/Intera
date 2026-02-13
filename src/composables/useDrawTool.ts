@@ -44,7 +44,7 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
 
   function down(e: PointerEvent): void {
     const layerType = DRAW_TOOLS[editor.tool]
-    if (!layerType) return
+    if (!layerType || drawId) return  // 防重入: 正在绘制时忽略第二次 down
     const pos = toLocal(e)
     originX = pos.x; originY = pos.y
     const layer = project.addLayer(layerType, null, undefined, layerType)
