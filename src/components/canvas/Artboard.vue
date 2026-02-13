@@ -1,0 +1,118 @@
+<template lang="pug">
+.artboard(:class="{ active: isActive }")
+  .artboard-frame(
+    ref="frameRef"
+    :style="frameStyle"
+    :data-state-id="displayState.id"
+  )
+  .artboard-label {{ displayState.name }}
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue'
+import type { DisplayState, AnimatableProps } from '@engine/scene/types'
+import { useProjectStore } from '@store/project'
+import { DOMRenderer } from '@renderer/DOMRenderer'
+
+const props = defineProps<{
+  displayState: DisplayState
+  isActive: boolean
+}>()
+
+const store = useProjectStore()
+const frameRef = ref<HTMLElement>()
+const renderer = new DOMRenderer()
+
+// ── 画板尺寸 ──
+
+const frameStyle = computed(() => ({
+  width: `${store.project.canvasSize.width}px`,
+  height: `${store.project.canvasSize.height}px`,
+}))
+
+// ── 图层同步 ──
+
+/** 已在 renderer 中创建的图层 ID 集合 */
+const rendered = new Set<string>()
+
+function syncLayers(): void {
+  const { layers, rootLayerIds } = store.project
+  const stateId = props.displayState.id
+  const allIds = new Set(Object.keys(layers))
+
+  // 移除已删除的图层
+  for (const id of rendered) {
+    if (!allIds.has(id)) { renderer.removeLayer(id); rendered.delete(id) }
+  }
+
+  // 创建或更新图层
+  for (const id of allIds) {
+    const resolved = store.states.getResolvedProps(stateId, id)
+    if (!resolved) continue
+    if (rendered.has(id)) {
+      renderer.updateLayer(id, resolved)
+    } else {
+      renderer.createLayer(id, resolved)
+      rendered.add(id)
+    }
+  }
+
+  // 层级顺序 + 父子关系
+  for (const id of allIds) {
+    const layer = layers[id]
+    if (layer) renderer.setLayerParent(id, layer.parentId)
+  }
+  renderer.setLayerOrder(rootLayerIds)
+}
+
+// ── 生命周期 ──
+
+onMounted(() => {
+  if (frameRef.value) { renderer.mount(frameRef.value); syncLayers() }
+})
+
+onUnmounted(() => renderer.destroy())
+
+watch(() => store.project, syncLayers, { deep: true })
+
+// ── 动画帧同步 (弹簧过渡时直接刷新 DOM) ──
+
+watchEffect(() => {
+  if (store.liveStateId !== props.displayState.id) return
+  for (const [id, vals] of Object.entries(store.liveValues)) {
+    if (rendered.has(id)) renderer.updateLayer(id, vals as Partial<AnimatableProps>)
+  }
+}, { flush: 'sync' })
+</script>
+
+<style scoped>
+.artboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.artboard-frame {
+  background: #1e1e3a;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.15s;
+}
+
+.active .artboard-frame {
+  border-color: #5b5bf0;
+}
+
+.artboard-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.active .artboard-label {
+  color: #5b5bf0;
+}
+</style>

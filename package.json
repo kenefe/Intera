@@ -1,0 +1,23 @@
+{
+  "name": "intera",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pinia": "^2.3.1",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "pug": "^3.0.3",
+    "typescript": "~5.7.3",
+    "vite": "^6.2.0",
+    "vue-tsc": "^2.2.8"
+  }
+}
