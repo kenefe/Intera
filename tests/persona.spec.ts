@@ -185,12 +185,12 @@ const ACTIONS: Action[] = [
   },
 
   {
-    id: 'patch', name: '打开节点编辑', needs: ['add-state'], cap: 'patch',
+    id: 'patch', name: '添加交互节点', needs: ['add-state'], cap: 'patch',
     exec: async (page) => {
-      await page.click('.btn-patch')
-      await page.waitForTimeout(500)
-      await expect(page.locator('.btn-patch')).toHaveClass(/active/)
       await expect(page.locator('.patch-canvas')).toBeVisible()
+      // 添加 Touch 节点 — Patch 画像的核心交互
+      await page.click('.node-btn[data-type="touch"]')
+      await page.waitForTimeout(200)
     },
   },
 
@@ -250,7 +250,6 @@ for (const profile of profiles) {
     while (step < profile.budget) {
       const ui = await perceive(page)
 
-      // 决策: 从操作列表中选第一个满足条件的
       const next = ACTIONS.find(a =>
         !done.has(a.id)
         && a.needs.every(n => done.has(n))
@@ -258,12 +257,10 @@ for (const profile of profiles) {
       )
       if (!next) break
 
-      // 执行 (Playwright report 中显示感知→决策过程)
-      await test.step(`感知 ${ui.layers}层${ui.states}态 → ${next.name}`, async () => {
+      await test.step(next.name, async () => {
         await next.exec(page, profile)
       })
 
-      // 验证画面反馈
       if (next.check) {
         const after = await perceive(page)
         next.check(ui, after)
