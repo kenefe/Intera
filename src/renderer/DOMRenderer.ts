@@ -122,7 +122,10 @@ export class DOMRenderer implements Renderer {
   }
 
   /** 文本图层专用: 设置文本内容和字体属性 */
-  setTextContent(id: string, text: string, fontSize: number, fontFamily?: string): void {
+  setTextContent(
+    id: string, text: string, fontSize: number,
+    fontFamily?: string, fontWeight?: string, textAlign?: string,
+  ): void {
     const el = this.els.get(id)
     if (!el) return
     el.textContent = text
@@ -130,6 +133,8 @@ export class DOMRenderer implements Renderer {
     s.fontSize = `${fontSize}px`
     s.lineHeight = '1.4'
     s.fontFamily = fontFamily ?? 'system-ui, sans-serif'
+    s.fontWeight = fontWeight ?? '400'
+    s.textAlign = textAlign ?? 'left'
     s.overflow = 'hidden'
     s.wordBreak = 'break-word'
   }

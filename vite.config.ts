@@ -10,6 +10,7 @@ export default defineConfig({
       '@engine': resolve(__dirname, 'src/engine'),
       '@renderer': resolve(__dirname, 'src/renderer'),
       '@store': resolve(__dirname, 'src/store'),
+      '@composables': resolve(__dirname, 'src/composables'),
     },
   },
 })

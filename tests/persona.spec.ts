@@ -10,7 +10,6 @@
 
 import { test, expect, type Page } from '@playwright/test'
 
-const BASE = process.env.TEST_URL ?? 'http://localhost:5174'
 const SHOT = 'tests/screenshots/persona'
 
 // ══════════════════════════════════════
@@ -18,7 +17,7 @@ const SHOT = 'tests/screenshots/persona'
 // ══════════════════════════════════════
 
 async function load(page: Page) {
-  await page.goto(BASE)
+  await page.goto('/')
   await page.waitForLoadState('networkidle')
 }
 

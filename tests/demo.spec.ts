@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-const URL = process.env.TEST_URL ?? 'http://localhost:5173'
-
 test('完整交互动效设计演示', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto(URL)
+  await page.goto('/')
   await page.waitForLoadState('networkidle')
   await page.screenshot({ path: 'tests/screenshots/demo-01-empty.png' })
 

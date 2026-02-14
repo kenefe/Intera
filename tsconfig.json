@@ -16,7 +16,8 @@
       "@/*": ["src/*"],
       "@engine/*": ["src/engine/*"],
       "@renderer/*": ["src/renderer/*"],
-      "@store/*": ["src/store/*"]
+      "@store/*": ["src/store/*"],
+      "@composables/*": ["src/composables/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "env.d.ts"]

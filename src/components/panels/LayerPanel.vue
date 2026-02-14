@@ -3,104 +3,191 @@
   .section-title 图层
   .layer-list
     .layer-item(
-      v-for="node in flatNodes"
-      :key="node.id"
-      :class="{ selected: isSelected(node.id) }"
-      :style="{ paddingLeft: node.depth * 16 + 8 + 'px' }"
+      v-for="node in flatNodes" :key="node.id"
+      :class="layerCls(node)"
+      :style="{ paddingLeft: node.depth * 16 + 4 + 'px' }"
+      draggable="true"
       @click="onSelect(node.id, $event)"
+      @dragstart.stop="dd.start(node.id, $event)"
+      @dragover.stop.prevent="dd.over(node.id, $event)"
+      @dragend="dd.end()"
+      @drop.prevent="dd.drop()"
+      @contextmenu.prevent="openCtx(node.id, $event)"
     )
-      .layer-icon {{ iconOf(node.id) }}
-      //- ── 重命名模式: 双击进入 ──
+      span.expand(v-if="hasKids(node.id)" @click.stop="toggleFold(node.id)")
+        | {{ folded.has(node.id) ? '▸' : '▾' }}
+      span.expand.blank(v-else)
+      LayerIcon(:type="typeOf(node.id)" :active="isSelected(node.id)")
       input.layer-name-input(
-        v-if="editingId === node.id"
+        v-if="editId === node.id"
         :value="nameOf(node.id)"
         @input="onRenameInput(node.id, $event)"
-        @blur="commitRename"
-        @keydown.enter="commitRename"
-        @keydown.escape="cancelRename"
-        ref="renameInputRef"
+        @blur="doneRename"
+        @keydown.enter="doneRename"
+        @keydown.escape="doneRename"
+        @click.stop
       )
-      .layer-name(
-        v-else
-        @dblclick.stop="startRename(node.id)"
-      ) {{ nameOf(node.id) }}
-      //- ── 删除按钮: hover 时显示 ──
-      .layer-delete(@click.stop="onDelete(node.id)") ×
+      span.layer-name(v-else @dblclick.stop="beginRename(node.id)") {{ nameOf(node.id) }}
+      span.layer-delete(@click.stop="onDelete(node.id)") ×
   .empty-state(v-if="!flatNodes.length") 空画布 — 按 R 绘制矩形
+  ContextMenu(
+    v-if="ctx.show"
+    :x="ctx.x" :y="ctx.y" :items="ctxItems"
+    @close="ctx.show = false"
+    @select="onCtxAction"
+  )
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick } from 'vue'
-import type { Layer } from '@engine/scene/types'
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  LayerPanel —— 图层树面板
+//  职责: 展示图层树、折叠/展开、拖拽排序、重命名、右键菜单
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import { computed, ref, reactive, nextTick } from 'vue'
 import { useCanvasStore } from '@store/canvas'
 import { useProjectStore } from '@store/project'
+import { useLayerDrag } from '@composables/useLayerDrag'
+import ContextMenu from '../ContextMenu.vue'
+import type { MenuItem } from '../ContextMenu.vue'
+import LayerIcon from './LayerIcon.vue'
 
 const canvas = useCanvasStore()
 const project = useProjectStore()
+const dd = useLayerDrag()
 
-// ── 类型图标 ──
+// ━━━ 折叠 / 展开 ━━━
 
-const ICONS: Record<string, string> = {
-  frame: 'F', rectangle: 'R', ellipse: 'O', text: 'T', image: 'I', group: 'G',
+const folded = ref(new Set<string>())
+
+function toggleFold(id: string): void {
+  const s = folded.value
+  s.has(id) ? s.delete(id) : s.add(id)
 }
 
-// ── 将树结构扁平化 (DFS, 带深度) ──
+function hasKids(id: string): boolean {
+  return (project.project.layers[id]?.childrenIds.length ?? 0) > 0
+}
+
+// ━━━ 树扁平化 (深度优先, 含折叠跳过) ━━━
 
 interface FlatNode { id: string; depth: number }
 
 const flatNodes = computed<FlatNode[]>(() => {
   const result: FlatNode[] = []
-  const stack: Array<{ id: string; depth: number }> = []
+  const stack: FlatNode[] = []
   const roots = project.project.rootLayerIds
   for (let i = roots.length - 1; i >= 0; i--) stack.push({ id: roots[i], depth: 0 })
   while (stack.length) {
-    const { id, depth } = stack.pop()!
-    result.push({ id, depth })
-    const kids = project.project.layers[id]?.childrenIds ?? []
-    for (let i = kids.length - 1; i >= 0; i--) stack.push({ id: kids[i], depth: depth + 1 })
+    const node = stack.pop()!
+    result.push(node)
+    if (folded.value.has(node.id)) continue
+    const kids = project.project.layers[node.id]?.childrenIds ?? []
+    for (let i = kids.length - 1; i >= 0; i--) stack.push({ id: kids[i], depth: node.depth + 1 })
   }
   return result
 })
 
-function isSelected(id: string): boolean { return canvas.selectedLayerIds.includes(id) }
-function iconOf(id: string): string { return ICONS[project.project.layers[id]?.type] ?? '?' }
+// ━━━ 查询 ━━━
+
+function typeOf(id: string): string { return project.project.layers[id]?.type ?? 'rectangle' }
 function nameOf(id: string): string { return project.project.layers[id]?.name ?? '' }
+function isSelected(id: string): boolean { return canvas.selectedLayerIds.includes(id) }
 
 function onSelect(id: string, e: MouseEvent): void {
-  if (e.shiftKey || e.metaKey) canvas.toggleSelection(id)
-  else canvas.select([id])
+  e.shiftKey || e.metaKey ? canvas.toggleSelection(id) : canvas.select([id])
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  双击重命名
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━ 重命名 (双击) ━━━
 
-const editingId = ref<string | null>(null)
+const editId = ref<string | null>(null)
 
-function startRename(id: string): void {
-  editingId.value = id
+function beginRename(id: string): void {
+  editId.value = id
   nextTick(() => {
-    const input = document.querySelector('.layer-name-input') as HTMLInputElement
-    input?.focus()
-    input?.select()
+    const el = document.querySelector('.layer-name-input') as HTMLInputElement
+    el?.focus(); el?.select()
   })
 }
 
 function onRenameInput(id: string, e: Event): void {
-  const layer = project.project.layers[id]
-  if (layer) layer.name = (e.target as HTMLInputElement).value
+  const l = project.project.layers[id]
+  if (l) l.name = (e.target as HTMLInputElement).value
 }
 
-function commitRename(): void { editingId.value = null }
-function cancelRename(): void { editingId.value = null }
+function doneRename(): void { editId.value = null }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  删除图层
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━ 删除 ━━━
 
-function onDelete(id: string): void {
-  project.removeLayer(id)
-  canvas.select([])
+function onDelete(id: string): void { project.removeLayer(id); canvas.select([]) }
+
+// ━━━ 拖拽样式 ━━━
+
+function layerCls(n: FlatNode) {
+  return {
+    'layer-item': true,
+    selected: isSelected(n.id),
+    'drop-before': dd.state.overId === n.id && dd.state.pos === 'before',
+    'drop-inside': dd.state.overId === n.id && dd.state.pos === 'inside',
+    'drop-after': dd.state.overId === n.id && dd.state.pos === 'after',
+  }
+}
+
+// ━━━ 右键菜单 ━━━
+
+const ctx = reactive({ show: false, x: 0, y: 0, id: '' })
+
+function openCtx(id: string, e: MouseEvent): void {
+  canvas.select([id])
+  Object.assign(ctx, { show: true, x: e.clientX, y: e.clientY, id })
+}
+
+const ctxItems = computed<MenuItem[]>(() => [
+  { id: 'rename', label: '重命名', shortcut: '双击' },
+  { id: 'dup', label: '复制图层', shortcut: '⌘D' },
+  { divider: true },
+  { id: 'up', label: '上移一层', shortcut: '⌘[' },
+  { id: 'down', label: '下移一层', shortcut: '⌘]' },
+  { divider: true },
+  { id: 'del', label: '删除', shortcut: 'Del' },
+])
+
+function onCtxAction(action: string): void {
+  ctx.show = false
+  const id = ctx.id
+  const actions: Record<string, () => void> = {
+    rename: () => beginRename(id),
+    dup: () => dupLayer(id),
+    up: () => moveUp(id),
+    down: () => moveDown(id),
+    del: () => onDelete(id),
+  }
+  actions[action]?.()
+}
+
+function dupLayer(id: string): void {
+  const l = project.project.layers[id]
+  if (!l) return
+  const c = project.addLayer(l.type, l.parentId, undefined, l.name + ' 副本')
+  project.updateLayerProps(c.id, { ...l.props })
+  if (l.text !== undefined) { c.text = l.text; c.fontSize = l.fontSize }
+  canvas.select([c.id])
+}
+
+function moveUp(id: string): void {
+  const l = project.project.layers[id]
+  if (!l) return
+  const arr = l.parentId ? project.project.layers[l.parentId]?.childrenIds ?? [] : project.project.rootLayerIds
+  const i = arr.indexOf(id)
+  if (i > 0) project.moveLayer(id, l.parentId, i - 1)
+}
+
+function moveDown(id: string): void {
+  const l = project.project.layers[id]
+  if (!l) return
+  const arr = l.parentId ? project.project.layers[l.parentId]?.childrenIds ?? [] : project.project.rootLayerIds
+  const i = arr.indexOf(id)
+  if (i < arr.length - 1) project.moveLayer(id, l.parentId, i + 2)
 }
 </script>
 
@@ -108,76 +195,50 @@ function onDelete(id: string): void {
 .layer-panel { padding: 12px 0; }
 
 .section-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.5;
-  padding: 0 12px;
-  margin-bottom: 8px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1px; opacity: 0.5; padding: 0 12px; margin-bottom: 8px;
 }
 
 .layer-list { display: flex; flex-direction: column; }
 
 .layer-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 0.1s;
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 8px; cursor: pointer; font-size: 12px;
+  transition: background 0.1s; user-select: none;
 }
-
 .layer-item:hover { background: rgba(255, 255, 255, 0.04); }
 .layer-item.selected { background: rgba(91, 91, 240, 0.15); color: #a0a0ff; }
 
-.layer-icon {
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  opacity: 0.5;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 3px;
+/* ── 拖拽放置指示 ── */
+.layer-item.drop-before { box-shadow: inset 0 2px 0 0 #5b5bf0; }
+.layer-item.drop-after { box-shadow: inset 0 -2px 0 0 #5b5bf0; }
+.layer-item.drop-inside { background: rgba(91, 91, 240, 0.12); outline: 1px dashed rgba(91, 91, 240, 0.5); }
+
+/* ── 展开/折叠箭头 ── */
+.expand {
+  width: 14px; text-align: center; font-size: 10px;
+  opacity: 0.5; cursor: pointer; flex-shrink: 0; line-height: 1;
 }
+.expand:hover { opacity: 1; }
+.expand.blank { cursor: default; }
 
 .layer-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .layer-name-input {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(91, 91, 240, 0.5);
-  border-radius: 3px;
-  color: inherit;
-  font: inherit;
-  padding: 1px 4px;
-  outline: none;
+  flex: 1; background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(91, 91, 240, 0.5); border-radius: 3px;
+  color: inherit; font: inherit; padding: 1px 4px; outline: none;
 }
 
-/* ── 删除按钮: 默认隐藏, hover 显示 ── */
+/* ── 删除按钮 ── */
 .layer-delete {
-  opacity: 0;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  border-radius: 3px;
-  cursor: pointer;
+  opacity: 0; width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; border-radius: 3px; cursor: pointer;
   transition: opacity 0.15s, background 0.15s;
 }
 .layer-item:hover .layer-delete { opacity: 0.4; }
 .layer-delete:hover { opacity: 1 !important; background: rgba(255, 80, 80, 0.2); color: #ff6b6b; }
 
-.empty-state {
-  padding: 40px 16px;
-  text-align: center;
-  font-size: 12px;
-  opacity: 0.3;
-}
+.empty-state { padding: 40px 16px; text-align: center; font-size: 12px; opacity: 0.3; }
 </style>

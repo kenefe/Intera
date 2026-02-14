@@ -58,7 +58,7 @@ function syncLayers(): void {
     // 文本图层: 同步文本内容
     const layer = layers[id]
     if (layer?.type === 'text') {
-      renderer.setTextContent(id, layer.text ?? '', layer.fontSize ?? 16, layer.fontFamily)
+      renderer.setTextContent(id, layer.text ?? '', layer.fontSize ?? 16, layer.fontFamily, layer.fontWeight, layer.textAlign)
     }
   }
 

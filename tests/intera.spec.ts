@@ -13,8 +13,6 @@ import { test, expect, type Page, type Locator } from '@playwright/test'
 //  辅助工具
 // ══════════════════════════════════════
 
-const URL = process.env.TEST_URL ?? 'http://localhost:5174'
-
 /** 获取画布区域的 bounding box */
 async function canvasBox(page: Page) {
   const box = await page.locator('.canvas-area').boundingBox()
@@ -40,9 +38,9 @@ function layerItems(page: Page): Locator {
   return page.locator('.layer-item')
 }
 
-/** 等待页面加载完成 */
+/** 等待页面加载完成 — 使用 playwright.config 的 baseURL */
 async function load(page: Page) {
-  await page.goto(URL)
+  await page.goto('/')
   await page.waitForLoadState('networkidle')
 }
 
@@ -228,7 +226,7 @@ test.describe('Feature: 图层管理', () => {
     await page.keyboard.press('r')
     await drawOnCanvas(page, -60, -40, 0, 0)
     const icon = page.locator('.layer-icon').first()
-    await expect(icon).toHaveText('R')
+    await expect(icon).toHaveAttribute('data-type', 'rectangle')
   })
 })
 
