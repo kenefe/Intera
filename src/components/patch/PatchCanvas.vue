@@ -199,20 +199,24 @@ function onDeleteConnection(id: string): void {
 .patch-toolbar {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
 }
 
 .add-btn {
-  padding: 3px 8px;
-  border: none;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 10px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
 }
-.add-btn:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.add-btn:hover { background: rgba(91, 91, 240, 0.2); color: #aaf; border-color: rgba(91, 91, 240, 0.4); }
 </style>
