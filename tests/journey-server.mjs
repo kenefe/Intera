@@ -43,14 +43,51 @@ async function shot() {
   return { path: fp, width: vp.width, height: vp.height, elements }
 }
 
-/** 扫描页面可交互元素，返回 [{label, x, y}] */
+/** 扫描页面: UI控件 + 画布图层 + 画布区域 */
 async function scanElements() {
   return page.evaluate(() => {
     const els = []
     const seen = new Set()
+
+    // ── 1. 画布区域 ──
+    const cv = document.querySelector('.canvas-viewport')
+    if (cv) {
+      const r = cv.getBoundingClientRect()
+      els.push({
+        label: '[canvas]',
+        x: Math.round(r.x + r.width / 2),
+        y: Math.round(r.y + r.height / 2),
+        box: [Math.round(r.x), Math.round(r.y),
+              Math.round(r.width), Math.round(r.height)],
+      })
+    }
+
+    // ── 2. 画布图层 (带 bounding box) ──
+    // 从 store 读 id→name 映射
+    const store = document.querySelector('#app')?.__vue_app__
+      ?.config?.globalProperties?.$pinia?._s?.get('project')
+    const layers = store?.project?.layers ?? {}
+    const cvRect = cv?.getBoundingClientRect()
+    for (const el of document.querySelectorAll('[data-layer-id]')) {
+      const r = el.getBoundingClientRect()
+      if (r.width < 2 || r.height < 2) continue
+      // 只取画布区域内的图层，过滤预览缩略图
+      if (cvRect && (r.right < cvRect.x || r.x > cvRect.right)) continue
+      const lid = el.dataset.layerId
+      const name = layers[lid]?.name || lid?.slice(0, 8)
+      els.push({
+        label: `[${name}]`,
+        x: Math.round(r.x + r.width / 2),
+        y: Math.round(r.y + r.height / 2),
+        box: [Math.round(r.x), Math.round(r.y),
+              Math.round(r.width), Math.round(r.height)],
+      })
+    }
+
+    // ── 3. UI 控件 ──
     const query = [
       'button', 'input', 'select',
-      '[data-tool]', '[data-layer-id]', '[data-type]',
+      '[data-tool]', '[data-type]',
       '.layer-item', '.node-btn', '.btn-action',
       '.state-tab', '.add-btn',
     ].join(',')
@@ -67,13 +104,11 @@ async function scanElements() {
       if (seen.has(key)) continue
       seen.add(key)
 
-      // ── 标签提取: title > data属性 > 相邻label > 文本 ──
       const title = el.getAttribute('title') || ''
       const tool = el.getAttribute('data-tool') || ''
       const dtype = el.getAttribute('data-type') || ''
       const tag = el.tagName.toLowerCase()
 
-      // input/select: 从同级或父级找 span.label 获取语义
       let sibLabel = ''
       if (tag === 'input' || tag === 'select') {
         const field = el.closest('.prop-field, .prop-row, .cfg-row')
@@ -86,8 +121,6 @@ async function scanElements() {
         || (dtype && `type:${dtype}`)
         || (sibLabel ? `${sibLabel}:${el.value ?? ''}` : '')
         || text || ''
-
-      // 跳过无标签的泛元素
       if (!label) continue
 
       els.push({ label: label.slice(0, 30), x, y })
