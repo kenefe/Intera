@@ -15,7 +15,6 @@
     .toolbar-actions
       button.btn-action(@click="onOpen") Open
       button.btn-action(@click="onSaveFile") Save
-      button.btn-patch(@click="editor.togglePatchEditor" :class="{ active: editor.showPatchEditor }") Patch
       button.btn-action(@click="showExport = true") Export
 
   //- ── 导出对话框 ──
@@ -36,15 +35,14 @@
           PropertiesPanel
           KeyPropertyPanel
           CurvePanel
-      PatchCanvas(v-if="editor.showPatchEditor")
+      PatchCanvas
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
 import type { ToolType } from '@store/editor'
-import { defineAsyncComponent } from 'vue'
 import CanvasViewport from './components/canvas/CanvasViewport.vue'
 import StateBar from './components/canvas/StateBar.vue'
 import PreviewPanel from './components/panels/PreviewPanel.vue'
@@ -52,7 +50,7 @@ import LayerPanel from './components/panels/LayerPanel.vue'
 import PropertiesPanel from './components/panels/PropertiesPanel.vue'
 import KeyPropertyPanel from './components/panels/KeyPropertyPanel.vue'
 import CurvePanel from './components/panels/CurvePanel.vue'
-const PatchCanvas = defineAsyncComponent(() => import('./components/patch/PatchCanvas.vue'))
+import PatchCanvas from './components/patch/PatchCanvas.vue'
 const ExportDialog = defineAsyncComponent(() => import('./components/ExportDialog.vue'))
 
 const editor = useEditorStore()
@@ -140,10 +138,9 @@ onUnmounted(() => {
 
 .toolbar-actions { display: flex; gap: 4px; align-items: center; }
 
-/* ── 工具栏按钮 (共享基类) ── */
+/* ── 工具栏按钮 ── */
 
-.btn-action,
-.btn-patch {
+.btn-action {
   padding: 4px 10px;
   border: none;
   border-radius: 4px;
@@ -153,9 +150,7 @@ onUnmounted(() => {
   cursor: pointer;
   transition: background 0.1s, color 0.1s;
 }
-.btn-action:hover,
-.btn-patch:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
-.btn-patch.active { background: rgba(91, 91, 240, 0.2); color: #8888ff; }
+.btn-action:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 
 /* ── 三栏主体 ── */
 

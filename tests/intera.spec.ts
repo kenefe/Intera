@@ -90,9 +90,9 @@ test.describe('Feature: 应用外壳', () => {
     }
   })
 
-  test('工具栏包含操作按钮 (Open/Save/Patch/Export)', async ({ page }) => {
+  test('工具栏包含操作按钮 (Open/Save/Export)', async ({ page }) => {
     await load(page)
-    for (const text of ['Open', 'Save', 'Patch', 'Export']) {
+    for (const text of ['Open', 'Save', 'Export']) {
       await expect(page.locator(`button`, { hasText: text })).toBeVisible()
     }
   })
@@ -336,12 +336,17 @@ test.describe('Feature: 显示状态', () => {
     await expect(page.locator('.state-tab').first()).not.toHaveClass(/active/)
   })
 
-  test('多于一个状态时出现删除按钮 (hover 可见)', async ({ page }) => {
+  test('默认状态不可删除 — 无删除按钮', async ({ page }) => {
     await load(page)
     await page.locator('.add-btn').click()
+    // 默认状态 hover 后无删除按钮
     const firstTab = page.locator('.state-tab').first()
     await firstTab.hover()
-    await expect(firstTab.locator('.delete-btn')).toBeVisible()
+    await expect(firstTab.locator('.delete-btn')).toHaveCount(0)
+    // 非默认状态 hover 后有删除按钮
+    const secondTab = page.locator('.state-tab').nth(1)
+    await secondTab.hover()
+    await expect(secondTab.locator('.delete-btn')).toBeVisible()
   })
 
   test('只有一个状态时无删除按钮', async ({ page }) => {
@@ -349,7 +354,7 @@ test.describe('Feature: 显示状态', () => {
     await expect(page.locator('.delete-btn')).toHaveCount(0)
   })
 
-  test('删除状态后数量减少', async ({ page }) => {
+  test('删除非默认状态后数量减少', async ({ page }) => {
     await load(page)
     await page.locator('.add-btn').click()
     await expect(page.locator('.state-tab')).toHaveCount(2)
@@ -470,19 +475,14 @@ test.describe('Feature: 预览面板', () => {
 
 test.describe('Feature: Patch 编辑器', () => {
 
-  test('点击 Patch 按钮显示/隐藏 Patch 编辑器', async ({ page }) => {
+  test('Patch 编辑器常驻可见，含节点工具栏', async ({ page }) => {
     await load(page)
-    // 初始隐藏
-    await expect(page.locator('.patch-canvas')).not.toBeVisible()
-    // 点击打开
-    await page.click('.btn-patch')
-    await expect(page.locator('.btn-patch')).toHaveClass(/active/)
-    // 等待异步组件加载
-    await page.waitForTimeout(500)
+    await expect(page.locator('.patch-canvas')).toBeVisible()
+    // 7 种节点类型按钮齐全
+    for (const t of ['touch', 'condition', 'toggleVariable', 'delay', 'to', 'setTo', 'setVariable']) {
+      await expect(page.locator(`.node-btn[data-type="${t}"]`)).toBeVisible()
+    }
     await page.screenshot({ path: 'tests/screenshots/06-patch-editor.png' })
-    // 再次点击关闭
-    await page.click('.btn-patch')
-    await expect(page.locator('.btn-patch')).not.toHaveClass(/active/)
   })
 })
 
@@ -666,10 +666,8 @@ test.describe('Feature: 综合集成', () => {
     for (const k of ['v', 'r', 'o', 'f', 't']) {
       await page.keyboard.press(k)
     }
-    // 打开/关闭 Patch 编辑器
-    await page.click('.btn-patch')
-    await page.waitForTimeout(200)
-    await page.click('.btn-patch')
+    // Patch 编辑器常驻可见
+    await expect(page.locator('.patch-canvas')).toBeVisible()
     expect(errors).toHaveLength(0)
     await page.screenshot({ path: 'tests/screenshots/11-stress.png' })
   })

@@ -80,10 +80,11 @@ export class DisplayStateManager {
     return state
   }
 
-  /** 删除显示状态 */
+  /** 删除显示状态 (默认状态不可删除) */
   removeState(groupId: string, stateId: string): void {
     const group = this.findGroup(groupId)
     if (!group) return
+    if (group.displayStates[0]?.id === stateId) return
     group.displayStates = group.displayStates.filter(s => s.id !== stateId)
     if (group.activeDisplayStateId === stateId) group.activeDisplayStateId = null
   }

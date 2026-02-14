@@ -29,7 +29,7 @@
 
   //- ── 工具条 ──
   .patch-toolbar
-    button.add-btn(v-for="t in ADD_TYPES" :key="t.type" :data-type="t.type" :title="t.name" @click="onAddNode(t.type, t.name)") {{ t.label }}
+    button.node-btn(v-for="t in ADD_TYPES" :key="t.type" :data-type="t.type" :title="t.name" @click="onAddNode(t.type, t.name)") {{ t.label }}
 </template>
 
 <script setup lang="ts">
@@ -304,7 +304,7 @@ function onClickConnection(conn: PatchConnection, e: MouseEvent): void {
   border-radius: 6px;
 }
 
-.add-btn {
+.node-btn {
   padding: 5px 10px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
@@ -315,5 +315,5 @@ function onClickConnection(conn: PatchConnection, e: MouseEvent): void {
   cursor: pointer;
   transition: background 0.1s, color 0.1s, border-color 0.1s;
 }
-.add-btn:hover { background: rgba(91, 91, 240, 0.2); color: #aaf; border-color: rgba(91, 91, 240, 0.4); }
+.node-btn:hover { background: rgba(91, 91, 240, 0.2); color: #aaf; border-color: rgba(91, 91, 240, 0.4); }
 </style>

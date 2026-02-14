@@ -2,14 +2,14 @@
 .state-bar
   .state-tabs
     .state-tab(
-      v-for="state in displayStates"
+      v-for="(state, idx) in displayStates"
       :key="state.id"
       :class="{ active: state.id === activeId, animating: state.id === store.liveStateId }"
       @click="onSwitch(state.id)"
     )
       span.state-name {{ state.name }}
       .delete-btn(
-        v-if="displayStates.length > 1"
+        v-if="idx > 0 && displayStates.length > 1"
         @click.stop="onDelete(state.id)"
       ) &times;
     .add-btn(@click="onAdd" title="添加状态") +
