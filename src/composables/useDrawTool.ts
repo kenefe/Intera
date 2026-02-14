@@ -33,9 +33,15 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
   let drawId: string | null = null
   let originX = 0, originY = 0
 
+  // ── 绘制事务内锁定的画板引用 ──
+  // 避免 move 中 e.target 飘到 SelectionOverlay 等非画板元素上
+  // 导致 toLocal 在两种坐标系之间跳跃
+  let drawFrame: HTMLElement | null = null
+
   /** 屏幕坐标 → 画板本地坐标 (像素对齐) */
   function toLocal(e: PointerEvent): { x: number; y: number } {
-    const frame = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
+    const frame = drawFrame
+      ?? (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
     if (frame) {
       const r = frame.getBoundingClientRect()
       return {
@@ -54,6 +60,7 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
   function down(e: PointerEvent): void {
     const layerType = DRAW_TOOLS[editor.tool]
     if (!layerType || drawId) return  // 防重入: 正在绘制时忽略第二次 down
+    drawFrame = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
     const pos = toLocal(e)
     originX = pos.x; originY = pos.y
     const n = Object.values(project.project.layers).filter(l => l.type === layerType).length + 1
@@ -77,6 +84,7 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
   function up(): void {
     if (drawId) editor.setTool('select')
     drawId = null
+    drawFrame = null
   }
 
   return { down, move, up }

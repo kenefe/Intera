@@ -6,7 +6,9 @@
 )
   .node-header
     span.header-text {{ patch.name }}
-    button.btn-delete(v-if="selected" @pointerdown.stop @click.stop="$emit('delete')") ×
+    button.btn-delete(@pointerdown.stop @click.stop="$emit('delete')" title="删除节点")
+      svg(width="10" height="10" viewBox="0 0 10 10")
+        path(d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round")
   .node-ports
     .port-row(v-for="port in patch.inputs" :key="port.id")
       .port-dot.port-in(
@@ -217,22 +219,21 @@ function onValueChange(e: Event): void {
 .header-text { flex: 1; }
 
 .btn-delete {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   border-radius: 4px;
-  background: rgba(255, 80, 80, 0.25);
-  color: #ff8888;
-  font-size: 14px;
-  font-weight: 700;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.3);
   cursor: pointer;
-  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
   transition: background 0.12s, color 0.12s;
 }
-.btn-delete:hover { background: rgba(255, 80, 80, 0.6); color: #fff; }
+.btn-delete:hover { background: rgba(255, 80, 80, 0.5); color: #fff; }
 
 /* 分类配色 */
 .cat-trigger .node-header { background: #2a6b4a; }

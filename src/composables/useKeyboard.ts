@@ -24,9 +24,20 @@ export function useKeyboard(): void {
   const editor = useEditorStore()
   const project = useProjectStore()
 
+  /** 是否正在编辑文本内容 (文本 input / textarea / contentEditable) */
+  function isEditingText(e: KeyboardEvent): boolean {
+    const el = e.target as HTMLElement
+    if (el.tagName === 'TEXTAREA' || el.isContentEditable) return true
+    if (el.tagName === 'INPUT') {
+      const t = (el as HTMLInputElement).type
+      return t === 'text' || t === 'search' || t === 'url' || t === 'email' || t === 'password'
+    }
+    return false
+  }
+
   function onKeyDown(e: KeyboardEvent): void {
     const tag = (e.target as HTMLElement).tagName
-    const inInput = tag === 'INPUT' || tag === 'TEXTAREA'
+    const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
     const meta = e.metaKey || e.ctrlKey
 
     // ── 全局修饰键 (输入框内也生效) ──
@@ -41,12 +52,18 @@ export function useKeyboard(): void {
       e.preventDefault(); project.save(); return
     }
 
-    if (inInput) return
-
-    // ── 工具快捷键 ──
+    // ── 工具快捷键 — 文本编辑中除外，数值/颜色 input 中仍生效 ──
 
     const tool = TOOL_KEYS[e.key]
-    if (tool) { editor.setTool(tool); return }
+    if (tool && !isEditingText(e)) {
+      e.preventDefault()
+      ;(e.target as HTMLElement).blur()
+      editor.setTool(tool)
+      return
+    }
+
+    // 其余快捷键在 input 内不生效 (Delete/Backspace 留给输入框)
+    if (inInput) return
 
     if (e.key === 'Delete' || e.key === 'Backspace') {
       const ids = [...canvas.selectedLayerIds]
