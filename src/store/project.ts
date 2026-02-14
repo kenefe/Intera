@@ -90,6 +90,7 @@ export const useProjectStore = defineStore('project', () => {
     project.id = snap.id
     project.canvasSize.width = snap.canvasSize.width
     project.canvasSize.height = snap.canvasSize.height
+    scene.syncIdCounter()
     transition.cleanup()
   }
 

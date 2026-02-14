@@ -11,6 +11,16 @@ import type { Layer, LayerType, AnimatableProps, LayoutProps } from './types'
 let nextId = 1
 function generateId(): string { return `layer_${nextId++}` }
 
+/** 将 ID 计数器推进到已有图层 ID 的最大值之后，避免碰撞 */
+function syncIdCounter(layers: Record<string, unknown>): void {
+  let max = 0
+  for (const id of Object.keys(layers)) {
+    const m = id.match(/^layer_(\d+)$/)
+    if (m) max = Math.max(max, +m[1])
+  }
+  if (max >= nextId) nextId = max + 1
+}
+
 // ── 默认值工厂 ──
 
 function defaultProps(): AnimatableProps {
@@ -41,6 +51,9 @@ export class SceneGraph {
     this.map = layers
     this.rootIds = rootIds
   }
+
+  /** 同步 ID 计数器 — 项目加载后必须调用 */
+  syncIdCounter(): void { syncIdCounter(this.map) }
 
   // ── 查询 ──
 

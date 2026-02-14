@@ -43,88 +43,156 @@ async function shot() {
   return { path: fp, width: vp.width, height: vp.height, elements }
 }
 
-/** 扫描页面: UI控件 + 画布图层 + 画布区域 */
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  通用元素扫描 — 零硬编码选择器
+ *
+ *  策略: 按交互信号自动发现 + 区域归属
+ *  UI 怎么改都不用动这里
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
 async function scanElements() {
   return page.evaluate(() => {
+
+    // ── 区域定义 (从 DOM 实时读取) ──
+    const REGION_SEL = {
+      toolbar:    '.toolbar',
+      layers:     '.panel-left',
+      canvas:     '.canvas-viewport',
+      properties: '.panel-right',
+      states:     '.state-bar, .canvas-area > :last-child',
+      patch:      '.patch-canvas',
+      patchVars:  '.var-panel',
+    }
+    const regionRects = {}
+    for (const [name, sel] of Object.entries(REGION_SEL)) {
+      const el = document.querySelector(sel)
+      if (!el) continue
+      const r = el.getBoundingClientRect()
+      if (r.width < 1) continue
+      regionRects[name] = [Math.round(r.x), Math.round(r.y),
+                           Math.round(r.width), Math.round(r.height)]
+    }
+
+    /** 判断元素属于哪个区域 */
+    function regionOf(el) {
+      for (const [name, sel] of Object.entries(REGION_SEL)) {
+        if (el.closest(sel)) return name
+      }
+      return null
+    }
+
+    /** 从元素提取人类可读标签 */
+    function labelOf(el) {
+      const tag = el.tagName.toLowerCase()
+      // 1. title 属性
+      const title = el.getAttribute('title')
+      if (title) return title
+      // 2. data 属性语义
+      const tool = el.getAttribute('data-tool')
+      if (tool) return `tool:${tool}`
+      const dtype = el.getAttribute('data-type')
+      if (dtype) return `type:${dtype}`
+      const patchId = el.getAttribute('data-patch-id')
+      if (patchId) {
+        const hdr = el.querySelector('.header-text')
+        return hdr?.textContent?.trim() || `patch:${patchId.slice(0, 6)}`
+      }
+      // 3. input/select: 相邻 label + 当前值
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') {
+        const field = el.closest('.prop-field, .prop-row, .cfg-row, .var-row')
+        const sib = field?.querySelector('.label, span.label')
+        const lbl = sib?.textContent?.trim() || el.placeholder || ''
+        if (lbl) return `${lbl}:${el.value ?? ''}`
+        // checkbox 特殊处理
+        if (el.type === 'checkbox') {
+          const parent = el.closest('.prop-field')
+          const pLbl = parent?.querySelector('.label')?.textContent?.trim()
+          return pLbl ? `${pLbl}:${el.checked ? 'on' : 'off'}` : ''
+        }
+        return ''
+      }
+      // 4. textContent
+      const text = el.textContent?.trim()?.slice(0, 25)
+      if (text) return text
+      return ''
+    }
+
     const els = []
     const seen = new Set()
 
-    // ── 1. 画布区域 ──
-    const cv = document.querySelector('.canvas-viewport')
-    if (cv) {
-      const r = cv.getBoundingClientRect()
-      els.push({
-        label: '[canvas]',
-        x: Math.round(r.x + r.width / 2),
-        y: Math.round(r.y + r.height / 2),
-        box: [Math.round(r.x), Math.round(r.y),
-              Math.round(r.width), Math.round(r.height)],
-      })
+    function add(label, x, y, box) {
+      const key = `${x},${y}`
+      if (seen.has(key)) return
+      seen.add(key)
+      const entry = { label: label.slice(0, 35), x, y }
+      if (box) entry.box = box
+      els.push(entry)
+    }
+
+    // ── 1. 区域 bounding box ──
+    for (const [name, box] of Object.entries(regionRects)) {
+      add(`[${name}]`, box[0] + Math.round(box[2] / 2),
+                        box[1] + Math.round(box[3] / 2), box)
     }
 
     // ── 2. 画布图层 (带 bounding box) ──
-    // 从 store 读 id→name 映射
     const store = document.querySelector('#app')?.__vue_app__
       ?.config?.globalProperties?.$pinia?._s?.get('project')
-    const layers = store?.project?.layers ?? {}
-    const cvRect = cv?.getBoundingClientRect()
+    const layerMap = store?.project?.layers ?? {}
+    const cvEl = document.querySelector('.canvas-viewport')
+    const cvR = cvEl?.getBoundingClientRect()
     for (const el of document.querySelectorAll('[data-layer-id]')) {
       const r = el.getBoundingClientRect()
       if (r.width < 2 || r.height < 2) continue
-      // 只取画布区域内的图层，过滤预览缩略图
-      if (cvRect && (r.right < cvRect.x || r.x > cvRect.right)) continue
+      if (cvR && (r.right < cvR.x || r.x > cvR.right)) continue
       const lid = el.dataset.layerId
-      const name = layers[lid]?.name || lid?.slice(0, 8)
-      els.push({
-        label: `[${name}]`,
-        x: Math.round(r.x + r.width / 2),
-        y: Math.round(r.y + r.height / 2),
-        box: [Math.round(r.x), Math.round(r.y),
-              Math.round(r.width), Math.round(r.height)],
-      })
+      const name = layerMap[lid]?.name || lid?.slice(0, 8)
+      add(`[${name}]`, Math.round(r.x + r.width / 2),
+                        Math.round(r.y + r.height / 2),
+                        [Math.round(r.x), Math.round(r.y),
+                         Math.round(r.width), Math.round(r.height)])
     }
 
-    // ── 3. UI 控件 ──
-    const query = [
-      'button', 'input', 'select',
-      '[data-tool]', '[data-type]',
-      '.layer-item', '.node-btn', '.btn-action',
-      '.state-tab', '.add-btn',
-    ].join(',')
+    // ── 3. 所有可交互元素 (通用发现) ──
+    const interactive = document.querySelectorAll([
+      'button', 'input', 'select', 'textarea',
+      '[role="button"]', '[tabindex]',
+      '[data-tool]', '[data-type]', '[data-patch-id]',
+      '.layer-item', '.state-tab', '.port-dot',
+    ].join(','))
 
-    for (const el of document.querySelectorAll(query)) {
+    for (const el of interactive) {
       const r = el.getBoundingClientRect()
-      if (r.width < 4 || r.height < 4) continue
+      if (r.width < 3 || r.height < 3) continue
       if (r.bottom < 0 || r.top > innerHeight) continue
       if (r.right < 0 || r.left > innerWidth) continue
 
-      const x = Math.round(r.x + r.width / 2)
-      const y = Math.round(r.y + r.height / 2)
-      const key = `${x},${y}`
-      if (seen.has(key)) continue
-      seen.add(key)
-
-      const title = el.getAttribute('title') || ''
-      const tool = el.getAttribute('data-tool') || ''
-      const dtype = el.getAttribute('data-type') || ''
-      const tag = el.tagName.toLowerCase()
-
-      let sibLabel = ''
-      if (tag === 'input' || tag === 'select') {
-        const field = el.closest('.prop-field, .prop-row, .cfg-row')
-        sibLabel = field?.querySelector('.label, span.label')?.textContent?.trim() || ''
-      }
-
-      const text = el.textContent?.trim()?.slice(0, 20) || ''
-      const label = title
-        || (tool && `tool:${tool}`)
-        || (dtype && `type:${dtype}`)
-        || (sibLabel ? `${sibLabel}:${el.value ?? ''}` : '')
-        || text || ''
+      let label = labelOf(el)
       if (!label) continue
 
-      els.push({ label: label.slice(0, 30), x, y })
+      // patch 端口: 特殊标签
+      if (el.classList.contains('port-dot')) {
+        const dir = el.dataset.portDir || ''
+        const node = el.closest('[data-patch-id]')
+        const nodeName = node?.querySelector('.header-text')?.textContent?.trim() || ''
+        const portName = el.closest('.port-row')?.querySelector('.port-label')?.textContent?.trim() || ''
+        label = `port:${nodeName}.${portName}.${dir}`
+      }
+
+      const region = regionOf(el)
+      const entry = {
+        label: label.slice(0, 35),
+        x: Math.round(r.x + r.width / 2),
+        y: Math.round(r.y + r.height / 2),
+      }
+      if (region) entry.region = region
+      const key = `${entry.x},${entry.y}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      els.push(entry)
     }
+
     return els
   })
 }
@@ -144,6 +212,21 @@ const ACTIONS = {
   },
   press:      async ({ key }) => page.keyboard.press(key),
   keyboard:   async ({ text }) => page.keyboard.type(text),
+
+  // headless 模式下原生 <select> 无法通过 click+keyboard 操作
+  // 用坐标定位元素 → 程序化设置值 → 触发 change 事件
+  selectOption: async ({ x, y, label, value }) => {
+    await page.evaluate(([px, py, lbl, val]) => {
+      const el = document.elementFromPoint(px, py)?.closest('select')
+      if (!el) return
+      const opt = [...el.options].find(o =>
+        (lbl && o.text.includes(lbl)) || (val && o.value === val)
+      )
+      if (!opt) return
+      el.value = opt.value
+      el.dispatchEvent(new Event('change', { bubbles: true }))
+    }, [x, y, label ?? '', value ?? ''])
+  },
   scroll:     async ({ x, y, deltaX = 0, deltaY = 0 }) => {
     await page.mouse.move(x, y)
     await page.mouse.wheel(deltaX, deltaY)
