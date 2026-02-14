@@ -42,6 +42,15 @@ export const useCanvasStore = defineStore('canvas', () => {
     panY.value = 0
   }
 
+  /** 自适应视口 — 缩放+居中内容至可视区域 */
+  function fitToViewport(contentW: number, contentH: number, vpW: number, vpH: number): void {
+    const PAD = 40 // 舒适留白
+    const z = Math.min((vpW - PAD * 2) / contentW, (vpH - PAD * 2) / contentH, 1)
+    zoom.value = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z))
+    panX.value = (vpW - contentW * zoom.value) / 2
+    panY.value = (vpH - contentH * zoom.value) / 2
+  }
+
   // ── 选区操作 ──
 
   function select(ids: string[]): void {
@@ -72,7 +81,7 @@ export const useCanvasStore = defineStore('canvas', () => {
 
   return {
     zoom, panX, panY, selectedLayerIds, hasSelection,
-    setZoom, setPan, resetViewport,
+    setZoom, setPan, resetViewport, fitToViewport,
     select, addToSelection, removeFromSelection, toggleSelection, clearSelection,
   }
 })

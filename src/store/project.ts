@@ -2,9 +2,10 @@
 //  Project Store —— 项目数据中枢
 //  职责: 持有项目数据，协调 SceneGraph + DisplayStateManager
 //  角色: UI 层与 Engine 层之间的桥梁
+//  动画过渡已拆分至 composables/useTransition.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import { reactive, shallowReactive, ref, computed } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import type {
   Project, Layer, LayerType,
@@ -12,10 +13,9 @@ import type {
 } from '../engine/scene/types'
 import { SceneGraph } from '../engine/scene/SceneGraph'
 import { DisplayStateManager } from '../engine/scene/DisplayState'
-import { FolmeManager } from '../engine/folme/FolmeManager'
-import { buildTransition } from '../engine/scene/SmartAnimate'
 import { UndoManager } from '../engine/UndoManager'
 import { saveToLocal, loadFromLocal, saveToFile, loadFromFile } from '../engine/ProjectStorage'
+import { useTransition } from '../composables/useTransition'
 
 // ── 空项目工厂 ──
 
@@ -48,8 +48,7 @@ function createEmptyProject(): Project {
 
 function cleanOverrides(project: Project, layerIds: string[]): void {
   const set = new Set(layerIds)
-  const allStates = project.stateGroups.flatMap(g => g.displayStates)
-  for (const ds of allStates) {
+  for (const ds of project.stateGroups.flatMap(g => g.displayStates)) {
     for (const lid of set) delete ds.overrides[lid]
   }
 }
@@ -60,14 +59,11 @@ function cleanOverrides(project: Project, layerIds: string[]): void {
 
 export const useProjectStore = defineStore('project', () => {
   const project = reactive<Project>(createEmptyProject())
-
-  // 引擎实例 — 直接操作 reactive 数据，Vue 自动追踪变更
   const scene = new SceneGraph(project.layers, project.rootLayerIds)
   const states = new DisplayStateManager(project.stateGroups, project.layers)
+  const transition = useTransition(project, states)
 
-  // ═══════════════════════════════════
-  //  撤销 / 重做
-  // ═══════════════════════════════════
+  // ── 撤销 / 重做 ──
 
   const history = new UndoManager<string>(50)
   const historyVersion = ref(0)
@@ -75,41 +71,26 @@ export const useProjectStore = defineStore('project', () => {
   const canUndo = computed(() => { historyVersion.value; return history.canUndo })
   const canRedo = computed(() => { historyVersion.value; return history.canRedo })
 
-  /** 拍快照 — 在每次结构性操作前调用 */
   function snapshot(): void {
     history.push(JSON.stringify(project))
     historyVersion.value++
   }
 
-  /**
-   * 就地恢复项目数据
-   * 关键: splice / delete+assign 保持 reactive proxy 引用不断
-   * SceneGraph 和 DisplayStateManager 无需重建
-   */
+  /** 就地恢复 — splice/delete+assign 保持 reactive 引用不断 */
   function restoreFromJSON(json: string): void {
     const snap: Project = JSON.parse(json)
-
-    // 图层字典 — 清空后重新填充
     for (const key of Object.keys(project.layers)) delete project.layers[key]
     Object.assign(project.layers, snap.layers)
-
-    // 数组 — splice 保留引用
     project.rootLayerIds.splice(0, Infinity, ...snap.rootLayerIds)
     project.stateGroups.splice(0, Infinity, ...snap.stateGroups)
     project.variables.splice(0, Infinity, ...snap.variables)
     project.patches.splice(0, Infinity, ...snap.patches)
     project.connections.splice(0, Infinity, ...snap.connections)
-
-    // 标量
     project.name = snap.name
     project.id = snap.id
     project.canvasSize.width = snap.canvasSize.width
     project.canvasSize.height = snap.canvasSize.height
-
-    // 清理动画残留
-    for (const k of Object.keys(liveValues)) delete liveValues[k]
-    liveStateId.value = null
-    folmes.clear()
+    transition.cleanup()
   }
 
   function undo(): void {
@@ -122,9 +103,7 @@ export const useProjectStore = defineStore('project', () => {
     if (next) { restoreFromJSON(next); historyVersion.value++ }
   }
 
-  // ═══════════════════════════════════
-  //  持久化
-  // ═══════════════════════════════════
+  // ── 持久化 ──
 
   function save(): void { saveToLocal(project) }
   async function saveFile(): Promise<void> { await saveToFile(project) }
@@ -145,9 +124,7 @@ export const useProjectStore = defineStore('project', () => {
     return true
   }
 
-  // ═══════════════════════════════════
-  //  图层操作
-  // ═══════════════════════════════════
+  // ── 图层操作 ──
 
   function addLayer(
     type: LayerType, parentId: string | null = null, index?: number, name?: string,
@@ -167,23 +144,14 @@ export const useProjectStore = defineStore('project', () => {
     scene.move(id, parentId, index)
   }
 
-  // ═══════════════════════════════════
-  //  状态组操作
-  // ═══════════════════════════════════
+  // ── 状态组 + 显示状态 ──
 
   function addStateGroup(name: string, rootLayerId: string | null = null): StateGroup {
     snapshot()
     return states.addGroup(name, rootLayerId)
   }
 
-  function removeStateGroup(groupId: string): void {
-    snapshot()
-    states.removeGroup(groupId)
-  }
-
-  // ═══════════════════════════════════
-  //  显示状态操作
-  // ═══════════════════════════════════
+  function removeStateGroup(groupId: string): void { snapshot(); states.removeGroup(groupId) }
 
   function addDisplayState(groupId: string, name: string): DisplayState | undefined {
     snapshot()
@@ -191,8 +159,7 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   function removeDisplayState(groupId: string, stateId: string): void {
-    snapshot()
-    states.removeState(groupId, stateId)
+    snapshot(); states.removeState(groupId, stateId)
   }
 
   function switchState(groupId: string, stateId: string | null): void {
@@ -201,18 +168,12 @@ export const useProjectStore = defineStore('project', () => {
     if (group) group.activeDisplayStateId = stateId
   }
 
-  // ═══════════════════════════════════
-  //  图层属性 (不自动快照 — 连续操作由调用方负责)
-  // ═══════════════════════════════════
+  // ── 属性操作 (不自动快照 — 连续操作由调用方负责) ──
 
   function updateLayerProps(id: string, props: Partial<AnimatableProps>): void {
     const layer = project.layers[id]
     if (layer) Object.assign(layer.props, props)
   }
-
-  // ═══════════════════════════════════
-  //  属性覆盖 (不自动快照 — 同上)
-  // ═══════════════════════════════════
 
   function setOverride(stateId: string, layerId: string, props: Partial<AnimatableProps>): void {
     states.setOverride(stateId, layerId, props)
@@ -222,97 +183,17 @@ export const useProjectStore = defineStore('project', () => {
     states.clearOverride(stateId, layerId, prop)
   }
 
-  // ═══════════════════════════════════
-  //  动画过渡
-  // ═══════════════════════════════════
-
-  const folmes = new Map<string, FolmeManager>()
-  const liveStateId = ref<string | null>(null)
-  const liveValues = shallowReactive<Record<string, Record<string, number>>>({})
-  let transitionGen = 0
-
-  /** 带弹簧动画的状态切换 (不自动快照 — 预览模式下由 Patch 触发) */
-  function transitionToState(groupId: string, stateId: string): void {
-    // 优先精确查找; groupId 无效时从 stateId 反查所属 group
-    const group = states.findGroup(groupId)
-      ?? project.stateGroups.find(g => g.displayStates.some(s => s.id === stateId))
-    if (!group) return
-    const fromId = group.activeDisplayStateId
-    group.activeDisplayStateId = stateId
-    if (!fromId || fromId === stateId) return
-
-    // 解析两个状态的图层属性
-    const ids = Object.keys(project.layers)
-    const fromP: Record<string, AnimatableProps> = {}
-    const toP: Record<string, AnimatableProps> = {}
-    for (const id of ids) {
-      fromP[id] = states.getResolvedProps(fromId, id) ?? project.layers[id].props
-      toP[id] = states.getResolvedProps(stateId, id) ?? project.layers[id].props
-    }
-
-    const ts = states.findState(stateId)
-    if (!ts) return
-    const calls = buildTransition(ids, fromP, toP, ts.transition)
-
-    // 清理旧动画帧
-    for (const k of Object.keys(liveValues)) delete liveValues[k]
-    const gen = ++transitionGen
-    liveStateId.value = calls.length ? stateId : null
-
-    for (const c of calls) {
-      // 同步预填 liveValues — 避免 syncLayers 渲染目标状态后一帧闪烁
-      const numFrom: Record<string, number> = {}
-      for (const [k, v] of Object.entries(c.from)) {
-        if (typeof v === 'number') numFrom[k] = v
-      }
-      liveValues[c.layerId] = numFrom
-
-      let fm = folmes.get(c.layerId)
-      if (!fm) { fm = new FolmeManager(); folmes.set(c.layerId, fm) }
-      fm.setTo(c.from)
-      fm.to(c.to, {
-        ...c.config,
-        onUpdate: (vals) => {
-          if (gen !== transitionGen) return
-          liveValues[c.layerId] = vals
-        },
-        onComplete: () => {
-          if (gen !== transitionGen) return
-          delete liveValues[c.layerId]
-          if (!Object.keys(liveValues).length) liveStateId.value = null
-        },
-      })
-    }
-  }
-
-  /** 即时跳转状态 —— 无弹簧动画 (setTo patch 专用) */
-  function setToState(groupId: string, stateId: string): void {
-    const group = states.findGroup(groupId)
-      ?? project.stateGroups.find(g => g.displayStates.some(s => s.id === stateId))
-    if (!group) return
-    // 终止进行中的动画
-    ++transitionGen
-    for (const k of Object.keys(liveValues)) delete liveValues[k]
-    liveStateId.value = null
-    folmes.forEach(fm => fm.cancel())
-    // 直接切换状态
-    group.activeDisplayStateId = stateId
-  }
-
   return {
-    project,
-    scene,
-    states,
-    liveStateId,
-    liveValues,
-    // 撤销 / 重做
+    project, scene, states,
+    liveStateId: transition.liveStateId,
+    liveValues: transition.liveValues,
     canUndo, canRedo, snapshot, undo, redo,
-    // 持久化
     save, saveFile, openFile, loadSaved,
-    // 操作
     addLayer, removeLayer, moveLayer, updateLayerProps,
     addStateGroup, removeStateGroup,
-    addDisplayState, removeDisplayState, switchState, transitionToState, setToState,
+    addDisplayState, removeDisplayState, switchState,
+    transitionToState: transition.transitionToState,
+    setToState: transition.setToState,
     setOverride, clearOverride,
   }
 })

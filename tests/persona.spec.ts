@@ -1,17 +1,11 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  Intera — 角色旅程验证 (数据驱动·自动构建)
+//  Intera — 画像旅程验证 (感知-决策-执行 循环)
 //
-//  核心理念:
-//  角色 × 设计目标 = 旅程矩阵 (自动生成)
-//  加角色 → 旅程自动扩展
-//  加设计目标 → 旅程自动扩展
+//  不是预编译脚本，是反应式 Agent:
+//  每一步先感知画面，再决策下一步，执行后验证画面变化
+//  旅程在运行时动态构建，每个决策基于当前 UI 状态
 //
-//  运行全部: npx playwright test tests/persona.spec.ts
-//  按角色:   --grep "零基础" / "中级" / "专家" / "代码动效"
-//  按目标:   --grep "卡片" / "Tab" / "拖拽" / ...
-//
-//  循环打磨: 运行 → 截图审查 → 发现摩擦 → 修复 → 再运行
-//  截图目录: tests/screenshots/persona/
+//  运行: npx playwright test tests/persona.spec.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { test, expect, type Page } from '@playwright/test'
@@ -52,239 +46,244 @@ function collectErrors(page: Page): string[] {
 }
 
 // ══════════════════════════════════════
-//  步骤原语 (原子操作)
-//  每个工厂返回 StepFn，可组合成旅程配方
+//  UI 感知 — 读取当前画面状态
 // ══════════════════════════════════════
 
-type StepFn = (page: Page) => Promise<void>
+interface UIState {
+  layers: number
+  states: number
+}
 
-/** 绘制 N 个矩形 (自动错开位置) */
-const draw = (n: number): StepFn => async (page) => {
-  for (let i = 0; i < n; i++) {
-    await page.keyboard.press('r')
-    const o = i * 50
-    await drawOnCanvas(page, -80 + o, -60 + o, -10 + o, -10 + o)
-    await page.waitForTimeout(150)
+async function perceive(page: Page): Promise<UIState> {
+  return {
+    layers: await page.locator('.layer-item').count(),
+    states: await page.locator('.state-tab').count(),
   }
 }
 
-/** 添加 N 个显示状态 */
-const addStates = (n: number): StepFn => async (page) => {
-  for (let i = 0; i < n; i++) {
-    await page.locator('.add-btn').click()
-    await page.waitForTimeout(100)
-  }
+// ══════════════════════════════════════
+//  画像 — 纯能力集
+// ══════════════════════════════════════
+
+interface Profile {
+  id: string
+  name: string
+  caps: Set<string>
+  budget: number
 }
 
-/** 切换到第 N 个状态 (0-indexed) */
-const toState = (n: number): StepFn => async (page) => {
-  await page.locator('.state-tab').nth(n).click()
-  await page.waitForTimeout(200)
-}
+// ══════════════════════════════════════
+//  能力图谱 → 画像生成
+// ══════════════════════════════════════
 
-/** 选中第 N 个图层并修改指定属性 */
-const modify = (layerIdx: number, props: [number, string][]): StepFn => async (page) => {
-  await page.locator('.layer-item').nth(layerIdx).click()
-  await page.waitForTimeout(100)
-  for (const [idx, val] of props) {
-    const input = page.locator('.prop-field').nth(idx).locator('.input')
-    if (await input.isVisible()) {
-      await input.fill(val)
-      await input.press('Enter')
+const CAP_DEPS: Record<string, string[]> = {
+  states: [],
+  curves: ['states'],
+  patch:  ['states'],
+  folme:  ['curves', 'patch'],
+}
+const CAP_NAMES: Record<string, string> = {
+  states: '状态系统', curves: '弹簧曲线',
+  patch: '节点编辑',  folme: 'Folme映射',
+}
+const CAP_IDS = Object.keys(CAP_DEPS)
+
+function generateProfiles(): Profile[] {
+  const profiles: Profile[] = []
+  for (let mask = 0; mask < (1 << CAP_IDS.length); mask++) {
+    const caps = new Set<string>()
+    for (let i = 0; i < CAP_IDS.length; i++) {
+      if (mask & (1 << i)) caps.add(CAP_IDS[i])
     }
+    const valid = [...caps].every(id => CAP_DEPS[id].every(d => caps.has(d)))
+    if (!valid) continue
+
+    const ordered = CAP_IDS.filter(id => caps.has(id))
+    profiles.push({
+      id: caps.size === 0 ? 'base' : ordered.join('-'),
+      name: caps.size === 0 ? '基础绘制' : ordered.map(id => CAP_NAMES[id]).join(' · '),
+      caps,
+      budget: 5 + caps.size * 3,
+    })
   }
-}
-
-/** 验证曲线面板 (Folme response + damping) */
-const curves: StepFn = async (page) => {
-  const rp = page.locator('.panel-right')
-  await expect(rp).toContainText('过渡曲线')
-  await expect(rp).toContainText('响应')
-  await expect(rp).toContainText('阻尼')
-}
-
-/** 打开 → 验证 → 关闭 Patch 编辑器 */
-const patch: StepFn = async (page) => {
-  await page.click('.btn-patch')
-  await page.waitForTimeout(500)
-  await expect(page.locator('.btn-patch')).toHaveClass(/active/)
-  await page.click('.btn-patch')
-  await page.waitForTimeout(200)
-}
-
-/** 点击预览面板触发交互 */
-const preview: StepFn = async (page) => {
-  const p = page.locator('.preview-panel')
-  const box = await p.boundingBox()
-  if (box) {
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
-    await page.waitForTimeout(600)
-  }
-}
-
-/** 切回默认状态 (触发弹簧动画) */
-const backToDefault: StepFn = async (page) => {
-  await page.locator('.state-tab').first().click()
-  await page.waitForTimeout(600)
-}
-
-/** 验证空状态引导 */
-const checkEmpty: StepFn = async (page) => {
-  await expect(page.locator('.panel-left .empty-state')).toBeVisible()
-  await expect(page.locator('.properties-panel .empty-state')).toContainText('未选中')
-}
-
-/** 预览面板拖拽交互 */
-const previewDrag: StepFn = async (page) => {
-  const p = page.locator('.preview-panel')
-  const box = await p.boundingBox()
-  if (box) {
-    const cx = box.x + box.width / 2
-    await page.mouse.move(cx, box.y + box.height / 3)
-    await page.mouse.down()
-    await page.mouse.move(cx, box.y + box.height * 2 / 3, { steps: 10 })
-    await page.mouse.up()
-    await page.waitForTimeout(400)
-  }
+  return profiles.sort((a, b) => a.caps.size - b.caps.size)
 }
 
 // ══════════════════════════════════════
-//  角色定义 (加角色 → 旅程自动扩展)
-// ══════════════════════════════════════
-
-interface Persona {
-  id: string
-  name: string       // 用于 test.describe，grep 友好
-  maxLevel: number   // 0=零基础, 1=中级, 2=专家/代码
-  budget: number     // 步骤预算
-}
-
-const PERSONAS: Persona[] = [
-  { id: 'novice',  name: '零基础设计师',   maxLevel: 0, budget: 8  },
-  { id: 'mid',     name: '中级设计师',     maxLevel: 1, budget: 12 },
-  { id: 'expert',  name: '专家设计师',     maxLevel: 2, budget: 18 },
-  { id: 'code',    name: '代码动效专家',   maxLevel: 2, budget: 15 },
-]
-
-// ══════════════════════════════════════
-//  设计目标定义 (加目标 → 旅程自动扩展)
+//  原子操作 — 感知-决策-执行 的最小单元
 //
-//  每个目标 = 一个完整的交互动效设计
-//  levels: 按复杂度分层的步骤配方
-//    Level 0 = 自动动效 (画+状态+预览)
-//    Level 1 = 曲线调参 (+ 弹簧参数)
-//    Level 2 = 逻辑编排 (+ Patch 节点)
+//  needs: 前置已完成的操作 (保证逻辑顺序)
+//  cap:   所属能力 (无 = 所有画像都执行)
+//  exec:  执行操作
+//  check: 验证画面变化 (before → after)
+//
+//  列表顺序 = 优先级: 循环取第一个就绪的
 // ══════════════════════════════════════
 
-interface Goal {
+interface Action {
   id: string
-  name: string       // 用于 test name，grep 友好
-  min: number        // 最低所需角色等级
-  levels: Partial<Record<number, StepFn[]>>
+  name: string
+  needs: string[]
+  cap?: string
+  exec: (page: Page, p: Profile) => Promise<void>
+  check?: (before: UIState, after: UIState) => void
 }
 
-const GOALS: Goal[] = [
-  // ── G1: 按钮点击反馈 (最简) ──
+const ACTIONS: Action[] = [
   {
-    id: 'button', name: '按钮点击反馈', min: 0,
-    levels: {
-      0: [draw(1), addStates(1), toState(1),
-          modify(0, [[2, '80'], [3, '40']]), preview, backToDefault],
-      1: [curves],
-      2: [patch],
+    id: 'draw', name: '绘制图形', needs: [],
+    exec: async (page, p) => {
+      const n = p.caps.size >= 3 ? 3 : p.caps.size >= 1 ? 2 : 1
+      for (let i = 0; i < n; i++) {
+        await page.keyboard.press('r')
+        const o = i * 50
+        await drawOnCanvas(page, -60 + o, -40 + o, 60 + o, 40 + o)
+        await page.waitForTimeout(150)
+      }
+    },
+    check: (_b, a) => { expect(a.layers).toBeGreaterThan(0) },
+  },
+
+  {
+    id: 'add-state', name: '添加状态', needs: ['draw'], cap: 'states',
+    exec: async (page) => {
+      await page.locator('.add-btn').click()
+      await page.waitForTimeout(100)
+    },
+    check: (b, a) => { expect(a.states).toBeGreaterThan(b.states) },
+  },
+
+  {
+    id: 'to-state', name: '切换状态', needs: ['add-state'], cap: 'states',
+    exec: async (page) => {
+      await page.locator('.state-tab').nth(1).click()
+      await page.waitForTimeout(200)
     },
   },
-  // ── G2: 卡片展开收起 (经典) ──
+
   {
-    id: 'card', name: '卡片展开收起', min: 0,
-    levels: {
-      0: [draw(1), addStates(1), toState(1),
-          modify(0, [[2, '300'], [3, '400']]), preview, backToDefault],
-      1: [curves],
-      2: [patch],
+    id: 'modify', name: '修改属性', needs: ['to-state'], cap: 'states',
+    exec: async (page) => {
+      await page.locator('.layer-item').first().click()
+      await page.waitForTimeout(150)
+      const inputs = page.locator('.prop-field .input')
+      for (const idx of [2, 3]) {
+        const inp = inputs.nth(idx)
+        if (await inp.isVisible()) { await inp.fill('250'); await inp.press('Enter') }
+      }
     },
   },
-  // ── G3: Tab 导航切换 (多状态) ──
+
   {
-    id: 'tab', name: 'Tab 导航切换', min: 0,
-    levels: {
-      0: [draw(3), addStates(2), toState(1),
-          modify(1, [[4, '0.3']]), toState(2),
-          modify(2, [[4, '0.3']]), preview],
-      1: [backToDefault, curves],
-      2: [patch],
+    id: 'curves', name: '查看弹簧曲线', needs: ['modify'], cap: 'curves',
+    exec: async (page) => {
+      const rp = page.locator('.panel-right')
+      await expect(rp).toContainText('过渡曲线')
+      await expect(rp).toContainText('响应')
+      await expect(rp).toContainText('阻尼')
+      // 滚动到曲线面板，确保截图完整呈现弹簧参数
+      await page.locator('.curve-panel').scrollIntoViewIfNeeded()
     },
   },
-  // ── G4: 列表进入动画 (交错) ──
+
   {
-    id: 'entrance', name: '列表进入动画', min: 0,
-    levels: {
-      0: [draw(3), addStates(1), toState(1),
-          modify(0, [[0, '300']]), modify(1, [[0, '350']]),
-          modify(2, [[0, '400']]), preview],
-      1: [backToDefault, curves],
-      2: [patch],
+    id: 'patch', name: '打开节点编辑', needs: ['add-state'], cap: 'patch',
+    exec: async (page) => {
+      await page.click('.btn-patch')
+      await page.waitForTimeout(500)
+      await expect(page.locator('.btn-patch')).toHaveClass(/active/)
+      await expect(page.locator('.patch-canvas')).toBeVisible()
     },
   },
-  // ── G5: 拖拽交互 (触控) ──
+
   {
-    id: 'drag', name: '拖拽跟手交互', min: 1,
-    levels: {
-      1: [draw(1), addStates(1), toState(1),
-          modify(0, [[1, '500']]), curves, backToDefault],
-      2: [patch, previewDrag],
+    id: 'folme', name: '验证Folme映射', needs: ['curves', 'patch'], cap: 'folme',
+    exec: async (page) => {
+      const rp = page.locator('.panel-right')
+      // 弹簧类型选择器可见
+      await expect(rp.locator('.type-select')).toBeVisible()
+      // response / damping 滑块存在且可交互
+      const sliders = rp.locator('.param-slider')
+      await expect(sliders).not.toHaveCount(0)
+      // 数值显示可读
+      const vals = rp.locator('.param-val')
+      await expect(vals.first()).toBeVisible()
+      // 滚动到曲线面板，确保截图完整
+      await page.locator('.curve-panel').scrollIntoViewIfNeeded()
     },
   },
-  // ── G6: 复杂多组件原型 (全链路) ──
+
   {
-    id: 'complex', name: '复杂多组件原型', min: 2,
-    levels: {
-      2: [draw(3), addStates(2), toState(1),
-          modify(0, [[0, '300'], [2, '200']]),
-          modify(1, [[4, '0.5']]), toState(2),
-          modify(2, [[1, '400']]), patch, curves,
-          backToDefault, preview],
+    id: 'preview', name: '预览动画', needs: ['draw'],
+    exec: async (page) => {
+      const box = await page.locator('.preview-panel').boundingBox()
+      if (box) {
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+        await page.waitForTimeout(600)
+      }
+    },
+  },
+
+  {
+    id: 'back', name: '弹回默认', needs: ['preview'], cap: 'states',
+    exec: async (page) => {
+      await page.locator('.state-tab').first().click()
+      await page.waitForTimeout(600)
     },
   },
 ]
 
 // ══════════════════════════════════════
-//  自动构建: 角色 × 目标 = 旅程矩阵
+//  感知-决策-执行 循环
 //
-//  4 角色 × 6 目标 = 最多 24 条旅程
-//  自动过滤: 目标最低等级 > 角色等级 → 跳过
+//  每一轮:
+//  1. 感知当前画面 (几个图层? 几个状态?)
+//  2. 从 ACTIONS 中选第一个就绪的操作
+//  3. 执行操作
+//  4. 再次感知，验证画面确实变了
+//  5. 截图记录 (文件名含操作 id)
+//
+//  旅程在运行时构建，不是预编译脚本
 // ══════════════════════════════════════
 
-for (const persona of PERSONAS) {
-  test.describe(`角色: ${persona.name}`, () => {
+const profiles = generateProfiles()
 
-    for (const goal of GOALS) {
-      // 目标超出角色能力范围 → 跳过
-      if (goal.min > persona.maxLevel) continue
+for (const profile of profiles) {
+  test(`${profile.name} — 交互动效旅程`, async ({ page }) => {
+    const errors = collectErrors(page)
+    await load(page)
+    const done = new Set<string>()
+    let step = 0
 
-      test(`${goal.name} — 完整交互动效`, async ({ page }) => {
-        const errors = collectErrors(page)
-        await load(page)
-        let step = 0
+    while (step < profile.budget) {
+      const ui = await perceive(page)
 
-        // 按角色能力等级，逐层执行步骤配方
-        for (let lv = 0; lv <= persona.maxLevel; lv++) {
-          const fns = goal.levels[lv]
-          if (!fns) continue
-          for (const fn of fns) {
-            await fn(page)
-            step++
-            await page.screenshot({
-              path: `${SHOT}/${persona.id}-${goal.id}-${String(step).padStart(2, '0')}.png`,
-            })
-          }
-        }
+      // 决策: 从操作列表中选第一个满足条件的
+      const next = ACTIONS.find(a =>
+        !done.has(a.id)
+        && a.needs.every(n => done.has(n))
+        && (!a.cap || profile.caps.has(a.cap)),
+      )
+      if (!next) break
 
-        // 断言: 步骤在角色预算内
-        expect(step).toBeLessThanOrEqual(persona.budget)
-        // 断言: 全程零报错
-        expect(errors).toHaveLength(0)
+      // 执行 (Playwright report 中显示感知→决策过程)
+      await test.step(`感知 ${ui.layers}层${ui.states}态 → ${next.name}`, async () => {
+        await next.exec(page, profile)
+      })
+
+      // 验证画面反馈
+      if (next.check) {
+        const after = await perceive(page)
+        next.check(ui, after)
+      }
+
+      done.add(next.id)
+      step++
+      await page.screenshot({
+        path: `${SHOT}/${profile.id}-${String(step).padStart(2, '0')}-${next.id}.png`,
       })
     }
+
+    expect(errors).toHaveLength(0)
   })
 }

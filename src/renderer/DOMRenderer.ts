@@ -124,12 +124,6 @@ export class DOMRenderer implements Renderer {
 
   getViewport() { return { ...this.vp } }
 
-  // ── 帧捕获 (Phase 9 实现) ──
-
-  async captureFrame(): Promise<ImageBitmap> {
-    throw new Error('captureFrame: 未实现 (Phase 9)')
-  }
-
   // ── 事件 ──
 
   onInteraction(handler: InteractionHandler): void { this.handlers.add(handler) }

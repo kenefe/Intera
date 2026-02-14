@@ -13,11 +13,11 @@
       .prop-row
         .prop-field(:class="{ overridden: has('x') }")
           span.label X
-          input.input(type="number" :value="resolved.x" @change="e => set({ x: num(e) })" @blur="onEditEnd")
+          input.input(type="number" :value="dpx(resolved.x)" step="1" @change="e => set({ x: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('x')" @click.stop="reset('x')" title="重置为基础值") ↺
         .prop-field(:class="{ overridden: has('y') }")
           span.label Y
-          input.input(type="number" :value="resolved.y" @change="e => set({ y: num(e) })" @blur="onEditEnd")
+          input.input(type="number" :value="dpx(resolved.y)" step="1" @change="e => set({ y: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('y')" @click.stop="reset('y')" title="重置为基础值") ↺
 
     //- ── 尺寸 ──
@@ -26,11 +26,11 @@
       .prop-row
         .prop-field(:class="{ overridden: has('width') }")
           span.label W
-          input.input(type="number" :value="resolved.width" @change="e => set({ width: num(e) })" @blur="onEditEnd")
+          input.input(type="number" :value="dpx(resolved.width)" step="1" @change="e => set({ width: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('width')" @click.stop="reset('width')" title="重置为基础值") ↺
         .prop-field(:class="{ overridden: has('height') }")
           span.label H
-          input.input(type="number" :value="resolved.height" @change="e => set({ height: num(e) })" @blur="onEditEnd")
+          input.input(type="number" :value="dpx(resolved.height)" step="1" @change="e => set({ height: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('height')" @click.stop="reset('height')" title="重置为基础值") ↺
 
     //- ── 变换 ──
@@ -39,7 +39,7 @@
       .prop-row
         .prop-field(:class="{ overridden: has('rotation') }")
           span.label 旋转
-          input.input(type="number" :value="resolved.rotation" @change="e => set({ rotation: num(e) })" @blur="onEditEnd")
+          input.input(type="number" :value="dpx(resolved.rotation)" step="1" @change="e => set({ rotation: px(e) })" @blur="onEditEnd")
           span.unit °
           button.btn-reset(v-if="has('rotation')" @click.stop="reset('rotation')" title="重置为基础值") ↺
       .prop-row
@@ -80,12 +80,12 @@
           span.stroke-off(v-else) 无
         .prop-field(v-if="strokeEnabled" :class="{ overridden: has('strokeWidth') }")
           span.label 宽度
-          input.input(type="number" :value="resolved.strokeWidth" min="0" @change="e => set({ strokeWidth: num(e) })" @blur="onEditEnd")
+          input.input(type="number" :value="dpx(resolved.strokeWidth)" step="1" min="0" @change="e => set({ strokeWidth: px(e) })" @blur="onEditEnd")
           span.unit px
       .prop-row
         .prop-field(:class="{ overridden: has('borderRadius') }")
           span.label 圆角
-          input.input(type="number" :value="resolved.borderRadius" min="0" @change="e => set({ borderRadius: num(e) })" @blur="onEditEnd")
+          input.input(type="number" :value="dpx(resolved.borderRadius)" step="1" min="0" @change="e => set({ borderRadius: px(e) })" @blur="onEditEnd")
           span.unit px
           button.btn-reset(v-if="has('borderRadius')" @click.stop="reset('borderRadius')" title="重置为基础值") ↺
 
@@ -176,6 +176,8 @@ function onToggleStroke(): void {
 // ── 工具函数 ──
 
 function num(e: Event): number { return parseFloat((e.target as HTMLInputElement).value) || 0 }
+function px(e: Event): number { return Math.round(num(e)) }
+function dpx(v: number | undefined): number { return Math.round(v ?? 0) }
 function str(e: Event): string { return (e.target as HTMLInputElement).value }
 
 // ── 快照管理 ──

@@ -102,7 +102,7 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
 
     for (const lid of dragIds) {
       const start = layerStarts.get(lid)
-      if (start) writeXY(lid, start.x + dx, start.y + dy)
+      if (start) writeXY(lid, Math.round(start.x + dx), Math.round(start.y + dy))
     }
   }
 

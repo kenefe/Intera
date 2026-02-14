@@ -49,8 +49,8 @@ export interface Renderer {
   setViewport(zoom: number, panX: number, panY: number): void
   getViewport(): { zoom: number; panX: number; panY: number }
 
-  // ── 帧捕获 (视频导出用) ──
-  captureFrame(): Promise<ImageBitmap>
+  // ── 帧捕获 (视频导出用, 可选 — VideoExporter 已用 Canvas2D 替代) ──
+  captureFrame?(): Promise<ImageBitmap>
 
   // ── 事件 ──
   onInteraction(handler: InteractionHandler): void

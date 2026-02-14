@@ -23,12 +23,12 @@ export function useTextTool(viewportRef: Ref<HTMLElement | undefined>) {
     const r = frame
       ? frame.getBoundingClientRect()
       : viewportRef.value!.getBoundingClientRect()
-    const x = frame
+    const x = Math.round(frame
       ? (e.clientX - r.left) / canvas.zoom
-      : (e.clientX - r.left - canvas.panX) / canvas.zoom
-    const y = frame
+      : (e.clientX - r.left - canvas.panX) / canvas.zoom)
+    const y = Math.round(frame
       ? (e.clientY - r.top) / canvas.zoom
-      : (e.clientY - r.top - canvas.panY) / canvas.zoom
+      : (e.clientY - r.top - canvas.panY) / canvas.zoom)
 
     const n = Object.values(project.project.layers).filter(l => l.type === 'text').length + 1
     const layer = project.addLayer('text', null, undefined, `文本 ${n}`)

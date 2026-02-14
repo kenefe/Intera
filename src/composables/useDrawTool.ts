@@ -33,18 +33,21 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
   let drawId: string | null = null
   let originX = 0, originY = 0
 
-  /** 屏幕坐标 → 画板本地坐标 */
+  /** 屏幕坐标 → 画板本地坐标 (像素对齐) */
   function toLocal(e: PointerEvent): { x: number; y: number } {
     const frame = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
     if (frame) {
       const r = frame.getBoundingClientRect()
-      return { x: (e.clientX - r.left) / canvas.zoom, y: (e.clientY - r.top) / canvas.zoom }
+      return {
+        x: Math.round((e.clientX - r.left) / canvas.zoom),
+        y: Math.round((e.clientY - r.top) / canvas.zoom),
+      }
     }
     // 未命中画板 → 用视口坐标兜底
     const r = viewportRef.value!.getBoundingClientRect()
     return {
-      x: (e.clientX - r.left - canvas.panX) / canvas.zoom,
-      y: (e.clientY - r.top - canvas.panY) / canvas.zoom,
+      x: Math.round((e.clientX - r.left - canvas.panX) / canvas.zoom),
+      y: Math.round((e.clientY - r.top - canvas.panY) / canvas.zoom),
     }
   }
 

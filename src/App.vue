@@ -140,18 +140,9 @@ onUnmounted(() => {
 
 .toolbar-actions { display: flex; gap: 4px; align-items: center; }
 
-.btn-action {
-  padding: 4px 10px;
-  border: none;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 11px;
-  cursor: pointer;
-  transition: background 0.1s, color 0.1s;
-}
-.btn-action:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+/* ── 工具栏按钮 (共享基类) ── */
 
+.btn-action,
 .btn-patch {
   padding: 4px 10px;
   border: none;
@@ -162,6 +153,7 @@ onUnmounted(() => {
   cursor: pointer;
   transition: background 0.1s, color 0.1s;
 }
+.btn-action:hover,
 .btn-patch:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 .btn-patch.active { background: rgba(91, 91, 240, 0.2); color: #8888ff; }
 

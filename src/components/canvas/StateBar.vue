@@ -12,7 +12,7 @@
         v-if="displayStates.length > 1"
         @click.stop="onDelete(state.id)"
       ) &times;
-    .add-btn(@click="onAdd") +
+    .add-btn(@click="onAdd" title="添加状态") +
 </template>
 
 <script setup lang="ts">
@@ -91,17 +91,24 @@ function onDelete(stateId: string): void {
 .delete-btn:hover { opacity: 1 !important; background: rgba(255, 60, 60, 0.2); color: #ff6060; }
 
 .add-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.25);
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
   cursor: pointer;
-  transition: color 0.12s, background 0.12s;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
 }
 
-.add-btn:hover { color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.06); }
+.add-btn:hover {
+  color: rgba(136, 136, 255, 0.9);
+  background: rgba(136, 136, 255, 0.1);
+  border-color: rgba(136, 136, 255, 0.3);
+}
 </style>

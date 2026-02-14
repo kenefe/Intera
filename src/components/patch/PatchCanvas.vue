@@ -29,7 +29,7 @@
 
   //- ── 工具条 ──
   .patch-toolbar
-    button.add-btn(v-for="t in ADD_TYPES" :key="t.type" @click="onAddNode(t.type, t.name)") {{ t.label }}
+    button.add-btn(v-for="t in ADD_TYPES" :key="t.type" :data-type="t.type" :title="t.name" @click="onAddNode(t.type, t.name)") {{ t.label }}
 </template>
 
 <script setup lang="ts">

@@ -66,6 +66,16 @@
 3. 理解用户的具体指令
 4. 根据指令类型，执行对应流程
 
+### 铁律: 每次改完都提交 Git
+
+**所有流程 (A~E) 的最后一步都是 git commit。不提交 = 没做过。**
+
+```
+提交前自检 → docs/RULES.md 八、自检清单
+提交格式  → fix: / feat: / refactor: / test: / docs: + 简述
+提交范围  → 代码 + 测试 + 文档一起提交，保持原子性
+```
+
 ---
 
 ### 流程 A: 修 Bug
@@ -81,6 +91,7 @@
    - 必须覆盖触发 bug 的操作路径
 7. 运行: npx playwright test tests/intera.spec.ts --grep "对应Feature"
 8. 全部通过后，更新 docs/KNOWN-ISSUES.md
+9. 【Git 提交】git add + commit，格式: fix: 简述修复内容
 ```
 
 ### 流程 B: UX 验收
@@ -94,6 +105,7 @@
 6. 【BDD 自动补全】发现未覆盖的场景 → 自动生成测试添加到对应 Feature
 7. 再次运行全量 BDD，确认新增测试通过
 8. 输出: 问题清单 + BDD 通过率
+9. 【Git 提交】git add + commit，格式: test: UX 验收补全 BDD 覆盖
 ```
 
 ### 流程 C: 改功能 / 加功能
@@ -108,6 +120,7 @@
    - 如果是全新模块 → 新增 test.describe('Feature: XXX') 区块
 6. 运行: npx playwright test tests/intera.spec.ts --grep "对应Feature"
 7. 全部通过才算完成
+8. 【Git 提交】git add + commit，格式: feat: 简述新功能
 ```
 
 ### 流程 D: 重构 / 优化
@@ -121,13 +134,16 @@
 6. 【BDD 自动修正】如果重构导致测试失败:
    - 行为不变 → 只更新测试中的选择器/断言 (适配新结构)
    - 行为有变 → 更新测试反映新行为，并向用户确认
+7. 【Git 提交】git add + commit，格式: refactor: 简述重构内容
 ```
 
 ### 流程 E: 角色旅程验证 (数据驱动·自驱动循环)
 
-> **核心理念**: 角色 × 设计目标 = 旅程矩阵 (自动构建)。
-> 加一个角色，所有目标的旅程自动扩展。加一个设计目标，所有角色的旅程自动扩展。
-> 不是一次性通过——AI 作为每个角色亲自走完旅程，发现摩擦，修复，再走，循环至丝滑。
+> **核心理念**: 动态画像，零预置内容。
+> 能力图谱定义 Intera 的功能层次 + 依赖关系。
+> 枚举所有有效能力组合 → 自动生成画像 → 旅程从画像涌现。
+> 加一个能力 = 新画像自动涌现。零人工配置。
+> 不是一次性通过——AI 作为每个画像亲自走完旅程，发现摩擦，修复，再走，循环至丝滑。
 
 #### 四类用户角色
 
@@ -139,62 +155,65 @@
 | 步骤预算 | ≤ 8 步 | ≤ 12 步 | ≤ 18 步 | ≤ 15 步 |
 | 特殊验证 | 空状态引导充分 | 滑块实时反馈 | Patch 可视化清晰 | 概念映射到 Folme API |
 
-#### 六个设计目标 (每个都是完整交互动效)
+#### 能力图谱 → 动态画像 → 自动旅程
 
-| 目标 | 复杂度 | 最低等级 | 说明 |
-|---|---|---|---|
-| 按钮点击反馈 | 最简 | Level 0 | 按下缩小 + 松开弹回 |
-| 卡片展开收起 | 经典 | Level 0 | 两状态切换 + 弹簧过渡 |
-| Tab 导航切换 | 多状态 | Level 0 | 3+ 状态 + 自动循环 |
-| 列表进入动画 | 交错 | Level 0 | 多图层 + delay 交错 |
-| 拖拽跟手交互 | 触控 | Level 1 | Drag + 跟手 + 惯性 |
-| 复杂多组件原型 | 全链路 | Level 2 | 变量 + Patch + 多状态组 |
-
-#### 自动构建矩阵 (4 角色 × 6 目标)
+**设计哲学**: 零预置画像、零预置旅程。一切从能力图谱枚举。
 
 ```
-                 按钮反馈  卡片展开  Tab切换  进入动画  拖拽交互  复杂原型
-零基础 (L0)        ●        ●        ●        ●
-中级   (L1)        ●        ●        ●        ●        ●
-专家   (L2)        ●        ●        ●        ●        ●        ●
-代码专家(L2)       ●        ●        ●        ●        ●        ●
+能力图谱 (CAPS):
+  states ─────┬── curves ──┐
+              └── patch ───┴── folme
+
+枚举有效子集 → 6 个画像自动涌现:
+  ∅ / {states} / {states,curves} / {states,patch}
+  / {states,curves,patch} / {states,curves,patch,folme}
+
+旅程 = 感知-决策-执行 循环 (不是预编译脚本):
+  while (没完成) {
+    感知: 当前画面有几个图层? 几个状态?
+    决策: 基于画像能力 + 画面状态 → 选下一步
+    执行: 操作
+    验证: 画面确实变了
+    截图: {画像id}-{步骤号}-{操作id}.png
+  }
+聚焦产品使用体验，不测引导/入门
 ```
 
-● = 自动生成的旅程。每个旅程按角色能力层逐级执行步骤 (L0→L1→L2)。
-空白 = 目标超出角色能力范围，自动跳过。
-
-**扩展方式**: 在 `tests/persona.spec.ts` 的 `PERSONAS` 数组添加角色，或 `GOALS` 数组添加设计目标，旅程矩阵自动扩展。
+**扩展方式**:
+- 加能力: `CAP_DEPS` + `CAP_NAMES` 加一项 → 新画像自动涌现
+- 加操作: `ACTIONS` 数组加一项 (定义 needs + cap + exec + check)
+- 每个操作根据画面反馈决定下一步，不需要写固定序列
 
 #### 自驱动循环协议
 
 ```
 ┌── 第 1 步: 选择切入点 ────────────────────────────────────────────┐
-│   按角色: --grep "零基础"     (该角色所有可达目标)                 │
-│   按目标: --grep "卡片"       (所有角色做同一个目标)               │
-│   全量:   无 grep              (完整矩阵)                         │
+│   按画像: --grep "基础绘制"    (单个画像)                         │
+│   全量:   无 grep              (6 条旅程全部运行)                  │
 ├── 第 2 步: 运行旅程 BDD ──────────────────────────────────────────┤
 │   npx playwright test tests/persona.spec.ts --grep "xxx"          │
-│   每步自动生成截图: tests/screenshots/persona/{角色}-{目标}-NN.png │
+│   每步自动截图: tests/screenshots/persona/{画像}-{步号}-{操作}.png │
 ├── 第 3 步: 体验审查 (每张截图都要看) ─────────────────────────────┤
 │   □ 旅程完整走通 (无断裂)?                                        │
 │   □ UI 反馈充分 (选中/hover/active)?                              │
-│   □ 引导文案在需要时出现?                                         │
-│   □ 步骤数在角色预算内?                                           │
+│   □ 步骤数在画像预算内?                                           │
 │   □ 控制台零报错?                                                 │
-│   □ 代码专家: 概念映射到 Folme API (response/damping/to/setTo)?    │
+│   □ 含 Folme: 概念映射可见 (response/damping/to/setTo)?           │
 ├── 第 4 步: 发现摩擦 ──────────────────────────────────────────────┤
 │   有摩擦 → 记录到 KNOWN-ISSUES.md「摩擦日志」                     │
-│         → 修复代码 → 如需更新旅程 BDD 同步更新                     │
-│         → 回到第 2 步 (同一旅程重跑)                               │
-│   无摩擦 → 标记 ✅ → 选下一条旅程                                  │
+│         → 修复代码                                                │
+│         → 【Git 提交】fix: 修复体验摩擦 — {角色名}                 │
+│         → 回到第 2 步 (同一角色重跑)                               │
+│   无摩擦 → 标记 ✅ → 选下一个角色                                  │
 ├── 第 5 步: 全覆盖检查 ────────────────────────────────────────────┤
-│   所有旅程完成后，检查覆盖矩阵无空白                               │
-│   发现盲区 → 补充设计目标或角色 → 旅程自动扩展 → 回到第 1 步       │
+│   所有角色通过后，检查是否需要新角色覆盖盲区                       │
+│   发现盲区 → 添加新角色 (定义 knows + style) → 旅程自动涌现       │
+│   全部通过 → 【Git 提交】test: 角色旅程验证全量通过                 │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
 **关键原则**:
-- **自动构建** — 不手写旅程，从角色×目标矩阵生成
+- **动态画像** — 从能力图谱枚举，零人工预置
 - **螺旋深入** — 第一轮修崩溃，第二轮修摩擦，第三轮修品味
 - **每张截图都审查** — 体验感受比断言更重要
 - **摩擦日志持续积累** — `KNOWN-ISSUES.md` 的「摩擦日志」区追踪
@@ -202,21 +221,16 @@
 #### 快速命令
 
 ```bash
-# 全部旅程矩阵 (~21 条)
+# 全部画像 (自动生成，当前 6 条)
 npx playwright test tests/persona.spec.ts --reporter=list
 
-# 按角色
+# 按画像 (名称来自能力组合)
 npx playwright test tests/persona.spec.ts --grep "零基础"
-npx playwright test tests/persona.spec.ts --grep "中级"
-npx playwright test tests/persona.spec.ts --grep "专家设计师"
-npx playwright test tests/persona.spec.ts --grep "代码动效"
+npx playwright test tests/persona.spec.ts --grep "状态系统"
+npx playwright test tests/persona.spec.ts --grep "弹簧曲线"
+npx playwright test tests/persona.spec.ts --grep "Folme"
 
-# 按设计目标
-npx playwright test tests/persona.spec.ts --grep "卡片"
-npx playwright test tests/persona.spec.ts --grep "Tab"
-npx playwright test tests/persona.spec.ts --grep "拖拽"
-
-# 截图目录 (命名: {角色id}-{目标id}-{步骤号}.png)
+# 截图目录 (命名: {能力组合id}-{步骤号}.png)
 ls tests/screenshots/persona/
 ```
 

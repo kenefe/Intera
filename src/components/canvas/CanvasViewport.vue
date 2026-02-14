@@ -20,6 +20,7 @@
 
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useCanvasStore } from '@store/canvas'
+import { useProjectStore } from '@store/project'
 import { useLayerInteraction } from '@/composables/useLayerInteraction'
 import { useDrawTool } from '@/composables/useDrawTool'
 import { useTextTool } from '@/composables/useTextTool'
@@ -28,6 +29,7 @@ import ArtboardGrid from './ArtboardGrid.vue'
 import SelectionOverlay from './SelectionOverlay.vue'
 
 const canvas = useCanvasStore()
+const project = useProjectStore()
 const viewportRef = ref<HTMLElement>()
 
 const interaction = useLayerInteraction(viewportRef)
@@ -96,7 +98,34 @@ function onPointerUp(e: PointerEvent): void {
   interaction.up(); draw.up(); text.up()
 }
 
-onMounted(() => { window.addEventListener('keydown', onKeyDown); window.addEventListener('keyup', onKeyUp) })
+// ── 初始适配 — 画板缩放+居中至可视区域 ──
+
+function contentBounds(): { w: number; h: number } {
+  const p = project.project
+  const { width: cw, height: ch } = p.canvasSize
+  let maxW = 0, totalH = 80 // 顶部 padding
+  for (let i = 0; i < p.stateGroups.length; i++) {
+    const n = p.stateGroups[i].displayStates.length
+    maxW = Math.max(maxW, n * cw + (n - 1) * 80 + 80 + 48)
+    totalH += 30 + ch + 20 // 行标签 + 画板 + 底标签
+    if (i < p.stateGroups.length - 1) totalH += 120
+  }
+  return { w: maxW + 160, h: totalH + 80 }
+}
+
+function fitViewport(): void {
+  const vp = viewportRef.value
+  if (!vp) return
+  const { w, h } = contentBounds()
+  canvas.fitToViewport(w, h, vp.clientWidth, vp.clientHeight)
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onKeyUp)
+  // 等待父组件 loadSaved 完成后再适配
+  requestAnimationFrame(fitViewport)
+})
 onUnmounted(() => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp) })
 </script>
 
