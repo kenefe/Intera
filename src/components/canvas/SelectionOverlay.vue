@@ -1,5 +1,5 @@
 <template lang="pug">
-.selection-overlay(ref="root")
+.selection-overlay(ref="root" :class="{ 'draw-mode': drawMode }")
   .select-box(
     v-for="(b, idx) in allBoxes" :key="b.id"
     :style="boxStyle(b)"
@@ -25,11 +25,16 @@
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import type { AnimatableProps } from '@engine/scene/types'
 import { useCanvasStore } from '@store/canvas'
+import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
 
 const canvas = useCanvasStore()
+const editor = useEditorStore()
 const project = useProjectStore()
 const root = ref<HTMLElement>()
+
+// ── 绘制模式标记: 非选择工具时手柄不拦截指针 ──
+const drawMode = computed(() => editor.tool !== 'select')
 
 // ═══════════════════════════════════
 //  控制点拓扑
@@ -343,4 +348,9 @@ onUnmounted(() => {
 }
 
 .rotate-handle:active { cursor: grabbing; }
+
+/* ── 绘制模式: 手柄透传指针事件 ── */
+
+.draw-mode .handle,
+.draw-mode .rotate-handle { pointer-events: none; }
 </style>
