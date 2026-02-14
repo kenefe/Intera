@@ -261,6 +261,10 @@ watch(activeStateId, syncLayers)
   border-radius: 3px;
   background: rgba(91, 91, 240, 0.18);
   color: #a0a0ff;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .reset-btn {

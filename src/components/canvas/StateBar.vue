@@ -73,7 +73,7 @@ function onDelete(stateId: string): void {
 .state-tab.active { background: rgba(91, 91, 240, 0.18); color: #a0a0ff; }
 .state-tab.animating { box-shadow: 0 0 0 1px rgba(91, 91, 240, 0.4); }
 
-.state-name { white-space: nowrap; }
+.state-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 
 .delete-btn {
   width: 14px;

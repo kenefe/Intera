@@ -21,7 +21,9 @@ const store = useProjectStore()
 const groups = computed(() => store.project.stateGroups)
 
 function onAddState(groupId: string): void {
-  store.addDisplayState(groupId, `状态 ${Date.now()}`)
+  const group = groups.value.find(g => g.id === groupId)
+  const count = group?.displayStates.length ?? 0
+  store.addDisplayState(groupId, `状态 ${count + 1}`)
 }
 </script>
 
