@@ -187,18 +187,51 @@ AI 拿到能力集后，自己构思一个完整的交互动效设计任务。
 - ⛔ 不要提前规划所有步骤，不要写脚本
 - ⛔ 不要在没看截图的情况下执行下一步操作
 - ⛔ 不要反复打开关闭浏览器。打开一次，全程保持同一窗口
+- ⛔ **不要写多步合并脚本** — 禁止把多个操作写进一个 Playwright/JS 脚本一次性执行再回头看截图。这和「提前规划所有步骤」是完全相同的违规。每次只执行一个动作，看到结果再决定下一步
+- ⛔ 不要用 `npx playwright test` 驱动旅程探索。旅程用浏览器工具交互，不是自动化测试框架
+
+#### 工具: journey-server (唯一正确方式)
+
+通过 `tests/journey-server.mjs` 逐步操作浏览器。每次 `curl` = 一个动作 + 一张截图。
+浏览器由 server 常驻管理，AI 无法批量执行。
+
+```bash
+# 启动 (后台运行)
+node tests/journey-server.mjs --dir docs/journeys/{旅程文件夹} --port 3900 &
+
+# 每步一个 curl (返回 {"step":N,"screenshot":"path"})
+# 所有操作都是坐标 + 键盘，像真实用户一样看到什么点什么
+curl -s localhost:3900/step -d '{"action":"screenshot"}'              # 看屏幕
+curl -s localhost:3900/step -d '{"action":"mouse","x":500,"y":300}'   # 点击
+curl -s localhost:3900/step -d '{"action":"dblclick","x":100,"y":350}'  # 双击
+curl -s localhost:3900/step -d '{"action":"rightclick","x":100,"y":350}'  # 右键
+curl -s localhost:3900/step -d '{"action":"hover","x":500,"y":300}'   # 悬停
+curl -s localhost:3900/step -d '{"action":"drag","x1":400,"y1":200,"x2":600,"y2":400}'  # 拖拽
+curl -s localhost:3900/step -d '{"action":"press","key":"r"}'         # 按键/快捷键
+curl -s localhost:3900/step -d '{"action":"keyboard","text":"Hello"}' # 打字
+curl -s localhost:3900/step -d '{"action":"scroll","x":900,"y":400,"deltaY":200}'  # 滚动
+
+# 修改输入框值的方式 (不用选择器，像用户一样操作):
+#   mouse(x,y) → press("Control+a") → keyboard("360") → press("Enter")
+# 使用下拉框的方式:
+#   mouse(x,y) → screenshot → mouse(选项坐标)
+
+# 结束
+curl -s localhost:3900/step -d '{"action":"save"}'   # 导出 design.intera
+curl -s localhost:3900/step -d '{"action":"stop"}'   # 关闭浏览器
+```
 
 #### 核心协议: 一次一步，看完再动
 
 ```
 1. 选画像，构思设计任务，不规划步骤
-2. 打开浏览器 (只开一次，保持打开)
+2. 启动 journey-server (后台，浏览器常驻)
 3. 循环 {
-     a. 截图 (保存到旅程文件夹 screenshots/)
+     a. curl screenshot → Read 截图文件查看
      b. 描述截图中看到了什么 (具体画面内容)
      c. 基于画面 + 设计任务，决定下一步 (只决定一步)
-     d. 执行
-     e. 回到 a
+     d. curl 执行这一步 → Read 截图查看结果
+     e. 回到 b
    }
 4. 设计任务完成 → 归档旅程 (README.md + design.intera + 截图)
 5. 摩擦点同步到 docs/KNOWN-ISSUES.md 摩擦日志   ← ⚠️ 不可跳过
@@ -206,6 +239,29 @@ AI 拿到能力集后，自己构思一个完整的交互动效设计任务。
 7. 有摩擦 → 修代码 → git commit 代码修改 → 能力回归确认没坏 → 重走旅程
 8. 无摩擦 → 标记 ✅ → 下一画像，依然走流程E
 ```
+
+**操作偏好 (像真实设计师 — 零选择器)**:
+- **只有坐标和键盘** — 从截图估算位置，用 `mouse`/`drag`/`dblclick`/`rightclick`/`hover`。选择器已从 server 移除
+- **拖拽 > 输入框** — 调整尺寸/位置时优先拖拽手柄
+- **改输入框值** — `mouse` 点击输入框 → `press("Control+a")` 全选 → `keyboard("新值")` → `press("Enter")`
+- **用下拉框** — `mouse` 点击下拉 → `screenshot` 看选项 → `mouse` 点击选项坐标
+- **滚动** — `scroll` 传鼠标位置 (x,y) 和滚动量 (deltaX/deltaY)
+- **禁止 eval / 禁止选择器** — server 不提供这些能力，从架构上杜绝
+
+**产品快捷键 (设计师常用)**:
+| 按键 | 功能 |
+|---|---|
+| `v` | 选择工具 |
+| `r` | 矩形工具 |
+| `o` | 椭圆工具 |
+| `f` | Frame 工具 |
+| `t` | 文本工具 |
+| `Arrow` | 微调选中图层 1px |
+| `Shift+Arrow` | 微调选中图层 10px |
+| `Delete` / `Backspace` | 删除选中图层 |
+| `Ctrl+Z` | 撤销 |
+| `Ctrl+Shift+Z` | 重做 |
+| `Ctrl+S` | 保存 |
 
 **关键**:
 - AI 不知道产品操作方式，通过看画面探索
