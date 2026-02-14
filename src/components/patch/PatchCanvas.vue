@@ -254,9 +254,9 @@ function onClickConnection(conn: PatchConnection, e: MouseEvent): void {
 <style scoped>
 .patch-canvas {
   position: relative;
-  width: 100%;
-  height: 250px;
-  min-height: 200px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
   background: #12122a;
   overflow: hidden;
   border-top: 1px solid rgba(255, 255, 255, 0.06);

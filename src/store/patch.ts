@@ -41,6 +41,13 @@ export const usePatchStore = defineStore('patch', () => {
     if (idx >= 0) p.variables.splice(idx, 1)
   }
 
+  /** 更新变量属性 (重命名 / 改类型 / 改默认值) */
+  function updateVariable(id: string, updates: Partial<Pick<Variable, 'name' | 'type' | 'defaultValue'>>): void {
+    project.snapshot()
+    const v = p.variables.find(v => v.id === id)
+    if (v) Object.assign(v, updates)
+  }
+
   // ── Patch CRUD ──
 
   function addPatchNode(type: PatchType, pos: Vec2, config?: Record<string, unknown>, name?: string): Patch {
@@ -119,7 +126,7 @@ export const usePatchStore = defineStore('patch', () => {
 
   return {
     variables, runtime,
-    addVariable, removeVariable,
+    addVariable, removeVariable, updateVariable,
     addPatchNode, removePatch, updatePatchPos,
     addConnection, removeConnection,
     fireTrigger,

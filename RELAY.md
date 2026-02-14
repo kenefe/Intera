@@ -90,8 +90,13 @@
    - 测试名: 描述修复后的正确行为 (不是描述 bug)
    - 必须覆盖触发 bug 的操作路径
 7. 运行: npx playwright test tests/intera.spec.ts --grep "对应Feature"
-8. 全部通过后，更新 docs/KNOWN-ISSUES.md
+8. 【文档同步】全部通过后，更新受影响的文档:
+   - docs/KNOWN-ISSUES.md — 必更新 (从待修移到已修)
+   - docs/UI-DESIGN.md — 若修复改变了 UI 行为
+   - docs/ARCHITECTURE.md — 若修复涉及架构/数据流变更
+   - RELAY.md 代码地图 — 若新增/重命名了文件或模块
 9. 【Git 提交】git add + commit，格式: fix: 简述修复内容
+   代码 + 测试 + 文档一起提交，保持原子性
 ```
 
 ### 流程 B: UX 验收
@@ -120,7 +125,13 @@
    - 如果是全新模块 → 新增 test.describe('Feature: XXX') 区块
 6. 运行: npx playwright test tests/intera.spec.ts --grep "对应Feature"
 7. 全部通过才算完成
-8. 【Git 提交】git add + commit，格式: feat: 简述新功能
+8. 【文档同步】更新受影响的文档 (缺一不可):
+   - docs/UI-DESIGN.md — 新增/修改 UI 元素、交互描述
+   - docs/ARCHITECTURE.md — 新增模块、数据流变更
+   - docs/KNOWN-ISSUES.md — 若解决了已知问题 / 产生新限制
+   - RELAY.md 代码地图 — 新增文件、模块入口变更
+9. 【Git 提交】git add + commit，格式: feat: 简述新功能
+   代码 + 测试 + 文档一起提交，保持原子性
 ```
 
 ### 流程 D: 重构 / 优化
@@ -134,7 +145,12 @@
 6. 【BDD 自动修正】如果重构导致测试失败:
    - 行为不变 → 只更新测试中的选择器/断言 (适配新结构)
    - 行为有变 → 更新测试反映新行为，并向用户确认
-7. 【Git 提交】git add + commit，格式: refactor: 简述重构内容
+7. 【文档同步】更新受影响的文档:
+   - docs/ARCHITECTURE.md — 结构/命名/模块边界变更
+   - RELAY.md 代码地图 — 文件重命名、目录调整
+   - docs/UI-DESIGN.md — 若重构改变了组件接口或交互
+8. 【Git 提交】git add + commit，格式: refactor: 简述重构内容
+   代码 + 测试 + 文档一起提交，保持原子性
 ```
 
 ### 流程 E: 角色旅程验证 (AI 驱动·逐步探索)
@@ -201,6 +217,7 @@ AI 拿到能力集后，自己构思一个完整的交互动效设计任务。
 - ⛔ **摩擦点双写** — 每条摩擦点必须同时写入两处: (1) 旅程 README.md 的「摩擦点」区 (2) `docs/KNOWN-ISSUES.md` 的「摩擦日志」表。只写一处 = 没写
 - ⛔ **摩擦点必须修复** — 发现摩擦不是记笔记。旅程结束后必须: 记录到 README + KNOWN-ISSUES → 修代码 → git commit 修复 → 跑能力回归 → 重走旅程验证修复生效。摩擦未修复的旅程结论只能是「有摩擦待修」，不能标 ✅
 - ⛔ **摩擦修复循环** — 旅程发现摩擦 → 修代码 → commit → 回归测试 → 用同一画像重走旅程。循环直到该画像零摩擦才能标 ✅ 进入下一画像
+- ⛔ **代码·测试·文档三位一体** — 任何功能修改/新增/修复，必须同时更新: (1) 代码 (2) BDD 测试 (`tests/intera.spec.ts`) (3) 相关文档 (`UI-DESIGN.md`/`ARCHITECTURE.md`/`KNOWN-ISSUES.md`/`RELAY.md` 代码地图)。三者必须在同一次 commit 中完成。缺任何一项 = 未完成
 
 #### 旅程归档
 
@@ -301,6 +318,7 @@ git commit -m "fix: {修复了什么摩擦点}"
 | | `CurveEdit.vue` | 曲线可视化编辑 |
 | `patch/` | `PatchCanvas.vue` | Patch 编辑器画布 |
 | | `PatchNode.vue` | 单个 Patch 节点 |
+|| | `PatchVarPanel.vue` | 变量管理面板 (增删改名/类型/默认值，可折叠) |
 
 ### Store 层 (`src/store/`)
 
@@ -309,7 +327,7 @@ git commit -m "fix: {修复了什么摩擦点}"
 | `project.ts` | 项目数据中枢 (图层/状态/动画/撤销/持久化) |
 | `editor.ts` | 工具选择 + Patch 面板开关 |
 | `canvas.ts` | 视口 (zoom/pan) + 选区 |
-| `patch.ts` | Patch 编辑器状态 |
+| `patch.ts` | Patch 编辑器状态 (变量 add/remove/update + Patch CRUD + 运行时) |
 
 ### 其他
 

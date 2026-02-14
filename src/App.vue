@@ -6,10 +6,19 @@
       .tool-btn(
         v-for="t in tools"
         :key="t.key"
+        :data-tool="t.key"
         :class="{ active: editor.tool === t.key }"
         :title="t.tip"
         @click="editor.setTool(t.key)"
-      ) {{ t.label }}
+      )
+        //- 选择工具: 光标箭头
+        svg.tool-icon(v-if="t.key === 'select'" viewBox="0 0 16 16" fill="none")
+          path(
+            d="M5 2v9l2.5-2.5L9.5 13l1.5-1-2-4.5L13 7z"
+            stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"
+          )
+        //- 绘图工具: 复用图层类型图标
+        LayerIcon.tool-icon(v-else :type="t.key")
     .toolbar-center
       span.brand Intera
     .toolbar-actions
@@ -35,7 +44,9 @@
           PropertiesPanel
           KeyPropertyPanel
           CurvePanel
-      PatchCanvas
+      .patch-row
+        PatchCanvas
+        PatchVarPanel
 </template>
 
 <script setup lang="ts">
@@ -51,18 +62,20 @@ import PropertiesPanel from './components/panels/PropertiesPanel.vue'
 import KeyPropertyPanel from './components/panels/KeyPropertyPanel.vue'
 import CurvePanel from './components/panels/CurvePanel.vue'
 import PatchCanvas from './components/patch/PatchCanvas.vue'
+import PatchVarPanel from './components/patch/PatchVarPanel.vue'
+import LayerIcon from './components/panels/LayerIcon.vue'
 const ExportDialog = defineAsyncComponent(() => import('./components/ExportDialog.vue'))
 
 const editor = useEditorStore()
 const project = useProjectStore()
 const showExport = ref(false)
 
-const tools: Array<{ key: ToolType; label: string; tip: string }> = [
-  { key: 'select', label: 'V', tip: '选择 (V)' },
-  { key: 'frame', label: 'F', tip: '容器 (F)' },
-  { key: 'rectangle', label: 'R', tip: '矩形 (R)' },
-  { key: 'ellipse', label: 'O', tip: '椭圆 (O)' },
-  { key: 'text', label: 'T', tip: '文本 (T)' },
+const tools: Array<{ key: ToolType; tip: string }> = [
+  { key: 'select',    tip: '选择 (V)' },
+  { key: 'frame',     tip: '容器 (F)' },
+  { key: 'rectangle', tip: '矩形 (R)' },
+  { key: 'ellipse',   tip: '椭圆 (O)' },
+  { key: 'text',      tip: '文本 (T)' },
 ]
 
 // ── 文件操作 ──
@@ -126,6 +139,10 @@ onUnmounted(() => {
 .tool-btn:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
 .tool-btn.active { background: rgba(91, 91, 240, 0.2); color: #8888ff; }
 
+/* ── 工具图标 (覆盖 LayerIcon 类型配色，继承按钮状态色) ── */
+.tool-icon { width: 16px; height: 16px; }
+.tool-btn :deep(.layer-icon) { color: inherit; }
+
 .toolbar-center { flex: 1; text-align: center; }
 
 .brand {
@@ -181,6 +198,12 @@ onUnmounted(() => {
   background: #16162a;
   border-left: 1px solid rgba(255, 255, 255, 0.06);
   overflow-y: auto;
+}
+
+.patch-row {
+  display: flex;
+  height: 250px;
+  min-height: 200px;
 }
 
 .canvas-area {

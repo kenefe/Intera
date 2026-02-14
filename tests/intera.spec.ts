@@ -83,8 +83,8 @@ test.describe('Feature: 应用外壳', () => {
     await load(page)
     const btns = page.locator('.tool-btn')
     await expect(btns).toHaveCount(5)
-    for (const label of ['V', 'F', 'R', 'O', 'T']) {
-      await expect(page.locator('.tool-btn', { hasText: label })).toBeVisible()
+    for (const tool of ['select', 'frame', 'rectangle', 'ellipse', 'text']) {
+      await expect(page.locator(`.tool-btn[data-tool="${tool}"]`)).toBeVisible()
     }
   })
 
@@ -123,7 +123,7 @@ test.describe('Feature: 绘图工具', () => {
   test('按 R 激活矩形工具，按钮高亮', async ({ page }) => {
     await load(page)
     await page.keyboard.press('r')
-    await expect(page.locator('.tool-btn', { hasText: 'R' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="rectangle"]')).toHaveClass(/active/)
   })
 
   test('拖拽绘制矩形后，图层面板出现新图层', async ({ page }) => {
@@ -137,7 +137,7 @@ test.describe('Feature: 绘图工具', () => {
   test('绘制矩形后自动切回选择工具', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await expect(page.locator('.tool-btn', { hasText: 'V' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="select"]')).toHaveClass(/active/)
   })
 
   test('绘制矩形后自动选中该图层', async ({ page }) => {
@@ -149,7 +149,7 @@ test.describe('Feature: 绘图工具', () => {
   test('按 O 绘制椭圆', async ({ page }) => {
     await load(page)
     await page.keyboard.press('o')
-    await expect(page.locator('.tool-btn', { hasText: 'O' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="ellipse"]')).toHaveClass(/active/)
     await drawOnCanvas(page, -40, -30, 40, 30)
     await expect(layerItems(page)).toHaveCount(1)
     // 图层名现在是中文 (椭圆 1)
@@ -159,7 +159,7 @@ test.describe('Feature: 绘图工具', () => {
   test('按 F 绘制 Frame 容器', async ({ page }) => {
     await load(page)
     await page.keyboard.press('f')
-    await expect(page.locator('.tool-btn', { hasText: 'F' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="frame"]')).toHaveClass(/active/)
     await drawOnCanvas(page, -50, -50, 50, 50)
     await expect(layerItems(page)).toHaveCount(1)
     // 图层名现在是中文 (容器 1)
@@ -225,7 +225,7 @@ test.describe('Feature: 图层管理', () => {
     await load(page)
     await page.keyboard.press('r')
     await drawOnCanvas(page, -60, -40, 0, 0)
-    const icon = page.locator('.layer-icon').first()
+    const icon = page.locator('.layers-section .layer-icon').first()
     await expect(icon).toHaveAttribute('data-type', 'rectangle')
   })
 })
@@ -482,6 +482,45 @@ test.describe('Feature: Patch 编辑器', () => {
     }
     await page.screenshot({ path: 'tests/screenshots/06-patch-editor.png' })
   })
+
+  test('变量面板常驻可见，支持新建变量', async ({ page }) => {
+    await load(page)
+    const panel = page.locator('.patch-var-panel')
+    await expect(panel).toBeVisible()
+    // 初始无变量
+    await expect(panel.locator('.panel-title')).toContainText('变量 (0)')
+    // 点击 + 新建
+    await panel.locator('.btn-add').click()
+    await expect(panel.locator('.panel-title')).toContainText('变量 (1)')
+    await expect(panel.locator('.var-name')).toHaveValue('myVar')
+    await expect(panel.locator('.var-type')).toHaveValue('boolean')
+  })
+
+  test('变量面板支持删除变量', async ({ page }) => {
+    await load(page)
+    const panel = page.locator('.patch-var-panel')
+    await panel.locator('.btn-add').click()
+    await expect(panel.locator('.var-item')).toHaveCount(1)
+    // 删除
+    await panel.locator('.var-del').click()
+    await expect(panel.locator('.var-item')).toHaveCount(0)
+    await expect(panel.locator('.panel-title')).toContainText('变量 (0)')
+  })
+
+  test('变量面板可折叠和展开', async ({ page }) => {
+    await load(page)
+    const panel = page.locator('.patch-var-panel')
+    // 初始展开态
+    await expect(panel.locator('.panel-header')).toBeVisible()
+    // 折叠
+    await panel.locator('.btn-collapse').click()
+    await expect(panel).toHaveClass(/collapsed/)
+    await expect(panel.locator('.toggle-strip')).toBeVisible()
+    // 展开
+    await panel.locator('.toggle-strip').click()
+    await expect(panel).not.toHaveClass(/collapsed/)
+    await expect(panel.locator('.panel-header')).toBeVisible()
+  })
 })
 
 // ══════════════════════════════════════
@@ -494,31 +533,31 @@ test.describe('Feature: 键盘快捷键', () => {
     await load(page)
     await page.keyboard.press('r') // 先切到别的
     await page.keyboard.press('v')
-    await expect(page.locator('.tool-btn', { hasText: 'V' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="select"]')).toHaveClass(/active/)
   })
 
   test('R 键切换到矩形工具', async ({ page }) => {
     await load(page)
     await page.keyboard.press('r')
-    await expect(page.locator('.tool-btn', { hasText: 'R' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="rectangle"]')).toHaveClass(/active/)
   })
 
   test('O 键切换到椭圆工具', async ({ page }) => {
     await load(page)
     await page.keyboard.press('o')
-    await expect(page.locator('.tool-btn', { hasText: 'O' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="ellipse"]')).toHaveClass(/active/)
   })
 
   test('F 键切换到容器工具', async ({ page }) => {
     await load(page)
     await page.keyboard.press('f')
-    await expect(page.locator('.tool-btn', { hasText: 'F' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="frame"]')).toHaveClass(/active/)
   })
 
   test('T 键切换到文本工具', async ({ page }) => {
     await load(page)
     await page.keyboard.press('t')
-    await expect(page.locator('.tool-btn', { hasText: 'T' })).toHaveClass(/active/)
+    await expect(page.locator('.tool-btn[data-tool="text"]')).toHaveClass(/active/)
   })
 
   test('快速连续切换工具不报错', async ({ page }) => {

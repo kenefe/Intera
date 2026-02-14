@@ -204,7 +204,8 @@ src/
 │   │   └── KeyPropertyPanel.vue
 │   └── patch/              # Patch 编辑器
 │       ├── PatchCanvas.vue
-│       └── PatchNode.vue
+│       ├── PatchNode.vue
+│       └── PatchVarPanel.vue
 │
 ├── composables/            # Vue Composables
 │   ├── useLayerInteraction.ts
