@@ -241,7 +241,7 @@ test.describe('Feature: 属性面板', () => {
   test('选中图层后属性面板显示 X/Y/W/H', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await expect(page.getByText('属性', { exact: true })).toBeVisible()
+    await expect(page.locator('.layer-header')).toBeVisible()
     await expect(page.locator('.prop-label', { hasText: '位置' })).toBeVisible()
     await expect(page.locator('.prop-label', { hasText: '尺寸' })).toBeVisible()
     await expect(page.locator('.prop-label', { hasText: '外观' })).toBeVisible()
@@ -301,7 +301,7 @@ test.describe('Feature: 属性面板', () => {
     await layerItems(page).first().click()
     await expect(layerItems(page).first()).toHaveClass(/selected/)
     // 属性面板应显示第一个图层的属性
-    await expect(page.getByText('属性', { exact: true })).toBeVisible()
+    await expect(page.locator('.layer-header')).toBeVisible()
   })
 })
 

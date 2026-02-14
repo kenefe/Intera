@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const URL = 'http://localhost:5178'
+const URL = process.env.TEST_URL ?? 'http://localhost:5173'
 
 test('完整交互动效设计演示', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
@@ -103,20 +103,17 @@ test('完整交互动效设计演示', async ({ page }) => {
   await page.waitForTimeout(500)
   await page.screenshot({ path: 'tests/screenshots/demo-12-patch-editor.png' })
 
-  // ── Step 12: 关闭 Patch，进入预览模式 ──
+  // ── Step 12: 关闭 Patch ──
   await page.click('button:has-text("Patch")')
   await page.waitForTimeout(200)
-  await page.click('button:has-text("Preview")')
-  await page.waitForTimeout(500)
-  await page.screenshot({ path: 'tests/screenshots/demo-13-preview-mode.png' })
 
-  // ── Step 13: 在预览模式中点击交互 ──
-  await page.mouse.click(350, 250)
+  // ── Step 13: 左侧预览面板交互 (PreviewPanel 常驻) ──
+  const previewFrame = page.locator('.preview-frame')
+  await expect(previewFrame).toBeVisible()
+  await previewFrame.click()
   await page.waitForTimeout(800)
-  await page.screenshot({ path: 'tests/screenshots/demo-14-preview-interact.png' })
+  await page.screenshot({ path: 'tests/screenshots/demo-13-preview-interact.png' })
 
-  // ── Step 14: 退出预览 ──
-  await page.keyboard.press('Escape')
-  await page.waitForTimeout(300)
-  await page.screenshot({ path: 'tests/screenshots/demo-15-back-to-edit.png' })
+  // ── Step 14: 最终截图 ──
+  await page.screenshot({ path: 'tests/screenshots/demo-14-final.png' })
 })
