@@ -7,6 +7,23 @@
       .layer-name {{ layerName }}
       .state-badge(v-if="!isDefaultState") 覆盖
 
+    //- ── 文本 (仅 text 类型) ──
+    .prop-group(v-if="isTextLayer")
+      .prop-label 文本
+      .prop-row
+        textarea.text-input(
+          :value="layer?.text ?? ''"
+          @input="onTextInput"
+          @blur="onEditEnd"
+          rows="2"
+          placeholder="输入文本..."
+        )
+      .prop-row
+        .prop-field
+          span.label 字号
+          input.input(type="number" :value="layer?.fontSize ?? 16" step="1" min="1" @change="onFontSizeChange" @blur="onEditEnd")
+          span.unit px
+
     //- ── 位置 ──
     .prop-group
       .prop-label 位置
@@ -130,6 +147,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 const typeLabel = computed(() => layer.value ? TYPE_LABELS[layer.value.type] ?? layer.value.type : '')
 const layerName = computed(() => layer.value?.name ?? '')
+const isTextLayer = computed(() => layer.value?.type === 'text')
 
 // ── 合并后属性 ──
 
@@ -209,6 +227,22 @@ function reset(prop: keyof AnimatableProps): void {
 }
 
 function onEditEnd(): void { snapped = false }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  文本编辑
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function onTextInput(e: Event): void {
+  if (!layer.value) return
+  ensureSnapshot()
+  layer.value.text = (e.target as HTMLTextAreaElement).value
+}
+
+function onFontSizeChange(e: Event): void {
+  if (!layer.value) return
+  ensureSnapshot()
+  layer.value.fontSize = Math.max(1, parseInt((e.target as HTMLInputElement).value) || 16)
+}
 </script>
 
 <style scoped>
@@ -376,6 +410,25 @@ function onEditEnd(): void { snapped = false }
   padding: 0;
 }
 .btn-reset:hover { background: rgba(255, 152, 0, 0.35); }
+
+/* ── 文本编辑器 ── */
+
+.text-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 12px;
+  padding: 6px 8px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.4;
+  transition: border-color 0.12s;
+}
+.text-input:focus { border-color: rgba(136, 136, 255, 0.5); }
+.text-input::placeholder { color: rgba(255, 255, 255, 0.2); }
 
 .empty-state {
   padding: 40px 16px;

@@ -10,12 +10,27 @@
       @click="onSelect(node.id, $event)"
     )
       .layer-icon {{ iconOf(node.id) }}
-      .layer-name {{ nameOf(node.id) }}
+      //- ── 重命名模式: 双击进入 ──
+      input.layer-name-input(
+        v-if="editingId === node.id"
+        :value="nameOf(node.id)"
+        @input="onRenameInput(node.id, $event)"
+        @blur="commitRename"
+        @keydown.enter="commitRename"
+        @keydown.escape="cancelRename"
+        ref="renameInputRef"
+      )
+      .layer-name(
+        v-else
+        @dblclick.stop="startRename(node.id)"
+      ) {{ nameOf(node.id) }}
+      //- ── 删除按钮: hover 时显示 ──
+      .layer-delete(@click.stop="onDelete(node.id)") ×
   .empty-state(v-if="!flatNodes.length") 空画布 — 按 R 绘制矩形
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, nextTick } from 'vue'
 import type { Layer } from '@engine/scene/types'
 import { useCanvasStore } from '@store/canvas'
 import { useProjectStore } from '@store/project'
@@ -36,7 +51,6 @@ interface FlatNode { id: string; depth: number }
 const flatNodes = computed<FlatNode[]>(() => {
   const result: FlatNode[] = []
   const stack: Array<{ id: string; depth: number }> = []
-  // 逆序压栈以保持正序输出
   const roots = project.project.rootLayerIds
   for (let i = roots.length - 1; i >= 0; i--) stack.push({ id: roots[i], depth: 0 })
   while (stack.length) {
@@ -55,6 +69,38 @@ function nameOf(id: string): string { return project.project.layers[id]?.name ??
 function onSelect(id: string, e: MouseEvent): void {
   if (e.shiftKey || e.metaKey) canvas.toggleSelection(id)
   else canvas.select([id])
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  双击重命名
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const editingId = ref<string | null>(null)
+
+function startRename(id: string): void {
+  editingId.value = id
+  nextTick(() => {
+    const input = document.querySelector('.layer-name-input') as HTMLInputElement
+    input?.focus()
+    input?.select()
+  })
+}
+
+function onRenameInput(id: string, e: Event): void {
+  const layer = project.project.layers[id]
+  if (layer) layer.name = (e.target as HTMLInputElement).value
+}
+
+function commitRename(): void { editingId.value = null }
+function cancelRename(): void { editingId.value = null }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  删除图层
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function onDelete(id: string): void {
+  project.removeLayer(id)
+  canvas.select([])
 }
 </script>
 
@@ -100,6 +146,33 @@ function onSelect(id: string, e: MouseEvent): void {
 }
 
 .layer-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.layer-name-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(91, 91, 240, 0.5);
+  border-radius: 3px;
+  color: inherit;
+  font: inherit;
+  padding: 1px 4px;
+  outline: none;
+}
+
+/* ── 删除按钮: 默认隐藏, hover 显示 ── */
+.layer-delete {
+  opacity: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+.layer-item:hover .layer-delete { opacity: 0.4; }
+.layer-delete:hover { opacity: 1 !important; background: rgba(255, 80, 80, 0.2); color: #ff6b6b; }
 
 .empty-state {
   padding: 40px 16px;

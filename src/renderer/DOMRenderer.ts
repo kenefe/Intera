@@ -14,9 +14,16 @@ function applyProps(el: HTMLElement, p: AnimatableProps, type?: LayerType): void
   s.width = `${p.width}px`
   s.height = `${p.height}px`
   s.opacity = String(p.opacity)
-  // 椭圆: 永远 50% 圆角; 其他: 使用属性值
   s.borderRadius = type === 'ellipse' ? '50%' : `${p.borderRadius}px`
-  s.backgroundColor = p.fill
+
+  // 文本图层: fill → 字色 (背景透明)
+  if (type === 'text') {
+    s.color = p.fill
+    s.backgroundColor = 'transparent'
+  } else {
+    s.backgroundColor = p.fill
+  }
+
   s.transform = [
     `translate(${p.x}px, ${p.y}px)`,
     `rotate(${p.rotation}deg)`,
@@ -112,6 +119,19 @@ export class DOMRenderer implements Renderer {
     if (!child) return
     const parent = parentId ? this.els.get(parentId) : this.world
     parent?.appendChild(child)
+  }
+
+  /** 文本图层专用: 设置文本内容和字体属性 */
+  setTextContent(id: string, text: string, fontSize: number, fontFamily?: string): void {
+    const el = this.els.get(id)
+    if (!el) return
+    el.textContent = text
+    const s = el.style
+    s.fontSize = `${fontSize}px`
+    s.lineHeight = '1.4'
+    s.fontFamily = fontFamily ?? 'system-ui, sans-serif'
+    s.overflow = 'hidden'
+    s.wordBreak = 'break-word'
   }
 
   // ── 画布控制 ──

@@ -173,6 +173,11 @@ function syncLayers(): void {
       renderer.createLayer(id, layers[id].type, merged as AnimatableProps)
       rendered.add(id)
     }
+    // 文本图层: 同步文本内容
+    const layer = layers[id]
+    if (layer?.type === 'text') {
+      renderer.setTextContent(id, layer.text ?? '', layer.fontSize ?? 16, layer.fontFamily)
+    }
   }
 
   for (const id of allIds) {

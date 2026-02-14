@@ -55,11 +55,13 @@ export function useKeyboard(): void {
     // ── 工具快捷键 — 文本编辑中除外，数值/颜色 input 中仍生效 ──
 
     const tool = TOOL_KEYS[e.key]
-    if (tool && !isEditingText(e)) {
-      e.preventDefault()
-      ;(e.target as HTMLElement).blur()
-      editor.setTool(tool)
-      return
+    if (tool) {
+      if (isEditingText(e)) { /* 文本输入中，让出按键 */ }
+      else {
+        if (inInput) { e.preventDefault(); (e.target as HTMLElement).blur() }
+        editor.setTool(tool)
+        return
+      }
     }
 
     // 其余快捷键在 input 内不生效 (Delete/Backspace 留给输入框)

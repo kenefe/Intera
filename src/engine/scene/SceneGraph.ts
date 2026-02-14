@@ -17,7 +17,7 @@ function defaultProps(): AnimatableProps {
   return {
     x: 0, y: 0, width: 100, height: 100,
     rotation: 0, scaleX: 1, scaleY: 1, opacity: 1,
-    borderRadius: 0, fill: '#FFFFFF', stroke: 'none', strokeWidth: 0,
+    borderRadius: 0, fill: '#D9D9D9', stroke: 'none', strokeWidth: 0,
   }
 }
 
