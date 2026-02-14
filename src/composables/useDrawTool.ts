@@ -50,15 +50,21 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
   // ── 绘制事务内锁定的画板引用 ──
   let drawFrame: HTMLElement | null = null
 
+  /** 查找画板 frame: 事件目标 → 激活画板 → null */
+  function resolveFrame(e: PointerEvent): HTMLElement | null {
+    return (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
+      ?? document.querySelector<HTMLElement>('.artboard.active .artboard-frame')
+  }
+
   /** 屏幕坐标 → 画板本地坐标 (像素对齐) */
   function toArtboard(e: PointerEvent): { x: number; y: number } {
-    const frame = drawFrame
-      ?? (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
+    const frame = drawFrame ?? resolveFrame(e)
     if (frame) {
       const r = frame.getBoundingClientRect()
+      const bw = 2 * canvas.zoom // 边框宽度 (CSS 2px, 经 zoom 缩放)
       return {
-        x: Math.round((e.clientX - r.left) / canvas.zoom),
-        y: Math.round((e.clientY - r.top) / canvas.zoom),
+        x: Math.round((e.clientX - r.left - bw) / canvas.zoom),
+        y: Math.round((e.clientY - r.top - bw) / canvas.zoom),
       }
     }
     const r = viewportRef.value!.getBoundingClientRect()
@@ -92,7 +98,7 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
   function down(e: PointerEvent): void {
     const layerType = DRAW_TOOLS[editor.tool]
     if (!layerType || drawId) return
-    drawFrame = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
+    drawFrame = resolveFrame(e)
 
     const abs = toArtboard(e)
     targetParentId = findFrameAt(abs.x, abs.y)
