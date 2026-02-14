@@ -221,70 +221,91 @@ function onValueChange(e: Event): void {
 .port-row:has(.out) { flex-direction: row; justify-content: flex-end; }
 
 .port-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
   background: #1e1e3a;
   flex-shrink: 0;
   cursor: crosshair;
-  transition: background 0.1s, border-color 0.1s;
+  position: relative;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
 }
-.port-dot:hover { background: #8888ff; border-color: #8888ff; }
+/* 扩大命中区域 (24×24) —— 不改变视觉尺寸 */
+.port-dot::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+}
+.port-dot:hover {
+  background: #8888ff;
+  border-color: #8888ff;
+  box-shadow: 0 0 6px rgba(136, 136, 255, 0.6);
+}
+/* 输出端口着色以区分方向 */
+.port-out { border-color: rgba(136, 136, 255, 0.4); }
 
 .port-label {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.55);
 }
 .port-label.out { text-align: right; flex: 1; }
 
 /* ── 配置区 ── */
 
 .node-config {
-  padding: 4px 8px 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 6px 8px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .cfg-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 3px;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 .cfg-label {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.55);
   min-width: 28px;
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 .cfg-select {
   flex: 1;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 3px;
-  color: #ccc;
-  font-size: 10px;
-  padding: 2px 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  color: #ddd;
+  font-size: 11px;
+  padding: 4px 6px;
   cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
 }
+.cfg-select:hover { border-color: rgba(136, 136, 255, 0.5); background: rgba(255, 255, 255, 0.14); }
+.cfg-select:focus { border-color: #8888ff; outline: none; }
 
 .cfg-input {
   flex: 1;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 3px;
-  color: #ccc;
-  font-size: 10px;
-  padding: 2px 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  color: #ddd;
+  font-size: 11px;
+  padding: 4px 6px;
   outline: none;
+  transition: border-color 0.12s;
 }
+.cfg-input:focus { border-color: #8888ff; }
 
 .cfg-unit {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
 }
 </style>

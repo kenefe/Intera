@@ -146,12 +146,21 @@ function onEditEnd(): void { snapped = false }
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 4px;
-  padding: 2px 6px;
+  padding: 3px 6px;
+  transition: border-color 0.12s, background 0.12s;
+}
+.prop-field:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.prop-field:focus-within {
+  border-color: rgba(136, 136, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.label { font-size: 10px; opacity: 0.4; min-width: 14px; }
+.label { font-size: 10px; opacity: 0.45; min-width: 14px; }
 
 .input {
   flex: 1;
@@ -167,11 +176,14 @@ function onEditEnd(): void { snapped = false }
 
 .color-input {
   width: 100%;
-  height: 24px;
-  border: none;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
   background: none;
   cursor: pointer;
+  transition: border-color 0.12s;
 }
+.color-input:hover { border-color: rgba(136, 136, 255, 0.4); }
 
 .empty-state {
   padding: 40px 16px;

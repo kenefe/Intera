@@ -60,4 +60,7 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-14 | **滚轮事件未区分缩放与平移** | `CanvasViewport.vue` 用 ctrlKey 区分 pinch-zoom 和 trackpad-pan |
 | 2026-02-14 | **BDD 测试端口硬编码** | 改为 `process.env.TEST_URL ?? 'http://localhost:5174'` |
 | 2026-02-14 | **BDD 预览模式测试假设不存在的 UI** | 重写为预览面板常驻左栏的测试 |
+| 2026-02-14 | **Patch 节点配置区域与节点背景融合** (P1) | `.node-config` 增加深色背景、`.cfg-select`/`.cfg-label` 提升对比度和尺寸 |
+| 2026-02-14 | **Patch 端口命中区域太小 (8px)** (P1) | 端口 8→10px + 24px 伪元素命中区 + hover 发光 + 输出端口蓝紫色区分 |
+| 2026-02-14 | **属性面板输入框与背景融合** (P2) | `.prop-field` 增加 border + hover/focus 态 + `.color-input` 增加边框 |
 | 2026-02-13 | `CanvasViewport.vue:84` 编译错误 — `up(e)` 传了多余参数 | 改为 `up()` |

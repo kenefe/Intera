@@ -58,7 +58,7 @@ function onAddNode(type: PatchType, name: string): void {
 const NODE_W = 180
 const HEADER_H = 28
 const PORT_H = 24
-const PORT_R = 4   // 端口圆心相对边缘
+const PORT_R = 5   // 端口圆心相对边缘 (10px dot / 2)
 
 function portPos(patchNode: typeof project.project.patches[number], portId: string, dir: 'in' | 'out'): { x: number; y: number } {
   const ports = dir === 'in' ? patchNode.inputs : patchNode.outputs
