@@ -285,6 +285,20 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  /** 即时跳转状态 —— 无弹簧动画 (setTo patch 专用) */
+  function setToState(groupId: string, stateId: string): void {
+    const group = states.findGroup(groupId)
+      ?? project.stateGroups.find(g => g.displayStates.some(s => s.id === stateId))
+    if (!group) return
+    // 终止进行中的动画
+    ++transitionGen
+    for (const k of Object.keys(liveValues)) delete liveValues[k]
+    liveStateId.value = null
+    folmes.forEach(fm => fm.cancel())
+    // 直接切换状态
+    group.activeDisplayStateId = stateId
+  }
+
   return {
     project,
     scene,
@@ -298,7 +312,7 @@ export const useProjectStore = defineStore('project', () => {
     // 操作
     addLayer, removeLayer, moveLayer, updateLayerProps,
     addStateGroup, removeStateGroup,
-    addDisplayState, removeDisplayState, switchState, transitionToState,
+    addDisplayState, removeDisplayState, switchState, transitionToState, setToState,
     setOverride, clearOverride,
   }
 })

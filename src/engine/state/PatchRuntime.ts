@@ -14,15 +14,19 @@ export class PatchRuntime {
   private connections: PatchConnection[]
   private vars: VariableManager
   private onTransition: TransitionFn
+  private onSetTo: TransitionFn
 
   constructor(
     patches: Patch[], connections: PatchConnection[],
-    vars: VariableManager, onTransition: TransitionFn,
+    vars: VariableManager,
+    onTransition: TransitionFn,
+    onSetTo?: TransitionFn,
   ) {
     this.patches = patches
     this.connections = connections
     this.vars = vars
     this.onTransition = onTransition
+    this.onSetTo = onSetTo ?? onTransition
   }
 
   // ── 公开 API ──
@@ -68,7 +72,7 @@ export class PatchRuntime {
         this.fire(patch.id, 'done')
       },
       setTo: () => {
-        this.onTransition(cfg.groupId as string, cfg.stateId as string)
+        this.onSetTo(cfg.groupId as string, cfg.stateId as string)
         this.fire(patch.id, 'done')
       },
       delay: () => {

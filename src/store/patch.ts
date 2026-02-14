@@ -22,6 +22,7 @@ export const usePatchStore = defineStore('patch', () => {
   const runtime = new PatchRuntime(
     p.patches, p.connections, variables,
     (gid, sid) => project.transitionToState(gid, sid),
+    (gid, sid) => project.setToState(gid, sid),
   )
 
   // ── 变量 CRUD ──

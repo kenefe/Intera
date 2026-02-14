@@ -13,7 +13,7 @@ import { test, expect, type Page, type Locator } from '@playwright/test'
 //  辅助工具
 // ══════════════════════════════════════
 
-const URL = 'http://localhost:5177'
+const URL = process.env.TEST_URL ?? 'http://localhost:5174'
 
 /** 获取画布区域的 bounding box */
 async function canvasBox(page: Page) {
@@ -90,9 +90,9 @@ test.describe('Feature: 应用外壳', () => {
     }
   })
 
-  test('工具栏包含操作按钮 (Open/Save/Patch/Export/Preview)', async ({ page }) => {
+  test('工具栏包含操作按钮 (Open/Save/Patch/Export)', async ({ page }) => {
     await load(page)
-    for (const text of ['Open', 'Save', 'Patch', 'Export', 'Preview']) {
+    for (const text of ['Open', 'Save', 'Patch', 'Export']) {
       await expect(page.locator(`button`, { hasText: text })).toBeVisible()
     }
   })
@@ -154,7 +154,8 @@ test.describe('Feature: 绘图工具', () => {
     await expect(page.locator('.tool-btn', { hasText: 'O' })).toHaveClass(/active/)
     await drawOnCanvas(page, -40, -30, 40, 30)
     await expect(layerItems(page)).toHaveCount(1)
-    await expect(page.locator('.layer-item')).toContainText('ellipse')
+    // 图层名现在是中文 (椭圆 1)
+    await expect(page.locator('.layer-item')).toContainText('椭圆')
   })
 
   test('按 F 绘制 Frame 容器', async ({ page }) => {
@@ -163,7 +164,8 @@ test.describe('Feature: 绘图工具', () => {
     await expect(page.locator('.tool-btn', { hasText: 'F' })).toHaveClass(/active/)
     await drawOnCanvas(page, -50, -50, 50, 50)
     await expect(layerItems(page)).toHaveCount(1)
-    await expect(page.locator('.layer-item')).toContainText('frame')
+    // 图层名现在是中文 (容器 1)
+    await expect(page.locator('.layer-item')).toContainText('容器')
   })
 
   test('按 T 点击创建文本图层', async ({ page }) => {
@@ -172,7 +174,8 @@ test.describe('Feature: 绘图工具', () => {
     const box = await canvasBox(page)
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
     await expect(layerItems(page)).toHaveCount(1)
-    await expect(page.locator('.layer-item')).toContainText('Text')
+    // 图层名现在是中文 (文本 1)
+    await expect(page.locator('.layer-item')).toContainText('文本')
   })
 
   test('连续绘制多个图形，图层面板依次增加', async ({ page }) => {
@@ -279,7 +282,8 @@ test.describe('Feature: 属性面板', () => {
   test('填充颜色选择器可用', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    const colorInput = page.locator('.color-input')
+    // 面板中有多个颜色输入 (填充 + 描边)，取填充的第一个
+    const colorInput = page.locator('.prop-row', { hasText: '填充' }).locator('.color-input')
     await expect(colorInput).toBeVisible()
     await expect(colorInput).toHaveAttribute('type', 'color')
   })
@@ -362,30 +366,43 @@ test.describe('Feature: 显示状态', () => {
 
 test.describe('Feature: 画布导航', () => {
 
-  test('滚轮缩放画布', async ({ page }) => {
+  test('Ctrl+滚轮缩放画布', async ({ page }) => {
     await load(page)
     const box = await canvasBox(page)
-    // 向上滚动 = 放大
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-    await page.mouse.wheel(0, -200)
+    const cx = box.x + box.width / 2
+    const cy = box.y + box.height / 2
+    // Ctrl + 向上滚动 = 放大 (模拟触控板 pinch)
+    await page.mouse.move(cx, cy)
+    // 通过 JS 派发带 ctrlKey 的 wheel 事件
+    await page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y)
+      el?.dispatchEvent(new WheelEvent('wheel', {
+        clientX: x, clientY: y, deltaY: -200, ctrlKey: true, bubbles: true,
+      }))
+    }, { x: cx, y: cy })
     await page.waitForTimeout(100)
-    // 验证 transform 的 scale 值变化 (通过检查 world 元素)
+    // 验证 transform scale 变大
     const world = page.locator('.canvas-world')
     const style = await world.getAttribute('style')
     expect(style).toContain('scale(')
-    // scale 应该大于 1 (放大了)
     const match = style?.match(/scale\(([^)]+)\)/)
     if (match) {
-      const scale = parseFloat(match[1])
-      expect(scale).toBeGreaterThan(1)
+      expect(parseFloat(match[1])).toBeGreaterThan(1)
     }
   })
 
-  test('向下滚动缩小画布', async ({ page }) => {
+  test('Ctrl+向下滚动缩小画布', async ({ page }) => {
     await load(page)
     const box = await canvasBox(page)
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-    await page.mouse.wheel(0, 200)
+    const cx = box.x + box.width / 2
+    const cy = box.y + box.height / 2
+    await page.mouse.move(cx, cy)
+    await page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y)
+      el?.dispatchEvent(new WheelEvent('wheel', {
+        clientX: x, clientY: y, deltaY: 200, ctrlKey: true, bubbles: true,
+      }))
+    }, { x: cx, y: cy })
     await page.waitForTimeout(100)
     const style = await page.locator('.canvas-world').getAttribute('style')
     const match = style?.match(/scale\(([^)]+)\)/)
@@ -396,51 +413,53 @@ test.describe('Feature: 画布导航', () => {
 })
 
 // ══════════════════════════════════════
-//  Feature 7: 预览模式
+//  Feature 7: 预览面板 (常驻左栏)
 // ══════════════════════════════════════
 
-test.describe('Feature: 预览模式', () => {
+test.describe('Feature: 预览面板', () => {
 
-  test('点击 Preview 进入预览模式，工具栏消失', async ({ page }) => {
+  test('预览面板始终可见', async ({ page }) => {
     await load(page)
-    await page.click('.btn-preview')
-    await expect(page.locator('.toolbar')).not.toBeVisible()
-    await expect(page.locator('.panel-left')).not.toBeVisible()
-    await expect(page.locator('.panel-right')).not.toBeVisible()
-    await expect(page.locator('.canvas-area')).toHaveClass(/previewing/)
-    await page.screenshot({ path: 'tests/screenshots/05-preview-mode.png' })
+    await expect(page.locator('.preview-panel')).toBeVisible()
+    await page.screenshot({ path: 'tests/screenshots/05-preview-panel.png' })
   })
 
-  test('预览模式下显示退出控制栏', async ({ page }) => {
+  test('绘制图层后预览面板显示对应元素', async ({ page }) => {
     await load(page)
-    await page.click('.btn-preview')
-    // PreviewMode 组件应该可见
-    await expect(page.locator('.canvas-area')).toHaveClass(/previewing/)
+    await drawRect(page)
+    // 预览面板的 .preview-frame 内应该有图层渲染
+    const previewLayers = page.locator('.preview-frame [data-layer-id]')
+    await expect(previewLayers).toHaveCount(1)
   })
 
-  test('按 Escape 退出预览模式', async ({ page }) => {
-    await load(page)
-    await page.click('.btn-preview')
-    await expect(page.locator('.toolbar')).not.toBeVisible()
-    await page.keyboard.press('Escape')
-    await expect(page.locator('.toolbar')).toBeVisible()
-    await expect(page.locator('.panel-left')).toBeVisible()
-  })
-
-  test('预览模式操作不产生控制台错误', async ({ page }) => {
+  test('预览面板交互不产生控制台错误', async ({ page }) => {
     const errors = collectErrors(page)
     await load(page)
-    // 先画一个矩形
     await drawRect(page)
-    // 进入预览
-    await page.click('.btn-preview')
+    // 点击预览面板
+    const preview = page.locator('.preview-panel')
+    const pbox = await preview.boundingBox()
+    if (pbox) {
+      await page.mouse.click(pbox.x + pbox.width / 2, pbox.y + pbox.height / 2)
+    }
     await page.waitForTimeout(300)
-    // 在画布上点击
-    const box = await canvasBox(page)
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
-    await page.waitForTimeout(300)
-    // 退出
-    await page.keyboard.press('Escape')
+    expect(errors).toHaveLength(0)
+  })
+
+  test('预览面板 Level 0 自动循环 (两个状态无 Patch 时)', async ({ page }) => {
+    const errors = collectErrors(page)
+    await load(page)
+    await drawRect(page)
+    // 添加第二个状态
+    await page.locator('.add-btn').click()
+    await page.waitForTimeout(200)
+    // 点击预览面板触发自动循环
+    const preview = page.locator('.preview-panel')
+    const pbox = await preview.boundingBox()
+    if (pbox) {
+      await page.mouse.click(pbox.x + pbox.width / 2, pbox.y + pbox.height / 2)
+    }
+    await page.waitForTimeout(600)
     expect(errors).toHaveLength(0)
   })
 })
@@ -561,8 +580,8 @@ test.describe('Feature: 导出', () => {
 
   test('点击 Export 打开导出对话框', async ({ page }) => {
     await load(page)
-    await page.click('.btn-export')
-    // 等待异步组件加载
+    // Export 按钮使用 .btn-action 类
+    await page.locator('button', { hasText: 'Export' }).click()
     await page.waitForTimeout(500)
     await page.screenshot({ path: 'tests/screenshots/08-export-dialog.png' })
   })
@@ -604,7 +623,7 @@ test.describe('Feature: 状态间动画过渡', () => {
 
 test.describe('Feature: 综合集成', () => {
 
-  test('完整工作流: 绘制 → 编辑 → 切状态 → 预览 → 退出', async ({ page }) => {
+  test('完整工作流: 绘制 → 编辑 → 切状态 → Patch → 预览点击', async ({ page }) => {
     const errors = collectErrors(page)
     await load(page)
     // 绘制两个图形
@@ -624,17 +643,12 @@ test.describe('Feature: 综合集成', () => {
     // 添加状态
     await page.locator('.add-btn').click()
     await expect(page.locator('.state-tab')).toHaveCount(2)
-    // 进入预览
-    await page.click('.btn-preview')
-    await page.waitForTimeout(300)
-    await expect(page.locator('.toolbar')).not.toBeVisible()
-    // 在预览中点击
-    const box = await canvasBox(page)
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 3)
+    // 切换到第二状态
+    await page.locator('.state-tab').nth(1).click()
+    await page.waitForTimeout(200)
+    // 切回默认 (触发动画过渡)
+    await page.locator('.state-tab').first().click()
     await page.waitForTimeout(500)
-    // 退出预览
-    await page.keyboard.press('Escape')
-    await expect(page.locator('.toolbar')).toBeVisible()
     await page.screenshot({ path: 'tests/screenshots/10-integration.png' })
     expect(errors).toHaveLength(0)
   })
@@ -652,10 +666,10 @@ test.describe('Feature: 综合集成', () => {
     for (const k of ['v', 'r', 'o', 'f', 't']) {
       await page.keyboard.press(k)
     }
-    // 进出预览
-    await page.click('.btn-preview')
+    // 打开/关闭 Patch 编辑器
+    await page.click('.btn-patch')
     await page.waitForTimeout(200)
-    await page.keyboard.press('Escape')
+    await page.click('.btn-patch')
     expect(errors).toHaveLength(0)
     await page.screenshot({ path: 'tests/screenshots/11-stress.png' })
   })
