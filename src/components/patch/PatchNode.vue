@@ -71,6 +71,7 @@
             v-for="v in vars" :key="v.id" :value="v.id"
             :selected="patch.config.variableId === v.id"
           ) {{ v.name }}
+        button.cfg-add(@click="onAddVar" title="新建变量") +
       .cfg-row
         .cfg-label 等于
         input.cfg-input(
@@ -88,6 +89,7 @@
             v-for="v in vars" :key="v.id" :value="v.id"
             :selected="patch.config.variableId === v.id"
           ) {{ v.name }}
+        button.cfg-add(@click="onAddVar" title="新建变量") +
 
     //- SetVariable → 变量 + 值
     template(v-if="patch.type === 'setVariable'")
@@ -99,6 +101,7 @@
             v-for="v in vars" :key="v.id" :value="v.id"
             :selected="patch.config.variableId === v.id"
           ) {{ v.name }}
+        button.cfg-add(@click="onAddVar" title="新建变量") +
       .cfg-row
         .cfg-label 值
         input.cfg-input(
@@ -117,10 +120,12 @@ import { computed } from 'vue'
 import type { Patch } from '@engine/scene/types'
 import { patchCategory } from '@engine/state/PatchDefs'
 import { useProjectStore } from '@store/project'
+import { usePatchStore } from '@store/patch'
 
 const props = defineProps<{ patch: Patch; selected: boolean }>()
 defineEmits<{ delete: [] }>()
 const project = useProjectStore()
+const patchStore = usePatchStore()
 
 const category = patchCategory(props.patch.type)
 
@@ -185,6 +190,15 @@ function onValueChange(e: Event): void {
   else if (v === 'false') c.value = false
   else if (!isNaN(Number(v)) && v !== '') c.value = Number(v)
   else c.value = v
+}
+
+// ── 就地创建变量 (消除空下拉摩擦) ──
+
+function onAddVar(): void {
+  const n = vars.value.length
+  const name = n === 0 ? 'isToggled' : `isToggled_${n + 1}`
+  const v = patchStore.addVariable(name, 'boolean', false)
+  const c = cfg(); if (c) c.variableId = v.id
 }
 </script>
 
@@ -333,6 +347,23 @@ function onValueChange(e: Event): void {
   transition: border-color 0.12s;
 }
 .cfg-input:focus { border-color: #8888ff; }
+
+/* ── 就地新建按钮 ── */
+
+.cfg-add {
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px dashed rgba(136, 136, 255, 0.3); border-radius: 4px;
+  background: rgba(136, 136, 255, 0.08); color: rgba(136, 136, 255, 0.7);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+  padding: 0;
+}
+.cfg-add:hover {
+  background: rgba(136, 136, 255, 0.2);
+  border-color: rgba(136, 136, 255, 0.6);
+  color: #aaf;
+}
 
 .cfg-unit {
   font-size: 10px;
