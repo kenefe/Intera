@@ -14,28 +14,9 @@
   - 现象: `cfg.variableId as string` 等 `as` 断言，绕过类型检查
   - 建议: 为每种 PatchType 定义专用 config 接口 (联合类型 + 类型守卫)
 
-### P1 — UI 布局
-
-- [ ] **画板在设计模式下底部被截断**
-  - 文件: `src/components/canvas/ArtboardGrid.vue`
-  - 现象: 375×812 的画板在 1440×900 视口中底部超出可视区域
-  - 建议: 初始加载时自动缩放适配 (fit to viewport)
-
 ### P2 — 代码规范
 
-- [ ] **`project.ts` 超 200 行 (~310 行)**
-  - 文件: `src/store/project.ts`
-  - 建议: 拆分 undo/redo → `composables/useUndoRedo.ts`，持久化 → `composables/useProjectStorage.ts`
-
-- [ ] **App.vue CSS 按钮样式重复**
-  - 文件: `src/App.vue`
-  - 现象: `.btn-action` 和 `.btn-patch` 近乎相同的样式
-  - 建议: 提取 `.btn-toolbar` 共享基类
-
-- [ ] **DOMRenderer.captureFrame() 空壳**
-  - 文件: `src/renderer/DOMRenderer.ts`
-  - 现象: `throw new Error('未实现')` 但 Phase 9 标记完成
-  - 建议: VideoExporter 已用 Canvas2D 替代，从 Renderer 接口移除或标 optional
+_(P1 UI 布局 + P2 代码规范问题已全部修复，见「已修」区)_
 
 ---
 
@@ -43,7 +24,7 @@
 
 > 以下功能已实现但未经人工 UX 验证。
 
-_全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 71/71 通过。_
+_全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 70/70 通过 (Feature 49 + Persona 21)。_
 
 ---
 
@@ -57,18 +38,20 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 
 ```
                  按钮反馈  卡片展开  Tab切换  进入动画  拖拽交互  复杂原型
-零基础 (L0)        ⬜       ⬜       ⬜       ⬜
-中级   (L1)        ⬜       ⬜       ⬜       ⬜       ⬜
-专家   (L2)        ⬜       ⬜       ⬜       ⬜       ⬜       ⬜
-代码专家(L2)       ⬜       ⬜       ⬜       ⬜       ⬜       ⬜
+零基础 (L0)        ✅       ✅       ✅       ✅
+中级   (L1)        ✅       ✅       ✅       ✅       ✅
+专家   (L2)        ✅       ✅       ✅       ✅       ✅       ✅
+代码专家(L2)       ✅       ✅       ✅       ✅       ✅       ✅
 ```
 
 > ⬜ 未验证 / ✅ 通过 / 🔄 迭代中
 > 空白 = 目标超出角色能力，自动跳过
 
+**验证日期**: 2026-02-14 | **通过率**: 21/21 (100%) | **Feature BDD**: 49/49 (100%)
+
 ### 摩擦记录
 
-_(循环打磨时在此追加)_
+_(本轮验证无阻断性摩擦，21 条旅程全量通过，截图审查 UI 反馈完整)_
 
 ---
 
@@ -96,4 +79,8 @@ _(循环打磨时在此追加)_
 | 2026-02-14 | **属性面板无覆盖标记** (P1) | 非默认状态下覆盖属性显示橙色边框 + ↺ 重置按钮 + 状态 badge |
 | 2026-02-14 | **描边默认值 'none' 误导** (P2) | 描边改为 checkbox 开关 + 颜色选择器联动，关闭时隐藏选择器 |
 | 2026-02-14 | **属性面板缺少图层信息** (P2) | 添加 `.layer-header` 显示图层类型标签 + 名称 + 覆盖状态 badge |
+| 2026-02-14 | **画板底部被截断** (P1) | `canvas.ts` 新增 `fitToViewport` 自适应缩放+居中; `CanvasViewport` mount 后自动调用; 绘制/拖拽坐标 `Math.round` 像素对齐 |
+| 2026-02-14 | **`project.ts` 超 200 行 (~318 行)** (P2) | 动画过渡拆分至 `composables/useTransition.ts` (96 行); project.ts 降至 199 行 |
+| 2026-02-14 | **App.vue CSS 按钮样式重复** (P2) | `.btn-action` 和 `.btn-patch` 合并为共享选择器 |
+| 2026-02-14 | **DOMRenderer.captureFrame() 空壳** (P2) | Renderer 接口标为 `captureFrame?()` (optional); DOMRenderer 移除空壳实现 |
 | 2026-02-13 | `CanvasViewport.vue:84` 编译错误 — `up(e)` 传了多余参数 | 改为 `up()` |
