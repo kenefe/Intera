@@ -30,7 +30,8 @@ const SHOT_DIR = path.join(DIR, 'screenshots')
 // ── 状态 ──
 let browser, page, stepNum = 0
 
-// ── 截图 ──
+// ── 截图 + 元素扫描 ──
+
 async function shot() {
   stepNum++
   const name = `step-${String(stepNum).padStart(2, '0')}.png`
@@ -38,7 +39,61 @@ async function shot() {
   await page.waitForTimeout(400)
   await page.screenshot({ path: fp })
   const vp = page.viewportSize()
-  return { path: fp, width: vp.width, height: vp.height }
+  const elements = await scanElements()
+  return { path: fp, width: vp.width, height: vp.height, elements }
+}
+
+/** 扫描页面可交互元素，返回 [{label, x, y}] */
+async function scanElements() {
+  return page.evaluate(() => {
+    const els = []
+    const seen = new Set()
+    const query = [
+      'button', 'input', 'select',
+      '[data-tool]', '[data-layer-id]', '[data-type]',
+      '.layer-item', '.node-btn', '.btn-action',
+      '.state-tab', '.add-btn',
+    ].join(',')
+
+    for (const el of document.querySelectorAll(query)) {
+      const r = el.getBoundingClientRect()
+      if (r.width < 4 || r.height < 4) continue
+      if (r.bottom < 0 || r.top > innerHeight) continue
+      if (r.right < 0 || r.left > innerWidth) continue
+
+      const x = Math.round(r.x + r.width / 2)
+      const y = Math.round(r.y + r.height / 2)
+      const key = `${x},${y}`
+      if (seen.has(key)) continue
+      seen.add(key)
+
+      // ── 标签提取: title > data属性 > 相邻label > 文本 ──
+      const title = el.getAttribute('title') || ''
+      const tool = el.getAttribute('data-tool') || ''
+      const dtype = el.getAttribute('data-type') || ''
+      const tag = el.tagName.toLowerCase()
+
+      // input/select: 从同级或父级找 span.label 获取语义
+      let sibLabel = ''
+      if (tag === 'input' || tag === 'select') {
+        const field = el.closest('.prop-field, .prop-row, .cfg-row')
+        sibLabel = field?.querySelector('.label, span.label')?.textContent?.trim() || ''
+      }
+
+      const text = el.textContent?.trim()?.slice(0, 20) || ''
+      const label = title
+        || (tool && `tool:${tool}`)
+        || (dtype && `type:${dtype}`)
+        || (sibLabel ? `${sibLabel}:${el.value ?? ''}` : '')
+        || text || ''
+
+      // 跳过无标签的泛元素
+      if (!label) continue
+
+      els.push({ label: label.slice(0, 30), x, y })
+    }
+    return els
+  })
 }
 
 // ── 动作分发 (纯视觉 — 零选择器，像真实用户) ──
@@ -110,9 +165,14 @@ const server = http.createServer(async (req, res) => {
     if (cmd.action === 'stop') return
 
     const snap = cmd.action === 'save' ? null : await shot()
-    const viewport = snap ? { width: snap.width, height: snap.height } : undefined
     res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ step: stepNum, screenshot: snap?.path ?? null, viewport, ...extra }))
+    res.end(JSON.stringify({
+      step: stepNum,
+      screenshot: snap?.path ?? null,
+      viewport: snap ? { width: snap.width, height: snap.height } : undefined,
+      elements: snap?.elements,
+      ...extra,
+    }))
   } catch (err) {
     res.writeHead(500)
     res.end(JSON.stringify({ error: err.message }))
