@@ -2,9 +2,11 @@
 .patch-node(
   :style="{ left: patch.position.x + 'px', top: patch.position.y + 'px' }"
   :data-patch-id="patch.id"
-  :class="'cat-' + category"
+  :class="['cat-' + category, { selected }]"
 )
-  .node-header {{ patch.name }}
+  .node-header
+    span.header-text {{ patch.name }}
+    button.btn-delete(v-if="selected" @pointerdown.stop @click.stop="$emit('delete')") ×
   .node-ports
     .port-row(v-for="port in patch.inputs" :key="port.id")
       .port-dot.port-in(
@@ -114,7 +116,8 @@ import type { Patch } from '@engine/scene/types'
 import { patchCategory } from '@engine/state/PatchDefs'
 import { useProjectStore } from '@store/project'
 
-const props = defineProps<{ patch: Patch }>()
+const props = defineProps<{ patch: Patch; selected: boolean }>()
+defineEmits<{ delete: [] }>()
 const project = useProjectStore()
 
 const category = patchCategory(props.patch.type)
@@ -196,14 +199,40 @@ function onValueChange(e: Event): void {
   transition: box-shadow 0.12s;
 }
 .patch-node:hover { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); }
+.patch-node.selected {
+  border-color: rgba(136, 136, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(136, 136, 255, 0.3), 0 2px 12px rgba(0, 0, 0, 0.4);
+}
 
 .node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 5px 10px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.3px;
   color: #fff;
 }
+.header-text { flex: 1; }
+
+.btn-delete {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 80, 80, 0.25);
+  color: #ff8888;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+.btn-delete:hover { background: rgba(255, 80, 80, 0.6); color: #fff; }
 
 /* 分类配色 */
 .cat-trigger .node-header { background: #2a6b4a; }

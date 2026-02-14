@@ -68,7 +68,14 @@ export const usePatchStore = defineStore('patch', () => {
 
   // ── 连线 CRUD ──
 
-  function addConnection(fromId: string, fromPort: string, toId: string, toPort: string): PatchConnection {
+  function addConnection(fromId: string, fromPort: string, toId: string, toPort: string): PatchConnection | null {
+    // ── 防重复连线 ──
+    const dup = p.connections.some(c =>
+      c.fromPatchId === fromId && c.fromPortId === fromPort
+      && c.toPatchId === toId && c.toPortId === toPort,
+    )
+    if (dup) return null
+
     project.snapshot()
     const conn: PatchConnection = {
       id: `conn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,

@@ -1,8 +1,11 @@
 <template lang="pug">
 .patch-canvas(
+  ref="canvasRef"
+  tabindex="0"
   @pointerdown="onDown"
   @pointermove="onMove"
   @pointerup="onUp"
+  @keydown="onKey"
 )
   //- ── SVG 连线层 ──
   svg.connection-layer
@@ -10,13 +13,19 @@
       v-for="conn in project.project.connections"
       :key="conn.id"
       :d="connectionPath(conn)"
-      @click.stop="onDeleteConnection(conn.id)"
+      :class="{ selected: selectedConnIds.has(conn.id) }"
+      @click.stop="onClickConnection(conn, $event)"
     )
     path.temp-line(v-if="tempPath" :d="tempPath")
 
   //- ── 节点层 ──
   .node-layer
-    PatchNode(v-for="p in project.project.patches" :key="p.id" :patch="p")
+    PatchNode(
+      v-for="p in project.project.patches" :key="p.id"
+      :patch="p"
+      :selected="selected.has(p.id)"
+      @delete="onDeleteNode(p.id)"
+    )
 
   //- ── 工具条 ──
   .patch-toolbar
@@ -24,7 +33,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  PatchCanvas —— 交互图画布
+//  职责: 节点增删 + 连线 + 选中 + 拖拽
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import type { PatchType, PatchConnection } from '@engine/scene/types'
 import { useProjectStore } from '@store/project'
 import { usePatchStore } from '@store/patch'
@@ -32,8 +46,60 @@ import PatchNode from './PatchNode.vue'
 
 const project = useProjectStore()
 const patch = usePatchStore()
+const canvasRef = ref<HTMLElement | null>(null)
 
-// ── 节点添加菜单 ──
+// ── 自动聚焦 (确保键盘事件可达) ──
+onMounted(() => canvasRef.value?.focus())
+
+// ── 选中态 ──
+
+const selected = reactive(new Set<string>())
+const selectedConnIds = reactive(new Set<string>())
+
+function selectNode(id: string, multi: boolean): void {
+  if (multi) {
+    selected.has(id) ? selected.delete(id) : selected.add(id)
+  } else {
+    selected.clear()
+    selected.add(id)
+  }
+  selectedConnIds.clear()
+}
+
+function clearSelection(): void {
+  selected.clear()
+  selectedConnIds.clear()
+}
+
+// ── 删除 ──
+
+function deleteSelected(): void {
+  if (selected.size === 0 && selectedConnIds.size === 0) return
+  for (const connId of selectedConnIds) patch.removeConnection(connId)
+  for (const id of selected) patch.removePatch(id)
+  clearSelection()
+}
+
+function onDeleteNode(id: string): void {
+  patch.removePatch(id)
+  selected.delete(id)
+}
+
+// ── 键盘 ──
+
+function onKey(e: KeyboardEvent): void {
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault()
+    deleteSelected()
+  }
+  if (e.key === 'a' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault()
+    project.project.patches.forEach(p => selected.add(p.id))
+  }
+  if (e.key === 'Escape') clearSelection()
+}
+
+// ── 节点添加 ──
 
 const ADD_TYPES: Array<{ type: PatchType; label: string; name: string }> = [
   { type: 'touch',          label: 'Touch',    name: 'Touch' },
@@ -50,23 +116,34 @@ function onAddNode(type: PatchType, name: string): void {
   const x = 40 + (addIdx % 4) * 220
   const y = 60 + Math.floor(addIdx / 4) * 140
   addIdx++
-  patch.addPatchNode(type, { x, y }, {}, name)
+  const p = patch.addPatchNode(type, { x, y }, {}, name)
+  selectNode(p.id, false)
 }
 
-// ── 端口坐标计算 ──
+// ── 端口坐标 (从 DOM 实测) ──
 
 const NODE_W = 180
-const HEADER_H = 28
-const PORT_H = 24
-const PORT_R = 5   // 端口圆心相对边缘 (10px dot / 2)
 
-function portPos(patchNode: typeof project.project.patches[number], portId: string, dir: 'in' | 'out'): { x: number; y: number } {
+function portPos(
+  patchNode: typeof project.project.patches[number],
+  portId: string, dir: 'in' | 'out',
+): { x: number; y: number } {
+  /* 优先从 DOM 读取精确位置 */
+  const dot = canvasRef.value?.querySelector<HTMLElement>(
+    `.port-dot[data-patch-id="${patchNode.id}"][data-port-id="${portId}"]`,
+  )
+  if (dot) {
+    const cr = canvasRef.value!.getBoundingClientRect()
+    const dr = dot.getBoundingClientRect()
+    return { x: dr.left + dr.width / 2 - cr.left, y: dr.top + dr.height / 2 - cr.top }
+  }
+  /* 回退: 估算 */
   const ports = dir === 'in' ? patchNode.inputs : patchNode.outputs
   const idx = ports.findIndex(p => p.id === portId)
   const offset = dir === 'in' ? 0 : patchNode.inputs.length
   return {
     x: patchNode.position.x + (dir === 'out' ? NODE_W : 0),
-    y: patchNode.position.y + HEADER_H + (offset + idx) * PORT_H + PORT_H / 2,
+    y: patchNode.position.y + 26 + (offset + idx) * 20 + 10,
   }
 }
 
@@ -106,28 +183,38 @@ function findNode(e: PointerEvent): string | null {
 }
 
 function onDown(e: PointerEvent): void {
-  // 优先检测端口拖线
+  /* 保持画布焦点 (键盘快捷键依赖) */
+  canvasRef.value?.focus()
+
+  /* 端口拖线 (优先) */
   const port = findPort(e)
   if (port?.dir === 'out') {
     wireFrom = { patchId: port.patchId, portId: port.portId }
     return
   }
-  // 节点拖拽
+
+  /* 节点选中 + 拖拽 */
   const id = findNode(e)
-  if (!id) return
-  const p = project.project.patches.find(n => n.id === id)
-  if (!p) return
-  dragPatchId = id
-  dragStartX = e.clientX; dragStartY = e.clientY
-  patchX0 = p.position.x; patchY0 = p.position.y
+  if (id) {
+    selectNode(id, e.shiftKey)
+    const p = project.project.patches.find(n => n.id === id)
+    if (!p) return
+    dragPatchId = id
+    dragStartX = e.clientX; dragStartY = e.clientY
+    patchX0 = p.position.x; patchY0 = p.position.y
+    return
+  }
+
+  /* 空白区域 → 取消选中 */
+  if (!(e.target as HTMLElement).closest('.patch-toolbar'))
+    clearSelection()
 }
 
 function onMove(e: PointerEvent): void {
   if (dragPatchId) {
-    patch.updatePatchPos(dragPatchId, {
-      x: patchX0 + e.clientX - dragStartX,
-      y: patchY0 + e.clientY - dragStartY,
-    })
+    const dx = e.clientX - dragStartX
+    const dy = e.clientY - dragStartY
+    patch.updatePatchPos(dragPatchId, { x: patchX0 + dx, y: patchY0 + dy })
     return
   }
   if (wireFrom) {
@@ -151,8 +238,16 @@ function onUp(e: PointerEvent): void {
   dragPatchId = null
 }
 
-function onDeleteConnection(id: string): void {
-  patch.removeConnection(id)
+// ── 连线交互 ──
+
+function onClickConnection(conn: PatchConnection, e: MouseEvent): void {
+  if (e.shiftKey) {
+    selectedConnIds.has(conn.id) ? selectedConnIds.delete(conn.id) : selectedConnIds.add(conn.id)
+  } else {
+    selected.clear()
+    selectedConnIds.clear()
+    selectedConnIds.add(conn.id)
+  }
 }
 </script>
 
@@ -165,6 +260,7 @@ function onDeleteConnection(id: string): void {
   background: #12122a;
   overflow: hidden;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  outline: none;
 }
 
 .connection-layer {
@@ -180,9 +276,10 @@ function onDeleteConnection(id: string): void {
   stroke-width: 2;
   pointer-events: stroke;
   cursor: pointer;
-  transition: stroke 0.1s;
+  transition: stroke 0.12s, stroke-width 0.12s;
 }
 .connection:hover { stroke: #ff6060; stroke-width: 2.5; }
+.connection.selected { stroke: #6c6cff; stroke-width: 3; }
 
 .temp-line {
   fill: none;
