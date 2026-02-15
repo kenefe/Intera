@@ -240,7 +240,7 @@ curl -s localhost:3900/step -d '{"action":"stop"}'   # 关闭浏览器
 
 文件结构:
 ```
-docs/journeys/{YYYYMMDD_HHmm}-{画像id}-{简述}/
+docs/journeys/{YYYYMMDD_HHmm}-{画像id}-{简述}/    ← 时间用北京时间 (GMT+8)
   README.md          ← 旅程记录 (过程 + 结论)
   design.intera      ← 最终设计文件
   screenshots/
