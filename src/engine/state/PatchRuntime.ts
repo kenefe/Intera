@@ -89,10 +89,12 @@ export class PatchRuntime {
     }
   }
 
-  /** 重建索引 (patches/connections 变化后调用) */
+  /** 重建索引 + 行为实例 (patches/connections 变化后调用) */
   rebuild(): void {
     this.connIdx = buildConnIndex(this.connections)
     this.patchIdx = buildPatchIndex(this.patches)
+    this.behaviors.destroyAll()
+    this.behaviors.initAll(this.patches)
   }
 
   /** 重置: 变量归位 + 取消所有 delay 定时器 */

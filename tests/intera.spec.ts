@@ -733,3 +733,62 @@ test.describe('Feature: 综合集成', () => {
     expect(box!.width).toBeGreaterThan(0)
   })
 })
+
+// ══════════════════════════════════════
+//  Feature: Drag 行为
+// ══════════════════════════════════════
+
+test.describe('Feature: Drag 行为', () => {
+
+  test('behaviorDrag 绑定图层后，预览面板拖拽图层位置跟手', async ({ page }) => {
+    const errors = collectErrors(page)
+    await load(page)
+
+    // 绘制矩形
+    await drawRect(page)
+    await expect(layerItems(page)).toHaveCount(1)
+
+    // 通过 store 添加 behaviorDrag patch 并绑定到图层
+    const layerId = await page.evaluate(() => {
+      const app = (document.querySelector('#app') as HTMLElement & { __vue_app__: { config: { globalProperties: { $pinia: { _s: Map<string, Record<string, unknown>> } } } } }).__vue_app__
+      const pinia = app.config.globalProperties.$pinia
+      const proj = pinia._s.get('project') as Record<string, unknown>
+      const project = proj.project as { layers: Record<string, unknown>; rootLayerIds: string[] }
+      const lid = project.rootLayerIds[0]
+
+      const patchStore = pinia._s.get('patch') as Record<string, (...args: unknown[]) => unknown>
+      patchStore.addPatchNode('behaviorDrag', { x: 100, y: 100 }, { layerId: lid, axis: 'both' })
+      return lid
+    })
+    expect(layerId).toBeTruthy()
+
+    // 在预览面板找到图层元素
+    const previewLayer = page.locator(`.preview-frame [data-layer-id="${layerId}"]`)
+    await expect(previewLayer).toBeVisible()
+    const before = await previewLayer.boundingBox()
+    expect(before).toBeTruthy()
+
+    // 在预览面板拖拽图层
+    const frame = page.locator('.preview-frame')
+    const fBox = await frame.boundingBox()
+    expect(fBox).toBeTruthy()
+    const startX = before!.x + before!.width / 2
+    const startY = before!.y + before!.height / 2
+    await page.mouse.move(startX, startY)
+    await page.mouse.down()
+    await page.mouse.move(startX + 50, startY + 30, { steps: 10 })
+    await page.mouse.up()
+    await page.waitForTimeout(200)
+
+    // 验证图层位置发生了变化
+    const after = await previewLayer.boundingBox()
+    expect(after).toBeTruthy()
+    // 拖拽后位置应该有明显偏移
+    const dx = Math.abs(after!.x - before!.x)
+    const dy = Math.abs(after!.y - before!.y)
+    expect(dx + dy).toBeGreaterThan(5)
+
+    expect(errors).toHaveLength(0)
+    await page.screenshot({ path: 'tests/screenshots/drag-behavior.png' })
+  })
+})

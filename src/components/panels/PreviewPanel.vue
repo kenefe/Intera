@@ -58,6 +58,9 @@ const scale = computed(() => {
   return Math.min(aw / cw, ah / ch, 1)
 })
 
+// ── 同步缩放到手势引擎 (拖拽坐标补偿) ──
+watch(scale, (s) => preview.setScale(s), { immediate: true })
+
 const frameStyle = computed(() => {
   const cw = store.project.canvasSize.width
   const ch = store.project.canvasSize.height
@@ -123,6 +126,8 @@ let downTs = 0, downX = 0, downY = 0
 function onDown(e: PointerEvent): void {
   downTs = performance.now()
   downX = e.clientX; downY = e.clientY
+  // 捕获指针 — 拖拽时即使离开元素也能持续接收事件
+  ;(e.currentTarget as HTMLElement)?.setPointerCapture(e.pointerId)
   preview.down(e)
 }
 
@@ -131,6 +136,7 @@ function onMove(e: PointerEvent): void {
 }
 
 function onUp(e: PointerEvent): void {
+  ;(e.currentTarget as HTMLElement)?.releasePointerCapture(e.pointerId)
   preview.up(e)
   // Level 0: 无 Patch 时点击自动循环状态
   const dt = performance.now() - downTs

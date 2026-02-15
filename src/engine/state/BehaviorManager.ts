@@ -11,6 +11,8 @@ import { DragEngine } from '../gesture/DragEngine'
 
 export interface BehaviorInstance {
   patchId: string
+  layerId?: string
+  engine?: DragEngine
   destroy(): void
 }
 
@@ -58,7 +60,12 @@ function createDragBehavior(
       if (result && cfg.snapPoints?.length) fire(patch.id, 'snap')
     },
   })
-  return { patchId: patch.id, destroy() { /* DragEngine 无需清理 */ } }
+  return {
+    patchId: patch.id,
+    layerId: cfg.layerId,
+    engine,
+    destroy() { /* DragEngine 无需清理 */ },
+  }
 }
 
 // ── Scroll 行为 ──
@@ -83,7 +90,12 @@ function createScrollBehavior(
       if (result && cfg.snapPoints?.length) fire(patch.id, 'snap')
     },
   })
-  return { patchId: patch.id, destroy() { /* DragEngine 无需清理 */ } }
+  return {
+    patchId: patch.id,
+    layerId: cfg.layerId,
+    engine,
+    destroy() { /* DragEngine 无需清理 */ },
+  }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -116,6 +128,14 @@ export class BehaviorManager {
   destroyAll(): void {
     for (const inst of this.instances.values()) inst.destroy()
     this.instances.clear()
+  }
+
+  /** 按目标图层查找 DragEngine 实例 */
+  findByLayer(layerId: string): BehaviorInstance | undefined {
+    for (const inst of this.instances.values()) {
+      if (inst.layerId === layerId && inst.engine) return inst
+    }
+    return undefined
   }
 
   /** 初始化所有 Behavior 节点 */

@@ -59,6 +59,7 @@ export const usePatchStore = defineStore('patch', () => {
     project.snapshot()
     const patch = createPatch(type, pos, config, name)
     p.patches.push(patch)
+    runtime.rebuild()
     return patch
   }
 
@@ -71,6 +72,7 @@ export const usePatchStore = defineStore('patch', () => {
       const c = p.connections[i]
       if (c.fromPatchId === id || c.toPatchId === id) p.connections.splice(i, 1)
     }
+    runtime.rebuild()
   }
 
   function updatePatchPos(id: string, pos: Vec2): void {
@@ -95,6 +97,7 @@ export const usePatchStore = defineStore('patch', () => {
       toPatchId: toId, toPortId: toPort,
     }
     p.connections.push(conn)
+    runtime.rebuild()
     return conn
   }
 
@@ -102,6 +105,7 @@ export const usePatchStore = defineStore('patch', () => {
     project.snapshot()
     const idx = p.connections.findIndex(c => c.id === id)
     if (idx >= 0) p.connections.splice(idx, 1)
+    runtime.rebuild()
   }
 
   // ── 触发 ──
