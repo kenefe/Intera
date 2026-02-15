@@ -78,6 +78,7 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-15 | states+curves R2 | Range slider 无法直接输入精确数值，只能拖拽 (P3) | — | 🔴 |
 | 2026-02-15 | states+patch R3→R4 | Patch 端口拖线失败 — 根因是 journey-server drag 缺少 80ms 延时，非产品 bug | journey-server.mjs drag 添加 80ms waitForTimeout | 🟢 |
 | 2026-02-15 | drag-card | Drag 行为不工作 — BehaviorManager 创建 DragEngine 但未绑定 DOM 指针事件，usePreviewGesture 无 Drag 感知 (P0) | BehaviorManager 暴露 engine+layerId + findByLayer(); usePreviewGesture 检测 behaviorDrag 并喂 begin/tick/end; PreviewPanel 添加 pointer capture; PatchRuntime.rebuild() 重建行为实例; patch store 变更后调用 rebuild() | 🟢 |
+| 2026-02-15 | 基础绘制 R4 | 文本工具创建图层后双击画布编辑文本时，工具状态残留导致意外创建新图层而非编辑已有文本 (P2) | — | 🔴 |
 
 ### 待优化 (旅途探索发现 · 非阻塞)
 
