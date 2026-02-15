@@ -1,6 +1,6 @@
 <template lang="pug">
 .curve-edit
-  select.type-select(:value="curve.type" @change="onType")
+  select.type-select(:value="curve.type" @change="onType" data-testid="curve-type")
     option(value="spring") 弹簧
     option(value="friction") 摩擦
     option(value="bezier") 贝塞尔
@@ -8,22 +8,22 @@
   template(v-if="curve.type === 'spring'")
     .param-row
       span.param-label 响应
-      input.param-slider(type="range" min="0.05" max="2" step="0.01" :value="curve.response ?? 0.35" @input="e => emit('update', { response: num(e) })")
-      input.param-input(type="number" min="0.05" max="2" step="0.01" :value="(curve.response ?? 0.35).toFixed(2)" @change="e => emit('update', { response: num(e) })")
+      input.param-slider(type="range" min="0.05" max="2" step="0.01" :value="curve.response ?? 0.35" @input="e => emit('update', { response: num(e) })" data-testid="curve-response" title="响应")
+      input.param-input(type="number" min="0.05" max="2" step="0.01" :value="(curve.response ?? 0.35).toFixed(2)" @change="e => emit('update', { response: num(e) })" data-testid="curve-response-input")
     .param-row
       span.param-label 阻尼
-      input.param-slider(type="range" min="0.01" max="2" step="0.01" :value="curve.damping ?? 0.95" @input="e => emit('update', { damping: num(e) })")
-      input.param-input(type="number" min="0.01" max="2" step="0.01" :value="(curve.damping ?? 0.95).toFixed(2)" @change="e => emit('update', { damping: num(e) })")
+      input.param-slider(type="range" min="0.01" max="2" step="0.01" :value="curve.damping ?? 0.95" @input="e => emit('update', { damping: num(e) })" data-testid="curve-damping" title="阻尼")
+      input.param-input(type="number" min="0.01" max="2" step="0.01" :value="(curve.damping ?? 0.95).toFixed(2)" @change="e => emit('update', { damping: num(e) })" data-testid="curve-damping-input")
   template(v-if="curve.type === 'friction'")
     .param-row
       span.param-label 摩擦
-      input.param-slider(type="range" min="0.01" max="1" step="0.01" :value="curve.friction ?? 0.48" @input="e => emit('update', { friction: num(e) })")
-      input.param-input(type="number" min="0.01" max="1" step="0.01" :value="(curve.friction ?? 0.48).toFixed(2)" @change="e => emit('update', { friction: num(e) })")
+      input.param-slider(type="range" min="0.01" max="1" step="0.01" :value="curve.friction ?? 0.48" @input="e => emit('update', { friction: num(e) })" data-testid="curve-friction" title="摩擦")
+      input.param-input(type="number" min="0.01" max="1" step="0.01" :value="(curve.friction ?? 0.48).toFixed(2)" @change="e => emit('update', { friction: num(e) })" data-testid="curve-friction-input")
   template(v-if="curve.type === 'bezier' || curve.type === 'linear'")
     .param-row
       span.param-label 时长
-      input.param-slider(type="range" min="0.05" max="3" step="0.05" :value="curve.duration ?? 0.3" @input="e => emit('update', { duration: num(e) })")
-      input.param-input(type="number" min="0.05" max="3" step="0.05" :value="(curve.duration ?? 0.3).toFixed(2)" @change="e => emit('update', { duration: num(e) })")
+      input.param-slider(type="range" min="0.05" max="3" step="0.05" :value="curve.duration ?? 0.3" @input="e => emit('update', { duration: num(e) })" data-testid="curve-duration" title="时长")
+      input.param-input(type="number" min="0.05" max="3" step="0.05" :value="(curve.duration ?? 0.3).toFixed(2)" @change="e => emit('update', { duration: num(e) })" data-testid="curve-duration-input")
 </template>
 
 <script setup lang="ts">
