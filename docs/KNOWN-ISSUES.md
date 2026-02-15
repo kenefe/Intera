@@ -72,6 +72,10 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-14 | 基础绘制 R3 | 画板外点击绘制时坐标映射到 canvas-world 而非画板本地，导致 X/Y 偏移 (P1) | `resolveFrame()` 三级查找 + border 补偿; 画板内绘制 X=63/105/146 验证通过 | 🟢 |
 | 2026-02-14 | 基础绘制 R3 | 文本图层 W 属性不可编辑 — 输入宽度值不生效，文本宽度由内容自适应 (P2) | 待确认: 是否为设计意图 | 🔴 |
 | 2026-02-15 | 状态系统 R3 | number input 点击易误触 spinner 箭头，Ctrl+A 在 input 聚焦时选中画布图层而非 input 内容 (P2) | — | 🔴 |
+| 2026-02-15 | states+curves R2 | 状态栏激活状态视觉反馈不清晰，用户误以为在状态3操作实际激活的是状态2 (P2) | — | 🔴 |
+| 2026-02-15 | states+curves R2 | 曲线面板需要大量滚动才能看到，curves 画像核心功能藏在底部 (P3) | — | 🔴 |
+| 2026-02-15 | states+curves R2 | 曲线面板元素缺少语义属性，自动化工具无法检测 slider/数值 (P3) | — | 🔴 |
+| 2026-02-15 | states+curves R2 | Range slider 无法直接输入精确数值，只能拖拽 (P3) | — | 🔴 |
 
 ### 待优化 (旅途探索发现 · 非阻塞)
 
@@ -93,6 +97,10 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | P3 | 无对齐参考线/智能吸附 | 用户 B + arrow-drag | |
 | P3 | 透明度差异在小预览面板中几乎不可辨 | 用户 B | |
 | P2 | **number input 编辑体验差**: 点击 number input 易误触 spinner 箭头导致微调而非聚焦编辑；Ctrl+A 在 input 聚焦时选中画布图层而非 input 内容 | 状态系统 R3 | PropertiesPanel number input 需要更大的文字点击区域或隐藏 spinner |
+| P2 | **状态栏激活状态视觉反馈不清晰**: 切换状态时当前激活状态高亮不够明显，用户可能误以为在状态3操作实际激活的是状态2，导致覆盖值写入错误状态 | states+curves R2 | StateBar 需要更强的激活态视觉区分（加粗/底色/下划线） |
+| P3 | **曲线面板需要大量滚动才能看到**: CurvePanel 和 KeyPropertyPanel 位于 PropertiesPanel 下方，右侧面板需要滚动很多才能到达。对 curves 画像用户来说曲线是核心功能 | states+curves R2 | 考虑折叠/展开机制或将曲线面板提升到更显眼位置 |
+| P3 | **曲线面板元素对自动化工具不可见**: slider、数值显示等交互元素缺少 title/data-testid 等语义属性，journey-server 元素扫描无法检测 | states+curves R2 | 为曲线面板交互元素添加 data-testid 或 title 属性 |
+| P3 | **Range slider 精确控制困难**: 弹簧参数（response/damping）仅有 range slider，无法直接输入精确数值 | states+curves R2 | 在 slider 旁添加可编辑数值输入框 |
 | P3 | 无撤销操作视觉反馈 | 用户 A | |
 
 ---

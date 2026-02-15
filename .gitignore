@@ -3,7 +3,6 @@ dist/
 .DS_Store
 *.tsbuildinfo
 test-results/
-.cursor/
 
 # 测试截图 (按需重新生成)
 tests/screenshots/
