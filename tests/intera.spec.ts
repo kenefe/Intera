@@ -961,3 +961,84 @@ test.describe('Feature: Review #1 补缺', () => {
     expect(rectActive).toBe(0)
   })
 })
+
+// ══════════════════════════════════════
+//  Feature: 摩擦点修复回归
+// ══════════════════════════════════════
+
+test.describe('Feature: 摩擦点修复回归', () => {
+
+  test('自定义 ColorPicker 替换原生 color input', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 属性面板应该有 ColorPicker 组件，不是原生 input[type=color]
+    const nativeColor = page.locator('.properties-panel input[type="color"]')
+    expect(await nativeColor.count()).toBe(0)
+    // 应该有 .color-swatch (自定义 ColorPicker)
+    const swatch = page.locator('.properties-panel .color-swatch')
+    expect(await swatch.count()).toBeGreaterThan(0)
+  })
+
+  test('ColorPicker 点击弹出 hex 输入和色板', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    const swatch = page.locator('.properties-panel .color-swatch').first()
+    await swatch.click()
+    // 弹出下拉面板
+    const dropdown = page.locator('.color-dropdown')
+    await expect(dropdown).toBeVisible()
+    // 包含 hex 输入框
+    const hexInput = page.locator('.hex-input')
+    await expect(hexInput).toBeVisible()
+    // 包含色板
+    const palette = page.locator('.palette-color')
+    expect(await palette.count()).toBeGreaterThan(0)
+  })
+
+  test('属性面板位置/尺寸/变换使用可折叠分组', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 应该有 CollapsibleGroup 组件
+    const groups = page.locator('.properties-panel .collapsible-group')
+    expect(await groups.count()).toBeGreaterThanOrEqual(2)
+    // 变换组默认收起 — chevron 应该有 collapsed 类
+    const chevrons = page.locator('.properties-panel .chevron.collapsed')
+    expect(await chevrons.count()).toBeGreaterThanOrEqual(1)
+  })
+
+  test('折叠分组点击可展开/收起', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 找到变换组 (默认收起)
+    const header = page.locator('.group-header').last()
+    const body = header.locator('~ .group-body')
+    // 默认收起 — body 不可见
+    await expect(body).toBeHidden()
+    // 点击展开
+    await header.click()
+    await expect(body).toBeVisible()
+    // 再点击收起
+    await header.click()
+    await expect(body).toBeHidden()
+  })
+
+  test('Shift 绘制保持工具不切回 select', async ({ page }) => {
+    await load(page)
+    await page.keyboard.press('r')
+    // 第一次绘制，按住 Shift 松手
+    const box = await canvasBox(page)
+    const cx = box.x + box.width / 2
+    const cy = box.y + box.height / 2
+    await page.mouse.move(cx - 80, cy - 40)
+    await page.mouse.down()
+    await page.mouse.move(cx - 20, cy + 20, { steps: 5 })
+    await page.keyboard.down('Shift')
+    await page.mouse.up()
+    await page.keyboard.up('Shift')
+    await page.waitForTimeout(100)
+    // 工具应该仍然是矩形
+    const rectActive = await page.locator('.tool-btn.active')
+    const tool = await rectActive.getAttribute('data-tool')
+    expect(tool).toBe('rectangle')
+  })
+})

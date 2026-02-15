@@ -542,6 +542,8 @@ Review 流程:
 | | `PropTextGroup.vue` | 文本属性子组件 (字号/字体/字重/对齐) |
 | | `PropLayoutGroup.vue` | 布局属性子组件 (方向/间距，仅容器) |
 | | `PropAppearanceGroup.vue` | 外观属性子组件 (透明度/填充/描边/圆角) |
+| | `ColorPicker.vue` | 自定义颜色选择器 (hex 输入 + 30 色色板) |
+| | `CollapsibleGroup.vue` | 可折叠分组容器 (▾ 箭头 + 点击折叠) |
 | | `KeyPropertyPanel.vue` | 关键属性标记 |
 | | `CurvePanel.vue` | 曲线编辑 (三级覆盖) |
 | | `CurveEdit.vue` | 曲线可视化编辑 (slider + 精确数值输入) |
@@ -642,6 +644,7 @@ ls tests/screenshots/
 | Drag 行为 | 1 | behaviorDrag 绑定图层后拖拽跟手 |
 | UI 打磨回归 | 7 | 状态栏/工具栏激活态、描边默认值、Patch滚动、曲线精确输入、data-testid、spinner隐藏 |
 | Review #1 补缺 | 5 | 状态命名格式、Patch节点删除、端口拖线连接、变量就地创建、input内快捷键屏蔽 |
+| 摩擦点修复回归 | 5 | ColorPicker替换原生color、hex输入+色板弹出、折叠分组存在+默认态、折叠展开交互、Shift连续绘制 |
 
 ### 源码 → Feature 映射 (改哪个模块，跑哪个测试)
 
@@ -661,6 +664,7 @@ ls tests/screenshots/
 | 导出器 `*Exporter.ts` | 导出 | `导出` |
 | `SmartAnimate.ts` / `FolmeManager.ts` | 状态间动画过渡 | `状态间动画` |
 | `StateBar.vue` / `PropertiesPanel.vue` / `CurveEdit.vue` / `PatchCanvas.vue` 样式变更 | UI 打磨回归 | `UI 打磨回归` |
+| `ColorPicker.vue` / `CollapsibleGroup.vue` / `useDrawTool.ts` / `useLayerInteraction.ts` | 摩擦点修复回归 | `摩擦点修复回归` |
 
 ### 编写自定义验证脚本
 
