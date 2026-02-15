@@ -240,8 +240,7 @@ test.describe('Feature: 属性面板', () => {
     await load(page)
     await drawRect(page)
     await expect(page.locator('.layer-header')).toBeVisible()
-    await expect(page.locator('.prop-label', { hasText: '位置' })).toBeVisible()
-    await expect(page.locator('.prop-label', { hasText: '尺寸' })).toBeVisible()
+    await expect(page.locator('.group-title', { hasText: '位置 / 尺寸' })).toBeVisible()
     await expect(page.locator('.prop-label', { hasText: '外观' })).toBeVisible()
   })
 
@@ -280,10 +279,9 @@ test.describe('Feature: 属性面板', () => {
   test('填充颜色选择器可用', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    // 面板中有多个颜色输入 (填充 + 描边)，取填充的第一个
-    const colorInput = page.locator('.prop-row', { hasText: '填充' }).locator('.color-input')
-    await expect(colorInput).toBeVisible()
-    await expect(colorInput).toHaveAttribute('type', 'color')
+    // 自定义 ColorPicker — 色块可见
+    const swatch = page.locator('.prop-row', { hasText: '填充' }).locator('.color-swatch')
+    await expect(swatch).toBeVisible()
   })
 
   test('通过图层面板切换选中后属性面板响应', async ({ page }) => {
@@ -1009,9 +1007,10 @@ test.describe('Feature: 摩擦点修复回归', () => {
   test('折叠分组点击可展开/收起', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    // 找到变换组 (默认收起)
-    const header = page.locator('.group-header').last()
-    const body = header.locator('~ .group-body')
+    // 找到变换组 (默认收起) — 最后一个 collapsible-group
+    const group = page.locator('.properties-panel .collapsible-group').last()
+    const header = group.locator('.group-header')
+    const body = group.locator('.group-body')
     // 默认收起 — body 不可见
     await expect(body).toBeHidden()
     // 点击展开
