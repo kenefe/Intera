@@ -105,6 +105,7 @@ function createScrollBehavior(
 export class BehaviorManager {
   private instances = new Map<string, BehaviorInstance>()
   private fire: FireFn
+  private patches: Patch[] = []
 
   constructor(fire: FireFn) { this.fire = fire }
 
@@ -130,16 +131,23 @@ export class BehaviorManager {
     this.instances.clear()
   }
 
-  /** 按目标图层查找 DragEngine 实例 */
+  /** 按目标图层查找 DragEngine 实例 (实时读 config，不依赖缓存) */
   findByLayer(layerId: string): BehaviorInstance | undefined {
-    for (const inst of this.instances.values()) {
-      if (inst.layerId === layerId && inst.engine) return inst
+    for (const p of this.patches) {
+      const cfg = p.config as BehaviorDragConfig | BehaviorScrollConfig
+      if ((cfg.type === 'behaviorDrag' || cfg.type === 'behaviorScroll')
+        && cfg.layerId === layerId) {
+        let inst = this.instances.get(p.id)
+        if (!inst) { this.create(p); inst = this.instances.get(p.id) }
+        if (inst?.engine) return inst
+      }
     }
     return undefined
   }
 
   /** 初始化所有 Behavior 节点 */
   initAll(patches: Patch[]): void {
+    this.patches = patches
     for (const p of patches) {
       if (p.config.type === 'behaviorDrag' || p.config.type === 'behaviorScroll')
         this.create(p)

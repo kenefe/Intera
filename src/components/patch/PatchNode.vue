@@ -209,7 +209,11 @@ function cfg(): PatchConfig | null {
 
 function onLayerPick(e: Event): void {
   const c = cfg()
-  if (c && ('layerId' in c)) c.layerId = (e.target as HTMLSelectElement).value
+  if (c && ('layerId' in c)) {
+    c.layerId = (e.target as HTMLSelectElement).value
+    // 行为节点配置变更 → 重建 BehaviorInstance
+    patchStore.runtime.rebuild()
+  }
 }
 
 function onStatePick(e: Event): void {

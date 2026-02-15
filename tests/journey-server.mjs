@@ -25,6 +25,7 @@ const args = Object.fromEntries(
 const PORT = parseInt(args.port || '3900')
 const URL  = args.url || 'http://localhost:5177'
 const DIR  = args.dir || '/tmp/journey-poc'
+const STORAGE = args.storage || null  // path to storage JSON to inject into localStorage
 const SHOT_DIR = path.join(DIR, 'screenshots')
 
 // ── 状态 ──
@@ -303,7 +304,18 @@ async function main() {
   fs.mkdirSync(SHOT_DIR, { recursive: true })
 
   browser = await chromium.launch({ headless: true })
-  page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+
+  // Inject localStorage if --storage provided
+  if (STORAGE && fs.existsSync(STORAGE)) {
+    const data = fs.readFileSync(STORAGE, 'utf8')
+    await context.addInitScript((d) => {
+      localStorage.setItem('intera_project', d)
+    }, data)
+    console.log(`📦 Injected localStorage from ${STORAGE}`)
+  }
+
+  page = await context.newPage()
   await page.goto(URL)
   await page.waitForLoadState('networkidle')
 

@@ -90,8 +90,8 @@ function defaultConfig(type: PatchType): PatchConfig {
     to:             () => ({ type: 'to' }),
     setTo:          () => ({ type: 'setTo' }),
     setVariable:    () => ({ type: 'setVariable' }),
-    behaviorDrag:   () => ({ type: 'behaviorDrag', axis: 'both' }),
-    behaviorScroll: () => ({ type: 'behaviorScroll', axis: 'y', overscroll: true }),
+    behaviorDrag:   () => ({ type: 'behaviorDrag', axis: 'both', layerId: '' }),
+    behaviorScroll: () => ({ type: 'behaviorScroll', axis: 'y', overscroll: true, layerId: '' }),
   }
   return map[type]()
 }
