@@ -88,6 +88,17 @@ export function useKeyboard(): void {
       e.preventDefault(); project.openFile(); return
     }
 
+    // ── Ctrl+A: 在 input 内选中全部内容 (number input 原生 Ctrl+A 不可靠) ──
+
+    if (meta && e.key === 'a' && inInput) {
+      const el = e.target as HTMLInputElement
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        e.preventDefault()
+        el.select()
+      }
+      return
+    }
+
     // ── 工具快捷键 — 文本编辑中除外，数值/颜色 input 中仍生效 ──
 
     const tool = TOOL_KEYS[e.key]
