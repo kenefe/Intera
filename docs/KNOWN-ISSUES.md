@@ -84,23 +84,23 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 严重度 | 描述 | 发现画像 | 备注 |
 |---|---|---|---|
 | ~~P1~~ | ~~**方向键移动图层**~~ → 已实现: useKeyboard.ts Arrow 处理 1px/Shift+10px | arrow-drag | 🟢 |
-| P1 | 画完自动切回 Select，用户不知要再按 R 才能继续画下一个 | 用户 B | 标准 Figma 行为但新手困惑 |
+| ~~P1~~ | ~~画完自动切回 Select~~ → 已修 2026-02-16: Shift 松手保持绘制工具，方便连续绘制 | 用户 B | 🟢 |
 | P1 | 工具切换失败时零视觉反馈 (按键被 input 吞掉但无提示) | 用户 C | P0 修复后大幅缓解，仅文本 input 内残留 |
 | P2 | **画板外图层难以拖回**: 图层拖出可视区域后无法再命中。需右键"回到中心"或图层面板双击定位 | arrow-drag | |
 | ~~P2~~ | ~~**Patch 画布高度不足**~~ → 已修 2026-02-15: 250→320px + max-height 45vh + overflow auto | toggle-card | 🟢 |
 | ~~P2~~ | ~~**无 Ctrl+O 打开快捷键**~~ → 已修 2026-02-15: useKeyboard Meta+o → openFile() | file-open-save | 🟢 |
 | ~~P2~~ | ~~**变量无独立管理面板**~~ → 已修 2026-02-14，见「已修」区 | toggle-card | |
-| P2 | 原生 HTML 颜色选择器 (`<input type="color">`)，无 hex 输入、无色板 | ×3 | |
+| ~~P2~~ | ~~原生 HTML 颜色选择器~~ → 已修 2026-02-16: 自定义 ColorPicker (hex 输入 + 30 色色板) | ×3 | 🟢 |
 | P2 | 画板默认缩放太小，精确绘制困难 | ×2 | |
 | ~~P2~~ | ~~图层无法重命名~~ → 已实现: LayerPanel 双击重命名 | ×2 | 🟢 |
-| P2 | 画布点击选层不稳定 — 重叠形状间点击经常选不中目标 | 用户 C | |
+| ~~P2~~ | ~~画布点击选层不稳定~~ → 已修 2026-02-16: Alt+Click 穿透选择下层图层 (geoHitTest) | 用户 C | 🟢 |
 | ~~P2~~ | ~~工具激活状态指示不够明显~~ → 已修 2026-02-15: 加深背景+底部蓝色下划线 | 用户 B | 🟢 |
 | ~~P2~~ | ~~描边默认 1px 太细~~ → 已修 2026-02-15: 开启描边默认 2px | 用户 A | 🟢 |
 | P3 | 无对齐参考线/智能吸附 | 用户 B + arrow-drag | |
 | P3 | 透明度差异在小预览面板中几乎不可辨 | 用户 B | |
 | ~~P2~~ | ~~**number input spinner 误触**~~ → 已修 2026-02-15: 隐藏 webkit/moz spinner 箭头 | 状态系统 R3 | 🟢 |
 | ~~P2~~ | ~~**状态栏激活状态视觉反馈不清晰**~~ → 已修 2026-02-15: 加深背景+底部蓝色下划线+font-weight 600 | states+curves R2 | 🟢 |
-| P3 | **曲线面板需要大量滚动才能看到**: CurvePanel 和 KeyPropertyPanel 位于 PropertiesPanel 下方，右侧面板需要滚动很多才能到达。对 curves 画像用户来说曲线是核心功能 | states+curves R2 | 考虑折叠/展开机制或将曲线面板提升到更显眼位置 |
+| P3 | **曲线面板需要大量滚动才能看到**: ~~CurvePanel 和 KeyPropertyPanel 位于 PropertiesPanel 下方~~ → 已缓解 2026-02-16: 位置/尺寸合并+变换默认收起，减少滚动距离 | states+curves R2 | 🟡 |
 | ~~P3~~ | ~~**曲线面板元素对自动化工具不可见**~~ → 已修 2026-02-15: CurveEdit 添加 data-testid + title | states+curves R2 | 🟢 |
 | ~~P3~~ | ~~**Range slider 精确控制困难**~~ → 已修 2026-02-15: slider 旁添加可编辑 number input | states+curves R2 | 🟢 |
 | ~~P0~~ | ~~**Patch 端口拖线失败**~~ → 已修 2026-02-15: 根因是 journey-server drag 操作缺少 move→down→move→up 之间的延时，非产品代码 bug。添加 80ms 延时后拖线正常 | states+patch R3→R4 | 🟢 已修 (journey-server 时序) |
@@ -140,3 +140,8 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-14 | **变量无独立管理面板** (P2) | `PatchVarPanel.vue` — Patch 画布右侧可折叠变量面板，支持增删改名/类型/默认值; `patch.ts` 新增 `updateVariable()`; `App.vue` 添加 `.patch-row` 布局 |
 | 2026-02-13 | `CanvasViewport.vue:84` 编译错误 — `up(e)` 传了多余参数 | 改为 `up()` |
 | 2026-02-15 | **Drag 行为不工作** (P0) — BehaviorManager 创建 DragEngine 但未绑定 DOM 指针事件 | BehaviorManager 暴露 engine+layerId + findByLayer(); usePreviewGesture 检测 behaviorDrag 喂 begin/tick/end + scale 补偿; PreviewPanel pointer capture; PatchRuntime.rebuild() 重建行为; patch store 变更后 rebuild() |
+| 2026-02-16 | **PropTextGroup / PropLayoutGroup 样式缺失** (P2) — 两个子组件无 `<style>` 块 | 补全 scoped 样式，textarea/select/对齐按钮组与 PropertiesPanel 暗色主题统一 |
+| 2026-02-16 | **原生 color picker 太粗糙** (P2) — 无 hex 输入、无色板 | 自定义 ColorPicker 组件 (hex 输入 + 30 色色板)，替换 PropAppearanceGroup 填充/描边 |
+| 2026-02-16 | **画完自动切回 Select** (P1) — 连续绘制需反复按快捷键 | useDrawTool Shift 松手保持当前绘制工具 |
+| 2026-02-16 | **画布重叠图层选不中下层** (P2) — DOM 事件只命中最上层 | useLayerInteraction Alt+Click 穿透选择 (geoHitTest 几何命中) |
+| 2026-02-16 | **曲线面板需大量滚动** (P3) — 位置/尺寸/变换占满右侧面板 | CollapsibleGroup 折叠组件; 位置+尺寸合并; 变换默认收起 |
