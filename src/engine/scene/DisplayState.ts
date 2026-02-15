@@ -8,11 +8,7 @@ import type {
   Layer, AnimatableProps, DisplayState,
   StateGroup, TransitionConfig,
 } from './types'
-
-// ── ID 生成 ──
-
-let nextId = 1
-function genId(prefix: string): string { return `${prefix}_${nextId++}` }
+import { makeId } from '../idFactory'
 
 // ── 默认过渡配置 ──
 
@@ -54,7 +50,7 @@ export class DisplayStateManager {
   /** 创建状态组 */
   addGroup(name: string, rootLayerId: string | null = null): StateGroup {
     const group: StateGroup = {
-      id: genId('group'), name, rootLayerId,
+      id: makeId('group'), name, rootLayerId,
       displayStates: [], activeDisplayStateId: null,
     }
     this.groups.push(group)
@@ -74,7 +70,7 @@ export class DisplayStateManager {
     const group = this.findGroup(groupId)
     if (!group) return undefined
     const state: DisplayState = {
-      id: genId('state'), name, overrides: {}, transition: defaultTransition(),
+      id: makeId('state'), name, overrides: {}, transition: defaultTransition(),
     }
     group.displayStates.push(state)
     return state

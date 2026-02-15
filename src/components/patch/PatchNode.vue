@@ -108,6 +108,23 @@
           :value="String(cfgValue ?? '')"
           @change="onValueChange"
         )
+
+    //- BehaviorDrag / BehaviorScroll → 图层 + 轴
+    template(v-if="patch.type === 'behaviorDrag' || patch.type === 'behaviorScroll'")
+      .cfg-row
+        .cfg-label 图层
+        select.cfg-select(@change="onLayerPick")
+          option(value="" :selected="!cfgLayerId") 选择…
+          option(
+            v-for="l in layers" :key="l.id" :value="l.id"
+            :selected="cfgLayerId === l.id"
+          ) {{ l.name }}
+      .cfg-row
+        .cfg-label 轴
+        select.cfg-select(@change="onAxisPick")
+          option(value="both" :selected="cfgAxis === 'both'") 双轴
+          option(value="x" :selected="cfgAxis === 'x'") X
+          option(value="y" :selected="cfgAxis === 'y'") Y
 </template>
 
 <script setup lang="ts">
@@ -131,7 +148,11 @@ const category = patchCategory(props.patch.type)
 
 // ── 可配置节点类型 ──
 
-const CONFIG_TYPES = ['touch', 'drag', 'to', 'setTo', 'delay', 'condition', 'toggleVariable', 'setVariable']
+const CONFIG_TYPES = [
+  'touch', 'drag', 'to', 'setTo', 'delay',
+  'condition', 'toggleVariable', 'setVariable',
+  'behaviorDrag', 'behaviorScroll',
+]
 const showConfig = CONFIG_TYPES.includes(props.patch.type)
 
 // ── 模板用 config 访问器 (避免 union 直接访问) ──
@@ -159,6 +180,10 @@ const cfgCompareValue = computed(() => {
 const cfgValue = computed(() => {
   const c = props.patch.config
   return c.type === 'setVariable' ? c.value : undefined
+})
+const cfgAxis = computed(() => {
+  const c = props.patch.config
+  return 'axis' in c ? (c.axis as string | undefined) : undefined
 })
 
 // ── 数据源 ──
@@ -223,6 +248,13 @@ function onValueChange(e: Event): void {
   else c.value = v
 }
 
+// ── Behavior 轴选择 ──
+
+function onAxisPick(e: Event): void {
+  const c = cfg()
+  if (c && 'axis' in c) c.axis = (e.target as HTMLSelectElement).value as 'x' | 'y' | 'both'
+}
+
 // ── 就地创建变量 (消除空下拉摩擦) ──
 
 function onAddVar(): void {
@@ -285,6 +317,7 @@ function onAddVar(): void {
 .cat-trigger .node-header { background: #2a6b4a; }
 .cat-logic   .node-header { background: #6b5a2a; }
 .cat-action  .node-header { background: #3a3a8b; }
+.cat-behavior .node-header { background: #6b2a5a; }
 
 .node-ports { padding: 4px 0; }
 

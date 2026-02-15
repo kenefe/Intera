@@ -9,6 +9,7 @@ import type { PatchType, Vec2, Patch, PatchConnection, Variable, VariableValue, 
 import { VariableManager } from '../engine/state/VariableManager'
 import { PatchRuntime } from '../engine/state/PatchRuntime'
 import { createPatch } from '../engine/state/PatchDefs'
+import { makeId } from '../engine/idFactory'
 import * as Sugar from '../engine/state/SugarPresets'
 import { useProjectStore } from './project'
 
@@ -29,7 +30,7 @@ export const usePatchStore = defineStore('patch', () => {
 
   function addVariable(name: string, type: Variable['type'], defaultValue: VariableValue): Variable {
     project.snapshot()
-    const v: Variable = { id: `var_${Date.now()}`, name, type, defaultValue }
+    const v: Variable = { id: makeId('var'), name, type, defaultValue }
     p.variables.push(v)
     variables.sync()
     return v
@@ -89,7 +90,7 @@ export const usePatchStore = defineStore('patch', () => {
 
     project.snapshot()
     const conn: PatchConnection = {
-      id: `conn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      id: makeId('conn'),
       fromPatchId: fromId, fromPortId: fromPort,
       toPatchId: toId, toPortId: toPort,
     }

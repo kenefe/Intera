@@ -9,6 +9,7 @@ import type {
   Variable, StateGroup,
 } from '../scene/types'
 import { createPatch } from './PatchDefs'
+import { makeId } from '../idFactory'
 
 /** Sugar 只依赖这三个方法，不耦合整个 DisplayStateManager */
 export interface StateOps {
@@ -19,8 +20,7 @@ export interface StateOps {
 
 // ── 连线 ID 工厂 ──
 
-let cid = 1
-function connId(): string { return `conn_${cid++}` }
+function connId(): string { return makeId('conn') }
 
 function connect(
   out: Patch, outPort: string, inp: Patch, inPort: string,
@@ -79,7 +79,7 @@ export function toggleExpand(
   if (!collapsedId) return
 
   // 变量
-  const varId = `var_expanded_${Date.now()}`
+  const varId = makeId('var_expanded')
   variables.push({ id: varId, name: 'isExpanded', type: 'boolean', defaultValue: false })
 
   // 展开状态

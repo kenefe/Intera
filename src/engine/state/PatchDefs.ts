@@ -4,6 +4,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import type { PatchType, PatchPort, Patch, Vec2, PatchConfig, ConfigFor } from '../scene/types'
+import { makeId } from '../idFactory'
 
 // ── 端口模板 ──
 
@@ -44,18 +45,32 @@ const DEFS: Record<PatchType, PortDef> = {
   to:          { inputs: [IN], outputs: [DONE] },
   setTo:       { inputs: [IN], outputs: [DONE] },
   setVariable: { inputs: [IN], outputs: [OUT] },
+
+  // 行为 (有状态，需要 create/destroy 生命周期)
+  behaviorDrag: { inputs: [], outputs: [
+    { id: 'start', name: 'Start', dataType: 'pulse' },
+    { id: 'end',   name: 'End',   dataType: 'pulse' },
+    { id: 'snap',  name: 'Snap',  dataType: 'pulse' },
+  ]},
+  behaviorScroll: { inputs: [], outputs: [
+    { id: 'start', name: 'Start', dataType: 'pulse' },
+    { id: 'end',   name: 'End',   dataType: 'pulse' },
+    { id: 'snap',  name: 'Snap',  dataType: 'pulse' },
+  ]},
 }
 
 // ── 节点分类 (用于 UI 着色) ──
 
-export type PatchCategory = 'trigger' | 'logic' | 'action'
+export type PatchCategory = 'trigger' | 'logic' | 'action' | 'behavior'
 
 const TRIGGER_TYPES: PatchType[] = ['touch', 'drag', 'scroll', 'timer', 'variableChange']
 const ACTION_TYPES: PatchType[]  = ['to', 'setTo', 'setVariable']
+const BEHAVIOR_TYPES: PatchType[] = ['behaviorDrag', 'behaviorScroll']
 
 export function patchCategory(type: PatchType): PatchCategory {
   if (TRIGGER_TYPES.includes(type)) return 'trigger'
   if (ACTION_TYPES.includes(type)) return 'action'
+  if (BEHAVIOR_TYPES.includes(type)) return 'behavior'
   return 'logic'
 }
 
@@ -75,13 +90,13 @@ function defaultConfig(type: PatchType): PatchConfig {
     to:             () => ({ type: 'to' }),
     setTo:          () => ({ type: 'setTo' }),
     setVariable:    () => ({ type: 'setVariable' }),
+    behaviorDrag:   () => ({ type: 'behaviorDrag', axis: 'both' }),
+    behaviorScroll: () => ({ type: 'behaviorScroll', axis: 'y', overscroll: true }),
   }
   return map[type]()
 }
 
 // ── 节点工厂 ──
-
-let nextId = 1
 
 export function createPatch<T extends PatchType>(
   type: T, position: Vec2,
@@ -94,7 +109,7 @@ export function createPatch<T extends PatchType>(
     ? { ...base, ...config } as PatchConfig
     : base
   return {
-    id: `patch_${nextId++}`,
+    id: makeId('patch'),
     type, name: name ?? type,
     position: { ...position },
     config: merged,

@@ -109,6 +109,8 @@ const ADD_TYPES: Array<{ type: PatchType; label: string; name: string }> = [
   { type: 'to',             label: 'To',       name: 'To' },
   { type: 'setTo',          label: 'SetTo',    name: 'SetTo' },
   { type: 'setVariable',    label: 'SetVar',   name: 'SetVar' },
+  { type: 'behaviorDrag',   label: 'Drag',     name: '拖拽行为' },
+  { type: 'behaviorScroll', label: 'Scroll',   name: '滚动行为' },
 ]
 
 let addIdx = 0

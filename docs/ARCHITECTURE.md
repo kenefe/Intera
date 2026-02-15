@@ -143,6 +143,21 @@ move/up              end → scroll          overscroll + absorb
 - Drag 节点: 封装跟手+惯性，可配置 axis/range/overscroll
 - Scroll 节点: 最高封装，Drag + absorb 吸附点
 
+### Behavior 节点 (第四类)
+
+Behavior 是有状态的交互行为封装，区别于无状态的 trigger/logic/action：
+
+```
+behaviorDrag   → 封装 FolmeDrag，配置 axis/range/snapPoints
+                 输出 start/end/snap 脉冲
+behaviorScroll → 封装滚动行为，配置 axis/range/overscroll/snapPoints
+                 输出 start/end/snap 脉冲
+```
+
+- 有 create/destroy 生命周期 (BehaviorManager 管理)
+- 保持 pulse-only，不引入数据流
+- UI 分类: `behavior` (紫色)
+
 ---
 
 ## 目录结构
@@ -171,16 +186,21 @@ src/
 │   │   └── ScrollEngine.ts # 滚动封装 (Drag + range + overscroll + absorb)
 │   │
 │   ├── scene/              # 场景图
-│   │   ├── types.ts        # 图层/状态类型
+│   │   ├── types.ts        # 类型 barrel (re-export)
+│   │   ├── SceneTypes.ts   # 图层/状态/曲线类型
+│   │   ├── PatchTypes.ts   # Patch 节点 discriminated union 类型
 │   │   ├── SceneGraph.ts   # 图层树操作
 │   │   ├── DisplayState.ts # 显示状态管理
 │   │   └── SmartAnimate.ts # 状态间差异过渡
 │   │
+│   ├── idFactory.ts        # 统一 ID 生成工厂
+│   │
 │   └── state/              # 交互逻辑
-│       ├── types.ts        # 状态机类型
 │       ├── VariableManager.ts  # 逻辑变量
-│       ├── PatchRuntime.ts # Patch 执行引擎
-│       └── SugarPresets.ts # 交互预设模板
+│       ├── PatchRuntime.ts     # Patch 执行引擎 (Map 索引 + 定时器管理)
+│       ├── PatchDefs.ts        # 节点端口定义 + 工厂
+│       ├── BehaviorManager.ts  # Behavior 节点生命周期管理
+│       └── SugarPresets.ts     # 交互预设模板
 │
 ├── renderer/               # 渲染器抽象
 │   ├── types.ts            # Renderer 接口

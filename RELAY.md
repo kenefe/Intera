@@ -344,14 +344,18 @@ git commit -m "fix: {修复了什么摩擦点}"
 | **手势** | `gesture/SpeedTracker.ts` | 速度追踪 (惯性用) |
 | | `gesture/GestureEngine.ts` | 原始触控事件处理 |
 | | `gesture/DragEngine.ts` | 拖拽 + 橡皮筋 + 惯性 + 吸附 |
-| **场景** | `scene/types.ts` | 全部数据类型定义 |
+| **场景** | `scene/types.ts` | 类型 barrel (re-export SceneTypes + PatchTypes) |
+| | `scene/SceneTypes.ts` | 图层/状态/曲线类型定义 |
+| | `scene/PatchTypes.ts` | Patch 节点 discriminated union 类型 |
 | | `scene/SceneGraph.ts` | 图层树 CRUD |
 | | `scene/DisplayState.ts` | 显示状态 + override 管理 |
 | | `scene/SmartAnimate.ts` | 状态差异 → folme.to() 调用 |
 | **交互** | `state/VariableManager.ts` | 逻辑变量 get/set/toggle |
-| | `state/PatchRuntime.ts` | Patch 图执行引擎 |
-| | `state/PatchDefs.ts` | Patch 节点定义 |
+| | `state/PatchRuntime.ts` | Patch 图执行引擎 (Map 索引 + 定时器管理) |
+| | `state/PatchDefs.ts` | Patch 节点端口定义 + 工厂 |
+| | `state/BehaviorManager.ts` | Behavior 节点生命周期 (create/destroy) |
 | | `state/SugarPresets.ts` | 一键预设 |
+| **基础** | `idFactory.ts` | 统一 ID 生成工厂 |
 | **导出** | `export/CSSExporter.ts` | 独立 HTML 导出 (内嵌弹簧引擎) |
 | | `export/LottieExporter.ts` | Lottie JSON |
 | | `export/VideoExporter.ts` | WebM 视频 (Canvas2D + MediaRecorder) |

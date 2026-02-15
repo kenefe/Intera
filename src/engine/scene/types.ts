@@ -22,6 +22,7 @@ export type {
   TouchConfig, DragConfig, ScrollConfig, TimerConfig, VarChangeConfig,
   ConditionConfig, ToggleVarConfig, DelayConfig, CounterConfig,
   ToConfig, SetToConfig, SetVarConfig,
+  BehaviorDragConfig, BehaviorScrollConfig,
   Patch, PatchConnection,
 } from './PatchTypes'
 export { narrowPatch } from './PatchTypes'

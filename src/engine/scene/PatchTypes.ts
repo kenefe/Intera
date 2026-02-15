@@ -12,6 +12,7 @@ export type PatchType =
   | 'timer' | 'variableChange'
   | 'condition' | 'toggleVariable' | 'delay' | 'counter'
   | 'to' | 'setTo' | 'setVariable'
+  | 'behaviorDrag' | 'behaviorScroll'
 
 export interface PatchPort {
   id: string
@@ -34,11 +35,31 @@ export interface ToConfig { type: 'to'; groupId?: string; stateId?: string }
 export interface SetToConfig { type: 'setTo'; groupId?: string; stateId?: string }
 export interface SetVarConfig { type: 'setVariable'; variableId?: string; value?: VariableValue }
 
+// ── Behavior 节点 config ──
+
+export interface BehaviorDragConfig {
+  type: 'behaviorDrag'
+  layerId?: string
+  axis?: 'x' | 'y' | 'both'
+  range?: [number, number]
+  snapPoints?: number[]
+}
+
+export interface BehaviorScrollConfig {
+  type: 'behaviorScroll'
+  layerId?: string
+  axis?: 'x' | 'y' | 'both'
+  range?: [number, number]
+  overscroll?: boolean
+  snapPoints?: number[]
+}
+
 export type PatchConfig =
   | TouchConfig | DragConfig | ScrollConfig
   | TimerConfig | VarChangeConfig
   | ConditionConfig | ToggleVarConfig | DelayConfig | CounterConfig
   | ToConfig | SetToConfig | SetVarConfig
+  | BehaviorDragConfig | BehaviorScrollConfig
 
 export type ConfigFor<T extends PatchType> =
   T extends 'touch' ? TouchConfig :
@@ -53,6 +74,8 @@ export type ConfigFor<T extends PatchType> =
   T extends 'to' ? ToConfig :
   T extends 'setTo' ? SetToConfig :
   T extends 'setVariable' ? SetVarConfig :
+  T extends 'behaviorDrag' ? BehaviorDragConfig :
+  T extends 'behaviorScroll' ? BehaviorScrollConfig :
   never
 
 // ── Patch 节点 ──

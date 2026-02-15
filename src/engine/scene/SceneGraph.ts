@@ -5,21 +5,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import type { Layer, LayerType, AnimatableProps, LayoutProps } from './types'
-
-// ── ID 生成 ──
-
-let nextId = 1
-function generateId(): string { return `layer_${nextId++}` }
-
-/** 将 ID 计数器推进到已有图层 ID 的最大值之后，避免碰撞 */
-function syncIdCounter(layers: Record<string, unknown>): void {
-  let max = 0
-  for (const id of Object.keys(layers)) {
-    const m = id.match(/^layer_(\d+)$/)
-    if (m) max = Math.max(max, +m[1])
-  }
-  if (max >= nextId) nextId = max + 1
-}
+import { makeId, syncIdCounter } from '../idFactory'
 
 // ── 默认值工厂 ──
 
@@ -53,7 +39,7 @@ export class SceneGraph {
   }
 
   /** 同步 ID 计数器 — 项目加载后必须调用 */
-  syncIdCounter(): void { syncIdCounter(this.map) }
+  syncIdCounter(): void { syncIdCounter(Object.keys(this.map)) }
 
   // ── 查询 ──
 
@@ -94,7 +80,7 @@ export class SceneGraph {
 
   /** 创建并添加图层 */
   add(type: LayerType, parentId: string | null = null, index?: number, name?: string): Layer {
-    const id = generateId()
+    const id = makeId('layer')
     const layer: Layer = {
       id, name: name ?? `${type}_${id}`, type,
       parentId: null, childrenIds: [], visible: true, locked: false,
