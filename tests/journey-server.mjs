@@ -206,8 +206,11 @@ const ACTIONS = {
   hover:      async ({ x, y }) => page.mouse.move(x, y),
   drag:       async ({ x1, y1, x2, y2, steps = 10 }) => {
     await page.mouse.move(x1, y1)
+    await page.waitForTimeout(80)
     await page.mouse.down()
+    await page.waitForTimeout(80)
     await page.mouse.move(x2, y2, { steps })
+    await page.waitForTimeout(80)
     await page.mouse.up()
   },
   press:      async ({ key }) => page.keyboard.press(key),
