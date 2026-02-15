@@ -75,3 +75,114 @@ function onToggleStroke(): void {
   emit('editEnd')
 }
 </script>
+
+<style scoped>
+/* ── 外观区统一样式 ── */
+
+.prop-group { margin-bottom: 12px; }
+.prop-label { font-size: 10px; opacity: 0.4; margin-bottom: 6px; letter-spacing: 0.5px; }
+.prop-row { display: flex; gap: 6px; margin-bottom: 4px; }
+
+.prop-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 3px 6px;
+  transition: border-color 0.12s, background 0.12s;
+}
+.prop-field:hover { border-color: rgba(255, 255, 255, 0.2); }
+.prop-field:focus-within { border-color: rgba(136, 136, 255, 0.5); background: rgba(255, 255, 255, 0.1); }
+.prop-field.overridden { border-color: rgba(255, 152, 0, 0.4); background: rgba(255, 152, 0, 0.05); }
+
+.label {
+  font-size: 10px;
+  opacity: 0.45;
+  min-width: 32px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.unit { font-size: 9px; opacity: 0.35; flex-shrink: 0; }
+
+.input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  width: 100%;
+  outline: none;
+  padding: 4px 0;
+  min-width: 0;
+  -moz-appearance: textfield;
+}
+.input::-webkit-inner-spin-button,
+.input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.color-input {
+  width: 100%;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  transition: border-color 0.12s;
+  flex: 1;
+}
+.color-input:hover { border-color: rgba(136, 136, 255, 0.4); }
+
+/* ── 描边行 ── */
+
+.stroke-toggle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: #8888ff;
+  cursor: pointer;
+  margin: 0;
+}
+
+.stroke-color {
+  flex: 1;
+  min-width: 0;
+}
+
+.stroke-off {
+  font-size: 11px;
+  opacity: 0.3;
+  flex: 1;
+}
+
+/* ── 重置按钮 ── */
+
+.btn-reset {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 3px;
+  background: rgba(255, 152, 0, 0.15);
+  color: #ffb74d;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.1s;
+  padding: 0;
+}
+.btn-reset:hover { background: rgba(255, 152, 0, 0.35); }
+</style>

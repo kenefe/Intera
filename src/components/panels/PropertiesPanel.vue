@@ -268,7 +268,7 @@ function onEditEnd(): void { snapped = false }
   border-color: rgba(255, 152, 0, 0.6);
 }
 
-.label { font-size: 10px; opacity: 0.45; min-width: 14px; flex-shrink: 0; }
+.label { font-size: 10px; opacity: 0.45; min-width: 32px; flex-shrink: 0; white-space: nowrap; }
 
 .unit {
   font-size: 9px;
