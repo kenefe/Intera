@@ -77,6 +77,7 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-15 | states+curves R2 | 曲线面板元素缺少语义属性，自动化工具无法检测 slider/数值 (P3) | — | 🔴 |
 | 2026-02-15 | states+curves R2 | Range slider 无法直接输入精确数值，只能拖拽 (P3) | — | 🔴 |
 | 2026-02-15 | states+patch R3→R4 | Patch 端口拖线失败 — 根因是 journey-server drag 缺少 80ms 延时，非产品 bug | journey-server.mjs drag 添加 80ms waitForTimeout | 🟢 |
+| 2026-02-15 | drag-card | Drag 行为不工作 — BehaviorManager 创建 DragEngine 但未绑定 DOM 指针事件，usePreviewGesture 无 Drag 感知 (P0) | BehaviorManager 暴露 engine+layerId + findByLayer(); usePreviewGesture 检测 behaviorDrag 并喂 begin/tick/end; PreviewPanel 添加 pointer capture; PatchRuntime.rebuild() 重建行为实例; patch store 变更后调用 rebuild() | 🟢 |
 
 ### 待优化 (旅途探索发现 · 非阻塞)
 
@@ -138,3 +139,4 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-14 | **DOMRenderer.captureFrame() 空壳** (P2) | Renderer 接口标为 `captureFrame?()` (optional); DOMRenderer 移除空壳实现 |
 | 2026-02-14 | **变量无独立管理面板** (P2) | `PatchVarPanel.vue` — Patch 画布右侧可折叠变量面板，支持增删改名/类型/默认值; `patch.ts` 新增 `updateVariable()`; `App.vue` 添加 `.patch-row` 布局 |
 | 2026-02-13 | `CanvasViewport.vue:84` 编译错误 — `up(e)` 传了多余参数 | 改为 `up()` |
+| 2026-02-15 | **Drag 行为不工作** (P0) — BehaviorManager 创建 DragEngine 但未绑定 DOM 指针事件 | BehaviorManager 暴露 engine+layerId + findByLayer(); usePreviewGesture 检测 behaviorDrag 喂 begin/tick/end + scale 补偿; PreviewPanel pointer capture; PatchRuntime.rebuild() 重建行为; patch store 变更后 rebuild() |
