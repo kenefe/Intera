@@ -11,10 +11,11 @@
 
 ---
 
-## Phase 1: 动画引擎 (Folme 移植)
+## Phase 1: 动画引擎 (Folme 移植) ✅
 
 > 目标：纯 TS 引擎，零 UI 依赖，可独立测试。
 > 参考源码：`reference/folme/`
+> **状态：全部完成。** Timeline, Spring/Friction/Immediate, IEasing, Ani, AniRequest, FolmeManager, FolmeEase 均已实现。
 
 ### Task 1.1: Timeline 全局动画循环
 - **文件**: `src/engine/folme/Timeline.ts`
@@ -66,10 +67,11 @@
 
 ---
 
-## Phase 2: 手势引擎 + 拖拽系统
+## Phase 2: 手势引擎 + 拖拽系统 ✅
 
 > 目标：完整的手势检测和拖拽交互。
 > 参考源码：`reference/MouseAction.as`, `reference/folme/FolmeDrag.as`
+> **状态：全部完成。** SpeedTracker, GestureEngine, DragEngine 均已实现。BehaviorDrag 已绑定 PreviewPanel 指针事件。
 
 ### Task 2.1: SpeedTracker 速度追踪
 - **文件**: `src/engine/gesture/SpeedTracker.ts`
@@ -93,9 +95,10 @@
 
 ---
 
-## Phase 3: 场景图 + Store
+## Phase 3: 场景图 + Store ✅
 
 > 目标：图层树数据结构 + Pinia Store
+> **状态：全部完成。** SceneGraph, DisplayState, Project/Canvas/Editor Store 均已实现。Undo/Redo 已有。
 
 ### Task 3.1: SceneGraph 图层操作
 - **文件**: `src/engine/scene/SceneGraph.ts`
@@ -125,9 +128,10 @@
 
 ---
 
-## Phase 4: DOM 渲染器 + 画布
+## Phase 4: DOM 渲染器 + 画布 ✅
 
 > 目标：画布上能看到图层，能缩放平移
+> **状态：全部完成。** DOMRenderer, CanvasViewport (zoom/pan), ArtboardGrid (多状态行布局), App 三栏布局均已实现。
 
 ### Task 4.1: DOMRenderer 实现
 - **文件**: `src/renderer/DOMRenderer.ts`
@@ -152,9 +156,10 @@
 
 ---
 
-## Phase 5: 设计工具基础
+## Phase 5: 设计工具基础 ✅
 
 > 目标：能在画布上画基本图形
+> **状态：全部完成。** 选择/拖拽、矩形/椭圆/文本绘制、属性面板、图层面板（含重命名）均已实现。
 
 ### Task 5.1: 图层选择与拖拽
 - **文件**: `src/composables/useLayerInteraction.ts`
@@ -178,9 +183,10 @@
 
 ---
 
-## Phase 6: 显示状态 + 动画
+## Phase 6: 显示状态 + 动画 ✅
 
 > 目标：多关键帧 + 状态切换 + 弹簧动画
+> **状态：全部完成。** StateBar, KeyPropertyPanel, SmartAnimate (folme 弹簧过渡), CurvePanel (三级覆盖 + 精确数值输入), delay 编排均已实现。
 
 ### Task 6.1: 显示状态 UI (状态栏)
 - **文件**: `src/components/canvas/StateBar.vue`
@@ -210,9 +216,10 @@
 
 ---
 
-## Phase 7: 交互逻辑 (Patch 编辑器)
+## Phase 7: 交互逻辑 (Patch 编辑器) ✅
 
 > 目标：可视化定义交互触发和逻辑
+> **状态：全部完成。** VariableManager, PatchRuntime, PatchNode/PatchCanvas (含拖线连接), Touch/Drag/Scroll 触发器, Toggle/Condition/To/SetTo/SetVariable 节点均已实现。PatchDefs defaultConfig 已修复。
 
 ### Task 7.1: 变量系统 (逻辑状态)
 - **文件**: `src/engine/state/VariableManager.ts`
@@ -244,9 +251,10 @@
 
 ---
 
-## Phase 8: 预览模式
+## Phase 8: 预览模式 ✅
 
 > 目标：可交互的实时预览
+> **状态：全部完成。** PreviewPanel 实时预览、usePreviewGesture 手势绑定、PatchRuntime 触发链路、DOMRenderer 渲染均已实现。Toggle 双向弹簧动画已验证。
 
 ### Task 8.1: 预览模式切换
 - **文件**: `src/components/canvas/PreviewMode.vue`
@@ -260,7 +268,9 @@
 
 ---
 
-## Phase 9: 导出
+## Phase 9: 导出 ⏳
+
+> **状态：未开始。** Export 对话框 UI 已有，但实际导出逻辑待实现。
 
 ### Task 9.1: CSS/JS 代码导出
 ### Task 9.2: Lottie JSON 导出
@@ -268,7 +278,15 @@
 
 ---
 
-## Phase 10: 打磨
+## Phase 10: 打磨 🔧 进行中
+
+> **状态：持续打磨中。**
+> - ✅ 快捷键系统 (R/O/T/V/Esc + Ctrl+S/Z/O + 方向键微调)
+> - ✅ 撤销/重做 (Undo/Redo)
+> - ✅ 项目保存/加载 (localStorage + File System Access API)
+> - ⏳ 性能优化 (待评估)
+> - ✅ BDD 54/54 + Persona 6/6 全部通过
+> - 详见 `docs/KNOWN-ISSUES.md` 剩余 11 项 open issues
 
 ### Task 10.1: 快捷键系统
 ### Task 10.2: 撤销/重做 (Undo/Redo)
