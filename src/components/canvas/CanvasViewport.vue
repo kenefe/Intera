@@ -95,7 +95,7 @@ function onPointerMove(e: PointerEvent): void {
 
 function onPointerUp(e: PointerEvent): void {
   panning = false
-  interaction.up(); draw.up(); text.up()
+  interaction.up(); draw.up(e); text.up()
 }
 
 // ── 初始适配 — 画板缩放+居中至可视区域 ──

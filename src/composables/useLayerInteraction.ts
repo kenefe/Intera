@@ -12,8 +12,30 @@ import { useProjectStore } from '@store/project'
 // ── DOM 查找 ──
 
 function findLayerId(e: PointerEvent): string | null {
+  // 优先用 DOM 命中 (最上层 z-index)
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-layer-id]')
   return el?.dataset.layerId ?? null
+}
+
+/**
+ * 几何命中测试: 从最上层往下找包含坐标的图层
+ * 用于 Alt+Click 穿透选择下层图层
+ */
+function geoHitTest(
+  x: number, y: number,
+  layers: Record<string, { props: { x: number; y: number; width: number; height: number }; parentId?: string | null }>,
+  order: string[],
+  skipIds: Set<string>,
+): string | null {
+  // 从后往前 (后绘制 = 上层)
+  for (let i = order.length - 1; i >= 0; i--) {
+    const id = order[i]
+    if (skipIds.has(id)) continue
+    const p = layers[id]?.props
+    if (!p) continue
+    if (x >= p.x && x < p.x + p.width && y >= p.y && y < p.y + p.height) return id
+  }
+  return null
 }
 
 function findStateId(e: PointerEvent): string | null {
@@ -62,7 +84,22 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
       group.activeDisplayStateId = clickedStateId
     }
 
-    const id = findLayerId(e)
+    let id = findLayerId(e)
+
+    // Alt+Click → 穿透选择: 跳过当前选中图层，命中下层
+    if (e.altKey && id && canvas.selectedLayerIds.includes(id)) {
+      const frame = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
+      if (frame) {
+        const r = frame.getBoundingClientRect()
+        const z = canvas.zoom
+        const lx = (e.clientX - r.left) / z
+        const ly = (e.clientY - r.top) / z
+        const skip = new Set(canvas.selectedLayerIds)
+        const deeper = geoHitTest(lx, ly, project.project.layers, project.project.rootLayerIds, skip)
+        if (deeper) id = deeper
+      }
+    }
+
     if (!id) { canvas.clearSelection(); return }
 
     // ── 选区逻辑 ──

@@ -13,9 +13,8 @@
     //- ── 布局 (仅容器类型) ──
     PropLayoutGroup(v-if="isFrameLayer" :layer="layer" :ensureSnapshot="ensureSnapshot" @editEnd="onEditEnd")
 
-    //- ── 位置 ──
-    .prop-group
-      .prop-label 位置
+    //- ── 位置 + 尺寸 (可折叠) ──
+    CollapsibleGroup(title="位置 / 尺寸")
       .prop-row
         .prop-field(:class="{ overridden: has('x') }")
           span.label X
@@ -25,10 +24,6 @@
           span.label Y
           input.input(type="number" :value="dpx(resolved.y)" step="1" @change="e => set({ y: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('y')" @click.stop="reset('y')" title="重置为基础值") ↺
-
-    //- ── 尺寸 ──
-    .prop-group
-      .prop-label 尺寸
       .prop-row
         .prop-field(:class="{ overridden: has('width') }")
           span.label W
@@ -39,9 +34,8 @@
           input.input(type="number" :value="dpx(resolved.height)" step="1" @change="e => set({ height: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('height')" @click.stop="reset('height')" title="重置为基础值") ↺
 
-    //- ── 变换 ──
-    .prop-group
-      .prop-label 变换
+    //- ── 变换 (可折叠，默认收起) ──
+    CollapsibleGroup(title="变换" :collapsed="true")
       .prop-row
         .prop-field(:class="{ overridden: has('rotation') }")
           span.label 旋转
@@ -87,6 +81,7 @@ import { useProjectStore } from '@store/project'
 import PropTextGroup from './PropTextGroup.vue'
 import PropLayoutGroup from './PropLayoutGroup.vue'
 import PropAppearanceGroup from './PropAppearanceGroup.vue'
+import CollapsibleGroup from './CollapsibleGroup.vue'
 
 const canvas = useCanvasStore()
 const store = useProjectStore()

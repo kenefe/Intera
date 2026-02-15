@@ -124,8 +124,12 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
     })
   }
 
-  function up(): void {
+  /** 记录最后一次 pointerup 是否按住 Shift (由外部传入) */
+  let keepTool = false
+
+  function up(e?: PointerEvent): void {
     if (!drawId) return
+    keepTool = !!e?.shiftKey
     // ── 点击(未拖拽) → 赋予默认尺寸，居中于点击位置 ──
     const layer = project.project.layers[drawId]
     if (layer && layer.props.width < CLICK_THRESHOLD && layer.props.height < CLICK_THRESHOLD) {
@@ -137,7 +141,8 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
         height: size.h,
       })
     }
-    editor.setTool('select')
+    // Shift 松手 → 保持当前绘制工具，方便连续绘制
+    if (!keepTool) editor.setTool('select')
     drawId = null
     drawFrame = null
     targetParentId = null

@@ -9,18 +9,17 @@
   .prop-row
     .prop-field(:class="{ overridden: has('fill') }")
       span.label 填充
-      input.color-input(type="color" :value="resolved.fill" @input="e => set({ fill: str(e) })" @change="$emit('editEnd')")
+      ColorPicker(:modelValue="resolved.fill" @update:modelValue="v => set({ fill: v })" @change="$emit('editEnd')")
       button.btn-reset(v-if="has('fill')" @click.stop="reset('fill')" title="重置为基础值") ↺
   .prop-row
     .prop-field(:class="{ overridden: has('stroke') || has('strokeWidth') }")
       span.label 描边
       label.stroke-toggle
         input.checkbox(type="checkbox" :checked="strokeEnabled" @change="onToggleStroke")
-      input.color-input.stroke-color(
+      ColorPicker(
         v-if="strokeEnabled"
-        type="color"
-        :value="resolved.stroke === 'none' ? '#000000' : resolved.stroke"
-        @input="e => set({ stroke: str(e) })"
+        :modelValue="resolved.stroke === 'none' ? '#000000' : resolved.stroke"
+        @update:modelValue="v => set({ stroke: v })"
         @change="$emit('editEnd')"
       )
       span.stroke-off(v-else) 无
@@ -40,6 +39,7 @@
 // 外观属性编辑子组件 (透明度/填充/描边/圆角)
 import { computed } from 'vue'
 import type { AnimatableProps } from '@engine/scene/types'
+import ColorPicker from './ColorPicker.vue'
 
 const props = defineProps<{
   resolved: AnimatableProps
@@ -59,8 +59,6 @@ function has(prop: keyof AnimatableProps): boolean {
 function num(e: Event): number { return parseFloat((e.target as HTMLInputElement).value) || 0 }
 function px(e: Event): number { return Math.round(num(e)) }
 function dpx(v: number | undefined): number { return Math.round(v ?? 0) }
-function str(e: Event): string { return (e.target as HTMLInputElement).value }
-
 const strokeEnabled = computed(() =>
   props.resolved.stroke !== 'none' && props.resolved.strokeWidth > 0,
 )
@@ -126,18 +124,6 @@ function onToggleStroke(): void {
   -webkit-appearance: none;
   margin: 0;
 }
-
-.color-input {
-  width: 100%;
-  height: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  background: none;
-  cursor: pointer;
-  transition: border-color 0.12s;
-  flex: 1;
-}
-.color-input:hover { border-color: rgba(136, 136, 255, 0.4); }
 
 /* ── 描边行 ── */
 
