@@ -282,6 +282,27 @@ PatchRuntime 执行触发器
     └─▶ 直接 FolmeManager.to()  ← 不经过逻辑状态 (mouseDown 反馈等)
 ```
 
+### 预览时 (Behavior 拖拽链路)
+
+```
+PreviewPanel pointer events (down/move/up)
+    │
+    ▼
+usePreviewGesture.layerIdFrom(e)  ← e.target.closest('[data-layer-id]')
+    │
+    ▼
+BehaviorManager.findByLayer(layerId)  ← 实时读取 PatchDefs config (不缓存)
+    │
+    ▼
+DragEngine.begin/tick/end  ← 跟手 + 惯性
+    │
+    ▼
+projectStore.liveValues[layerId]  ← 实时位置
+    │
+    ▼
+DOMRenderer watchEffect  ← 每帧渲染
+```
+
 ---
 
 ## 关键设计决策
