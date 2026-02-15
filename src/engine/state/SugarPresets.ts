@@ -53,9 +53,9 @@ export function buttonFeedback(
   states.setOverride(pressed.id, layerId, { scaleX: 0.95, scaleY: 0.95, opacity: 0.9 })
 
   // 创建节点
-  const touch     = createPatch('touch', { x: 0, y: 0 },     { layerId },                  'Touch')
-  const toPressed = createPatch('to',    { x: 260, y: 0 },   { groupId, stateId: pressed.id }, '按下')
-  const toDefault = createPatch('to',    { x: 260, y: 120 }, { groupId, stateId: defaultId },  '恢复')
+  const touch     = createPatch('touch', { x: 0, y: 0 },     { layerId },                         'Touch')
+  const toPressed = createPatch('to',    { x: 260, y: 0 },   { groupId, stateId: pressed.id },    '按下')
+  const toDefault = createPatch('to',    { x: 260, y: 120 }, { groupId, stateId: defaultId },     '恢复')
   patches.push(touch, toPressed, toDefault)
 
   // 连线
@@ -88,11 +88,11 @@ export function toggleExpand(
   states.setOverride(expanded.id, layerId, { height: 400, opacity: 1 })
 
   // 节点
-  const touch   = createPatch('touch',          { x: 0, y: 0 },     { layerId },                         'Touch')
-  const toggle  = createPatch('toggleVariable',  { x: 260, y: 0 },   { variableId: varId },               'Toggle')
-  const cond    = createPatch('condition',        { x: 520, y: 0 },   { variableId: varId, compareValue: true }, '展开?')
-  const toExp   = createPatch('to',              { x: 780, y: 0 },   { groupId, stateId: expanded.id },   '展开')
-  const toCol   = createPatch('to',              { x: 780, y: 120 }, { groupId, stateId: collapsedId },   '收起')
+  const touch   = createPatch('touch',          { x: 0, y: 0 },     { layerId },                                'Touch')
+  const toggle  = createPatch('toggleVariable',  { x: 260, y: 0 },   { variableId: varId },                      'Toggle')
+  const cond    = createPatch('condition',        { x: 520, y: 0 },   { variableId: varId, compareValue: true },  '展开?')
+  const toExp   = createPatch('to',              { x: 780, y: 0 },   { groupId, stateId: expanded.id },          '展开')
+  const toCol   = createPatch('to',              { x: 780, y: 120 }, { groupId, stateId: collapsedId },          '收起')
   patches.push(touch, toggle, cond, toExp, toCol)
 
   // 连线

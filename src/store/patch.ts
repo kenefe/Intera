@@ -5,7 +5,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { defineStore } from 'pinia'
-import type { PatchType, Vec2, Patch, PatchConnection, Variable, VariableValue } from '../engine/scene/types'
+import type { PatchType, Vec2, Patch, PatchConnection, Variable, VariableValue, ConfigFor } from '../engine/scene/types'
 import { VariableManager } from '../engine/state/VariableManager'
 import { PatchRuntime } from '../engine/state/PatchRuntime'
 import { createPatch } from '../engine/state/PatchDefs'
@@ -50,7 +50,11 @@ export const usePatchStore = defineStore('patch', () => {
 
   // ── Patch CRUD ──
 
-  function addPatchNode(type: PatchType, pos: Vec2, config?: Record<string, unknown>, name?: string): Patch {
+  function addPatchNode<T extends PatchType>(
+    type: T, pos: Vec2,
+    config?: Partial<Omit<ConfigFor<T>, 'type'>>,
+    name?: string,
+  ): Patch {
     project.snapshot()
     const patch = createPatch(type, pos, config, name)
     p.patches.push(patch)

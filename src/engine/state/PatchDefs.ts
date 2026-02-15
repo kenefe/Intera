@@ -3,7 +3,7 @@
 //  每种 PatchType 对应固定的输入/输出端口
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import type { PatchType, PatchPort, Patch, Vec2 } from '../scene/types'
+import type { PatchType, PatchPort, Patch, Vec2, PatchConfig, ConfigFor } from '../scene/types'
 
 // ── 端口模板 ──
 
@@ -59,20 +59,45 @@ export function patchCategory(type: PatchType): PatchCategory {
   return 'logic'
 }
 
-// ── 工厂 ──
+// ── 默认 config 工厂 ──
+
+function defaultConfig(type: PatchType): PatchConfig {
+  const map: Record<PatchType, () => PatchConfig> = {
+    touch:          () => ({ type: 'touch' }),
+    drag:           () => ({ type: 'drag' }),
+    scroll:         () => ({ type: 'scroll' }),
+    timer:          () => ({ type: 'timer' }),
+    variableChange: () => ({ type: 'variableChange' }),
+    condition:      () => ({ type: 'condition' }),
+    toggleVariable: () => ({ type: 'toggleVariable' }),
+    delay:          () => ({ type: 'delay' }),
+    counter:        () => ({ type: 'counter' }),
+    to:             () => ({ type: 'to' }),
+    setTo:          () => ({ type: 'setTo' }),
+    setVariable:    () => ({ type: 'setVariable' }),
+  }
+  return map[type]()
+}
+
+// ── 节点工厂 ──
 
 let nextId = 1
 
-export function createPatch(
-  type: PatchType, position: Vec2,
-  config: Record<string, unknown> = {}, name?: string,
+export function createPatch<T extends PatchType>(
+  type: T, position: Vec2,
+  config?: Partial<Omit<ConfigFor<T>, 'type'>>,
+  name?: string,
 ): Patch {
   const def = DEFS[type]
+  const base = defaultConfig(type)
+  const merged: PatchConfig = config
+    ? { ...base, ...config } as PatchConfig
+    : base
   return {
     id: `patch_${nextId++}`,
     type, name: name ?? type,
     position: { ...position },
-    config,
+    config: merged,
     inputs:  def.inputs.map(p => ({ ...p })),
     outputs: def.outputs.map(p => ({ ...p })),
   }

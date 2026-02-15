@@ -4,7 +4,11 @@
 //  trigger → logic → action 单向数据流
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import type { Patch, PatchConnection, VariableValue } from '../scene/types'
+import type {
+  Patch, PatchConnection, VariableValue,
+  ConditionConfig, ToggleVarConfig, SetVarConfig,
+  ToConfig, SetToConfig, DelayConfig, CounterConfig,
+} from '../scene/types'
 import type { VariableManager } from './VariableManager'
 
 type TransitionFn = (groupId: string, stateId: string) => void
@@ -43,50 +47,70 @@ export class PatchRuntime {
   /** 按图层事件触发匹配的 touch 节点 */
   triggerByLayer(layerId: string, event: string): void {
     for (const p of this.patches) {
-      if (p.type === 'touch' && p.config.layerId === layerId) this.fire(p.id, event)
+      if (p.type !== 'touch') continue
+      const cfg = p.config as { type: 'touch'; layerId?: string }
+      if (cfg.layerId === layerId) this.fire(p.id, event)
     }
   }
 
   /** 重置所有变量到默认值 */
   reset(): void { this.vars.reset() }
 
-  // ── 节点执行 (dispatch table) ──
+  // ── 节点执行 (类型安全 dispatch) ──
 
   private execute(patch: Patch): void {
-    const cfg = patch.config
-    const run: Record<string, () => void> = {
-      condition: () => {
-        const val = this.vars.get(cfg.variableId as string)
-        this.fire(patch.id, val === cfg.compareValue ? 'true' : 'false')
-      },
-      toggleVariable: () => {
-        this.vars.toggle(cfg.variableId as string)
+    switch (patch.config.type) {
+      case 'condition': {
+        const cfg = patch.config as ConditionConfig
+        const val = this.vars.get(cfg.variableId ?? '')
+        const port = val === cfg.compareValue ? 'true' : 'false'
+        this.fire(patch.id, port)
+        break
+      }
+      case 'toggleVariable': {
+        const cfg = patch.config as ToggleVarConfig
+        if (cfg.variableId) this.vars.toggle(cfg.variableId)
         this.fire(patch.id, 'out')
-      },
-      setVariable: () => {
-        this.vars.set(cfg.variableId as string, cfg.value as VariableValue)
+        break
+      }
+      case 'setVariable': {
+        const cfg = patch.config as SetVarConfig
+        if (cfg.variableId && cfg.value !== undefined)
+          this.vars.set(cfg.variableId, cfg.value)
         this.fire(patch.id, 'out')
-      },
-      to: () => {
-        this.onTransition(cfg.groupId as string, cfg.stateId as string)
+        break
+      }
+      case 'to': {
+        const cfg = patch.config as ToConfig
+        if (cfg.groupId && cfg.stateId)
+          this.onTransition(cfg.groupId, cfg.stateId)
         this.fire(patch.id, 'done')
-      },
-      setTo: () => {
-        this.onSetTo(cfg.groupId as string, cfg.stateId as string)
+        break
+      }
+      case 'setTo': {
+        const cfg = patch.config as SetToConfig
+        if (cfg.groupId && cfg.stateId)
+          this.onSetTo(cfg.groupId, cfg.stateId)
         this.fire(patch.id, 'done')
-      },
-      delay: () => {
-        const ms = (cfg.duration as number) ?? 1000
+        break
+      }
+      case 'delay': {
+        const cfg = patch.config as DelayConfig
+        const ms = cfg.duration ?? 1000
         setTimeout(() => this.fire(patch.id, 'out'), ms)
-      },
-      counter: () => {
-        const cur = this.vars.get(cfg.variableId as string)
-        if (typeof cur === 'number') {
-          this.vars.set(cfg.variableId as string, cur + ((cfg.step as number) ?? 1))
+        break
+      }
+      case 'counter': {
+        const cfg = patch.config as CounterConfig
+        if (cfg.variableId) {
+          const cur = this.vars.get(cfg.variableId)
+          if (typeof cur === 'number')
+            this.vars.set(cfg.variableId, cur + (cfg.step ?? 1))
         }
         this.fire(patch.id, 'out')
-      },
+        break
+      }
+      default: break
     }
-    run[patch.type]?.()
   }
 }

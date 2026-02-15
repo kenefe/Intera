@@ -61,16 +61,18 @@ function buildInteractionJS(project: Project): string {
   const lines: string[] = []
   for (const p of project.patches) {
     if (p.type !== 'touch') continue
-    const lid = p.config.layerId as string | undefined
-    if (!lid) continue
+    const cfg = p.config
+    if (cfg.type !== 'touch' || !cfg.layerId) continue
+    const lid = cfg.layerId
     // 找连线: down/up/tap → to 节点
     for (const port of ['down', 'up', 'tap']) {
       const conn = project.connections.find(c => c.fromPatchId === p.id && c.fromPortId === port)
       if (!conn) continue
       const target = project.patches.find(n => n.id === conn.toPatchId)
       if (!target || target.type !== 'to') continue
-      const stateId = target.config.stateId as string | undefined
-      if (!stateId) continue
+      const tCfg = target.config
+      if (tCfg.type !== 'to' || !tCfg.stateId) continue
+      const stateId = tCfg.stateId
       const props = resolveProps(project, stateId, lid)
       const ev = port === 'down' ? 'pointerdown' : port === 'up' ? 'pointerup' : 'click'
       const from = numericObj(resolveProps(project, project.stateGroups[0]?.displayStates[0]?.id ?? '', lid))

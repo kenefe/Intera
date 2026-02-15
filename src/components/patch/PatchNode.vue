@@ -33,10 +33,10 @@
       .cfg-row
         .cfg-label 图层
         select.cfg-select(@change="onLayerPick")
-          option(value="" :selected="!patch.config.layerId") 选择…
+          option(value="" :selected="!cfgLayerId") 选择…
           option(
             v-for="l in layers" :key="l.id" :value="l.id"
-            :selected="patch.config.layerId === l.id"
+            :selected="cfgLayerId === l.id"
           ) {{ l.name }}
 
     //- To / SetTo → 状态选择
@@ -44,10 +44,10 @@
       .cfg-row
         .cfg-label 状态
         select.cfg-select(@change="onStatePick")
-          option(value="" :selected="!patch.config.stateId") 选择…
+          option(value="" :selected="!cfgStateId") 选择…
           option(
             v-for="s in states" :key="s.id" :value="s.id"
-            :selected="patch.config.stateId === s.id"
+            :selected="cfgStateId === s.id"
           ) {{ s.name }}
 
     //- Delay → 延迟时长
@@ -56,7 +56,7 @@
         .cfg-label 延迟
         input.cfg-input(
           type="number" min="0" step="100"
-          :value="patch.config.duration ?? 1000"
+          :value="cfgDuration ?? 1000"
           @change="onDelayChange"
         )
         .cfg-unit ms
@@ -66,16 +66,16 @@
       .cfg-row
         .cfg-label 变量
         select.cfg-select(@change="onVarPick")
-          option(value="" :selected="!patch.config.variableId") 选择…
+          option(value="" :selected="!cfgVariableId") 选择…
           option(
             v-for="v in vars" :key="v.id" :value="v.id"
-            :selected="patch.config.variableId === v.id"
+            :selected="cfgVariableId === v.id"
           ) {{ v.name }}
         button.cfg-add(@click="onAddVar" title="新建变量") +
       .cfg-row
         .cfg-label 等于
         input.cfg-input(
-          :value="String(patch.config.compareValue ?? '')"
+          :value="String(cfgCompareValue ?? '')"
           @change="onCompareChange"
         )
 
@@ -84,10 +84,10 @@
       .cfg-row
         .cfg-label 变量
         select.cfg-select(@change="onVarPick")
-          option(value="" :selected="!patch.config.variableId") 选择…
+          option(value="" :selected="!cfgVariableId") 选择…
           option(
             v-for="v in vars" :key="v.id" :value="v.id"
-            :selected="patch.config.variableId === v.id"
+            :selected="cfgVariableId === v.id"
           ) {{ v.name }}
         button.cfg-add(@click="onAddVar" title="新建变量") +
 
@@ -96,16 +96,16 @@
       .cfg-row
         .cfg-label 变量
         select.cfg-select(@change="onVarPick")
-          option(value="" :selected="!patch.config.variableId") 选择…
+          option(value="" :selected="!cfgVariableId") 选择…
           option(
             v-for="v in vars" :key="v.id" :value="v.id"
-            :selected="patch.config.variableId === v.id"
+            :selected="cfgVariableId === v.id"
           ) {{ v.name }}
         button.cfg-add(@click="onAddVar" title="新建变量") +
       .cfg-row
         .cfg-label 值
         input.cfg-input(
-          :value="String(patch.config.value ?? '')"
+          :value="String(cfgValue ?? '')"
           @change="onValueChange"
         )
 </template>
@@ -117,7 +117,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { computed } from 'vue'
-import type { Patch } from '@engine/scene/types'
+import type { Patch, PatchConfig } from '@engine/scene/types'
 import { patchCategory } from '@engine/state/PatchDefs'
 import { useProjectStore } from '@store/project'
 import { usePatchStore } from '@store/patch'
@@ -133,6 +133,33 @@ const category = patchCategory(props.patch.type)
 
 const CONFIG_TYPES = ['touch', 'drag', 'to', 'setTo', 'delay', 'condition', 'toggleVariable', 'setVariable']
 const showConfig = CONFIG_TYPES.includes(props.patch.type)
+
+// ── 模板用 config 访问器 (避免 union 直接访问) ──
+
+const cfgLayerId = computed(() => {
+  const c = props.patch.config
+  return 'layerId' in c ? (c.layerId as string | undefined) : undefined
+})
+const cfgStateId = computed(() => {
+  const c = props.patch.config
+  return 'stateId' in c ? (c.stateId as string | undefined) : undefined
+})
+const cfgDuration = computed(() => {
+  const c = props.patch.config
+  return c.type === 'delay' ? c.duration : undefined
+})
+const cfgVariableId = computed(() => {
+  const c = props.patch.config
+  return 'variableId' in c ? (c.variableId as string | undefined) : undefined
+})
+const cfgCompareValue = computed(() => {
+  const c = props.patch.config
+  return c.type === 'condition' ? c.compareValue : undefined
+})
+const cfgValue = computed(() => {
+  const c = props.patch.config
+  return c.type === 'setVariable' ? c.value : undefined
+})
 
 // ── 数据源 ──
 
@@ -151,32 +178,35 @@ const vars = computed(() =>
 
 // ── 配置写入 (直接修改 reactive 数据) ──
 
-function cfg(): Record<string, unknown> | null {
+function cfg(): PatchConfig | null {
   return project.project.patches.find(p => p.id === props.patch.id)?.config ?? null
 }
 
 function onLayerPick(e: Event): void {
-  const c = cfg(); if (c) c.layerId = (e.target as HTMLSelectElement).value
+  const c = cfg()
+  if (c && ('layerId' in c)) c.layerId = (e.target as HTMLSelectElement).value
 }
 
 function onStatePick(e: Event): void {
   const c = cfg(); if (!c) return
-  c.stateId = (e.target as HTMLSelectElement).value
-  c.groupId = project.project.stateGroups[0]?.id
+  if ('stateId' in c) c.stateId = (e.target as HTMLSelectElement).value
+  if ('groupId' in c) c.groupId = project.project.stateGroups[0]?.id
 }
 
 function onDelayChange(e: Event): void {
-  const c = cfg(); if (c) c.duration = Number((e.target as HTMLInputElement).value) || 1000
+  const c = cfg()
+  if (c && c.type === 'delay') c.duration = Number((e.target as HTMLInputElement).value) || 1000
 }
 
 function onVarPick(e: Event): void {
-  const c = cfg(); if (c) c.variableId = (e.target as HTMLSelectElement).value
+  const c = cfg()
+  if (c && 'variableId' in c) c.variableId = (e.target as HTMLSelectElement).value
 }
 
 function onCompareChange(e: Event): void {
   const v = (e.target as HTMLInputElement).value
-  const c = cfg(); if (!c) return
-  // 尝试解析为布尔/数字, 否则字符串
+  const c = cfg()
+  if (!c || c.type !== 'condition') return
   if (v === 'true') c.compareValue = true
   else if (v === 'false') c.compareValue = false
   else if (!isNaN(Number(v)) && v !== '') c.compareValue = Number(v)
@@ -185,7 +215,8 @@ function onCompareChange(e: Event): void {
 
 function onValueChange(e: Event): void {
   const v = (e.target as HTMLInputElement).value
-  const c = cfg(); if (!c) return
+  const c = cfg()
+  if (!c || c.type !== 'setVariable') return
   if (v === 'true') c.value = true
   else if (v === 'false') c.value = false
   else if (!isNaN(Number(v)) && v !== '') c.value = Number(v)
@@ -198,7 +229,8 @@ function onAddVar(): void {
   const n = vars.value.length
   const name = n === 0 ? 'isToggled' : `isToggled_${n + 1}`
   const v = patchStore.addVariable(name, 'boolean', false)
-  const c = cfg(); if (c) c.variableId = v.id
+  const c = cfg()
+  if (c && 'variableId' in c) c.variableId = v.id
 }
 </script>
 
