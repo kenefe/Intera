@@ -363,6 +363,12 @@ git commit -m "fix: {修复了什么摩擦点}"
 **执行方式**: AI 在 commit message 末尾附加 `[F✓]` 标记表示已完成自审。
 缺少 `[F✓]` 的 commit 在 Flow G review 时会被标记为违规。
 
+**自动化强制执行** (git hooks):
+- `.githooks/pre-commit` — 检查三位一体（代码变更必须伴随 .spec.ts + .md）+ 文件行数限制
+- `.githooks/commit-msg` — 检查 commit message 包含 `[F✓]`
+- 安装: `git config core.hooksPath .githooks`
+- 紧急跳过: `git commit --no-verify`（仅紧急情况，Flow G 会追溯）
+
 ---
 
 ### 流程 G: 定期 Review (每 10 commits 或每轮 Flow E 后)

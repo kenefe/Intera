@@ -1,0 +1,30 @@
+#!/bin/bash
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Flow F commit-msg hook — 检查 [F✓] 标记
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MSG=$(cat "$1")
+
+# 纯 docs/journey commit 不强制要求 [F✓]
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
+HAS_CODE=false
+for f in $STAGED; do
+  case "$f" in
+    src/*.ts|src/*.vue) HAS_CODE=true ;;
+  esac
+done
+
+if [ "$HAS_CODE" = false ]; then
+  exit 0
+fi
+
+if ! echo "$MSG" | grep -q '\[F✓\]'; then
+  echo ""
+  echo "⚠ commit message 缺少 [F✓] 标记"
+  echo "  代码变更 commit 必须通过 Flow F 自审后附加 [F✓]"
+  echo "  用 git commit --no-verify 跳过 (仅紧急情况)"
+  echo ""
+  exit 1
+fi
+
+exit 0
