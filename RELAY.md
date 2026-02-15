@@ -467,12 +467,16 @@ Review 流程:
 | `panels/` | `PreviewPanel.vue` | 实时交互预览面板 (左栏常驻) |
 | | `LayerPanel.vue` | 图层树面板 |
 | | `LayerIcon.vue` | 图层类型图标 (矩形/椭圆/Frame/文本) |
-| | `PropertiesPanel.vue` | 属性检查器 |
+| | `PropertiesPanel.vue` | 属性检查器 (位置/尺寸/变换 + 子组件委托) |
+| | `PropTextGroup.vue` | 文本属性子组件 (字号/字体/字重/对齐) |
+| | `PropLayoutGroup.vue` | 布局属性子组件 (方向/间距，仅容器) |
+| | `PropAppearanceGroup.vue` | 外观属性子组件 (透明度/填充/描边/圆角) |
 | | `KeyPropertyPanel.vue` | 关键属性标记 |
 | | `CurvePanel.vue` | 曲线编辑 (三级覆盖) |
 | | `CurveEdit.vue` | 曲线可视化编辑 (slider + 精确数值输入) |
 | `patch/` | `PatchCanvas.vue` | Patch 编辑器画布 |
-| | `PatchNode.vue` | 单个 Patch 节点 |
+| | `PatchNode.vue` | 单个 Patch 节点 (端口+内联配置) |
+| | `patch-config.css` | 配置区共享样式 |
 | | `PatchVarPanel.vue` | 变量管理面板 (增删改名/类型/默认值，可折叠) |
 | 根级 | `ContextMenu.vue` | 右键菜单 |
 | | `ExportDialog.vue` | 导出对话框 |
