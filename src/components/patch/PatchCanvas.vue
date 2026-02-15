@@ -175,9 +175,24 @@ let wireFrom: { patchId: string; portId: string } | null = null
 const tempPath = ref<string | null>(null)
 
 function findPort(e: PointerEvent): { patchId: string; portId: string; dir: string } | null {
+  // 精确命中
   const dot = (e.target as HTMLElement).closest<HTMLElement>('.port-dot')
-  if (!dot?.dataset.patchId || !dot.dataset.portId || !dot.dataset.portDir) return null
-  return { patchId: dot.dataset.patchId, portId: dot.dataset.portId, dir: dot.dataset.portDir }
+  if (dot?.dataset.patchId && dot.dataset.portId && dot.dataset.portDir) {
+    return { patchId: dot.dataset.patchId, portId: dot.dataset.portId, dir: dot.dataset.portDir }
+  }
+  // 容差命中 — 24px 半径内最近的端口
+  const HIT = 24
+  const dots = canvasRef.value?.querySelectorAll<HTMLElement>('.port-dot')
+  if (!dots) return null
+  let best: HTMLElement | null = null, bestDist = HIT
+  for (const d of dots) {
+    const r = d.getBoundingClientRect()
+    const cx = r.x + r.width / 2, cy = r.y + r.height / 2
+    const dist = Math.hypot(e.clientX - cx, e.clientY - cy)
+    if (dist < bestDist) { bestDist = dist; best = d }
+  }
+  if (!best?.dataset.patchId || !best.dataset.portId || !best.dataset.portDir) return null
+  return { patchId: best.dataset.patchId, portId: best.dataset.portId, dir: best.dataset.portDir }
 }
 
 function findNode(e: PointerEvent): string | null {

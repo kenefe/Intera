@@ -708,4 +708,28 @@ test.describe('Feature: 综合集成', () => {
     expect(errors).toHaveLength(0)
     await page.screenshot({ path: 'tests/screenshots/11-stress.png' })
   })
+
+  test('保存后刷新页面，画布正确渲染恢复的图层', async ({ page }) => {
+    await load(page)
+    // 绘制矩形
+    await drawRect(page)
+    await expect(layerItems(page)).toHaveCount(1)
+    // 画布有渲染元素
+    const renderedBefore = page.locator('.artboard-frame [data-layer-id]')
+    await expect(renderedBefore).toHaveCount(1)
+    // Ctrl+S 保存
+    await page.keyboard.press('Control+s')
+    await page.waitForTimeout(200)
+    // 刷新页面
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    // 图层面板恢复
+    await expect(layerItems(page)).toHaveCount(1)
+    // 画布渲染恢复的图层 (回归: 修复 syncLayers 在 renderer 未挂载时的时序问题)
+    const renderedAfter = page.locator('.artboard-frame [data-layer-id]')
+    await expect(renderedAfter).toHaveCount(1)
+    const box = await renderedAfter.first().boundingBox()
+    expect(box).toBeTruthy()
+    expect(box!.width).toBeGreaterThan(0)
+  })
 })

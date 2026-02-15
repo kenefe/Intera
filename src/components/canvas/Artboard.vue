@@ -34,8 +34,11 @@ const frameStyle = computed(() => ({
 
 /** 已在 renderer 中创建的图层 ID 集合 */
 const rendered = new Set<string>()
+/** renderer 是否已挂载到 DOM */
+let mounted = false
 
 function syncLayers(): void {
+  if (!mounted) return
   const { layers, rootLayerIds } = store.project
   const stateId = props.displayState.id
   const allIds = new Set(Object.keys(layers))
@@ -73,12 +76,16 @@ function syncLayers(): void {
 // ── 生命周期 ──
 
 onMounted(() => {
-  if (frameRef.value) { renderer.mount(frameRef.value); syncLayers() }
+  if (frameRef.value) {
+    renderer.mount(frameRef.value)
+    mounted = true
+    syncLayers()
+  }
 })
 
-onUnmounted(() => renderer.destroy())
+onUnmounted(() => { mounted = false; renderer.destroy() })
 
-watch(() => store.project, syncLayers, { deep: true })
+watch(() => store.project, syncLayers, { deep: true, flush: 'post' })
 
 // ── 动画帧同步 (弹簧过渡时直接刷新 DOM) ──
 

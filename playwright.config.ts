@@ -15,6 +15,11 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
     screenshot: 'only-on-failure',
   },
+  webServer: {
+    command: `npx vite --port ${port}`,
+    port: Number(port),
+    reuseExistingServer: true,
+  },
   projects: [
     { name: 'chromium', use: { browserName: 'chromium' } },
   ],
