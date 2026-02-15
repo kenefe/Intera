@@ -326,6 +326,96 @@ git commit -m "fix: {修复了什么摩擦点}"
 
 ---
 
+### 流程 F: 提交自审 (每次 commit 前必做)
+
+> 每次 `git add` 之后、`git commit` 之前，逐项确认以下 checklist。
+> 任何一项未通过 → 先修再提交。不允许"先提交后补"。
+
+```
+自审 Checklist:
+
+□ 三位一体
+  - [ ] 代码改了 → 对应 BDD 测试有没有？(新功能=新测试, Bug修复=回归测试, 行为变更=更新断言)
+  - [ ] 文档需不需要更新？逐个检查:
+        UI-DESIGN.md    — UI/交互/快捷键变更
+        ARCHITECTURE.md — 数据流/模块/架构变更
+        RELAY.md        — 代码地图/BDD覆盖表/流程变更
+        KNOWN-ISSUES.md — Bug修复/新发现问题
+  - [ ] 代码+测试+文档在同一次 commit 中
+
+□ 编码铁律
+  - [ ] 纯 TS ≤ 200 行？Vue SFC ≤ 400 行？
+  - [ ] 函数 ≤ 20 行？缩进 ≤ 3 层？
+  - [ ] 无 any / 无 @ts-ignore？
+  - [ ] Engine 层无 UI 依赖？
+
+□ 质量
+  - [ ] pnpm build 编译通过？
+  - [ ] 相关 Feature BDD 测试通过？
+  - [ ] git diff 里有没有遗漏的文件？
+
+□ 记忆同步
+  - [ ] memory/YYYY-MM-DD.md 更新了？
+  - [ ] graph.json 概念共现 edge weight +1？
+  - [ ] 项目 node status 需要更新？
+```
+
+**执行方式**: AI 在 commit message 末尾附加 `[F✓]` 标记表示已完成自审。
+缺少 `[F✓]` 的 commit 在 Flow G review 时会被标记为违规。
+
+---
+
+### 流程 G: 定期 Review (每 10 commits 或每轮 Flow E 后)
+
+> 触发条件: (1) 累计 10 个新 commit (2) 每轮 Flow E 结束后 (3) kenefe 要求时
+> 目的: 兜底审查，防止自审遗漏
+
+```
+Review 流程:
+
+1. 列出待审 commits: git log --oneline (上次 review 之后的)
+2. 逐个检查三位一体:
+   - git show --stat <hash> → 有代码改动的 commit 是否包含测试和文档？
+   - 缺失的标记为 ❌，记录到 review report
+3. 文档一致性检查:
+   - RELAY.md 代码地图 vs 实际文件 (find src -name "*.ts" -o -name "*.vue")
+   - RELAY.md BDD 覆盖表 vs 实际测试数 (grep -c "test('" tests/intera.spec.ts)
+   - PHASES.md 阶段状态 vs 实际完成度
+   - RULES.md 行数限制 vs 实际文件行数
+4. 全量 BDD 回归: npx playwright test tests/intera.spec.ts
+5. 输出 Review Report:
+   - 违规 commits 列表 + 需要补的内容
+   - 文档不一致项
+   - BDD 通过率
+6. 修复所有违规项
+7. git commit -m "review: 第N轮审查修复 [F✓]"
+```
+
+**Review Report 格式**:
+```
+## Review #N — YYYY-MM-DD
+
+审查范围: <commit_from>..<commit_to> (N commits)
+
+### 三位一体合规
+| Commit | 代码 | 测试 | 文档 | 判定 |
+|--------|------|------|------|------|
+| abc1234 feat: xxx | ✅ | ❌ | ❌ | 违规 |
+
+### 文档一致性
+- RELAY.md 代码地图: ✅/❌ (缺 N 个文件)
+- BDD 覆盖表: ✅/❌ (实际 M 项 vs 记录 K 项)
+- RULES.md 行数: ✅/❌ (N 个文件超标)
+
+### BDD 回归
+- 通过: M/N
+
+### 修复项
+1. ...
+```
+
+---
+
 ## 代码地图
 
 ### Engine 层 (`src/engine/`) — 纯 TypeScript，零 UI 依赖

@@ -47,6 +47,8 @@ alwaysApply: true
 - **修完 Bug 后**: 更新 `docs/KNOWN-ISSUES.md`
 - **reference/ 目录**: 只读 AS3 源码参考，绝对不要修改
 - **每次改完都提交 Git**: 不提交 = 没做过。格式: `fix:/feat:/refactor:/test:/docs:` + 简述
+- **提交前必须自审 (Flow F)**: 三位一体 + 编码铁律 + 质量 + 记忆同步，commit message 末尾附 `[F✓]`
+- **定期 Review (Flow G)**: 每 10 commits 或每轮 Flow E 后，跑一次全面审查
 
 ## BDD 自动化铁律 (最高优先级)
 
