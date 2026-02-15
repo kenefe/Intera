@@ -439,7 +439,7 @@ git commit -m "fix: {修复了什么摩擦点}"
 # 确保 dev server 在跑
 pnpm dev &
 
-# 全量 BDD 测试 (54 项)
+# 全量 BDD 测试 (61 项)
 npx playwright test tests/intera.spec.ts --reporter=list
 
 # 只跑某个 Feature (用 --grep)
@@ -472,6 +472,7 @@ ls tests/screenshots/
 | 状态间动画过渡 | 1 | 两状态+属性+切换无报错 |
 | 综合集成 | 3 | 端到端工作流 + 10 图层压力测试 + 保存恢复 |
 | Drag 行为 | 1 | behaviorDrag 绑定图层后拖拽跟手 |
+| UI 打磨回归 | 7 | 状态栏/工具栏激活态、描边默认值、Patch滚动、曲线精确输入、data-testid、spinner隐藏 |
 
 ### 源码 → Feature 映射 (改哪个模块，跑哪个测试)
 
@@ -490,6 +491,7 @@ ls tests/screenshots/
 | `KeyPropertyPanel.vue` | 关键属性 | `关键属性` |
 | 导出器 `*Exporter.ts` | 导出 | `导出` |
 | `SmartAnimate.ts` / `FolmeManager.ts` | 状态间动画过渡 | `状态间动画` |
+| `StateBar.vue` / `PropertiesPanel.vue` / `CurveEdit.vue` / `PatchCanvas.vue` 样式变更 | UI 打磨回归 | `UI 打磨回归` |
 
 ### 编写自定义验证脚本
 
