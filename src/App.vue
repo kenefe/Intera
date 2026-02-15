@@ -137,7 +137,7 @@ onUnmounted(() => {
 }
 
 .tool-btn:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
-.tool-btn.active { background: rgba(91, 91, 240, 0.2); color: #8888ff; }
+.tool-btn.active { background: rgba(91, 91, 240, 0.3); color: #a0a0ff; box-shadow: inset 0 -2px 0 #7070ff; }
 
 /* ── 工具图标 (覆盖 LayerIcon 类型配色，继承按钮状态色) ── */
 .tool-icon { width: 16px; height: 16px; }

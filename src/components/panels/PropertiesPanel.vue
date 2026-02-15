@@ -235,7 +235,7 @@ function onToggleStroke(): void {
   if (strokeEnabled.value) {
     set({ stroke: 'none', strokeWidth: 0 })
   } else {
-    set({ stroke: '#000000', strokeWidth: 1 })
+    set({ stroke: '#000000', strokeWidth: 2 })
   }
   onEditEnd()
 }
