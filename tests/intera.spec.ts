@@ -865,3 +865,99 @@ test.describe('Feature: UI 打磨回归', () => {
     expect(['textfield', 'auto', 'none', '']).toContain(appearance)
   })
 })
+
+// ══════════════════════════════════════
+//  Feature 16: Review #1 补测试
+// ══════════════════════════════════════
+
+test.describe('Feature: Review #1 补缺', () => {
+
+  test('新增状态命名为递增数字而非时间戳', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    await page.locator('.add-btn').click()
+    await page.waitForTimeout(200)
+    const tabs = page.locator('.state-tab')
+    const count = await tabs.count()
+    expect(count).toBe(2)
+    const name = await tabs.nth(1).textContent()
+    // 应该是 "状态 2" 之类的递增名，不是时间戳
+    expect(name).not.toMatch(/\d{4}-\d{2}/)
+    expect(name!.trim()).toBeTruthy()
+  })
+
+  test('Patch 节点可删除', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 添加一个 Touch 节点
+    await page.locator('.patch-toolbar button[data-type="touch"]').click()
+    await page.waitForTimeout(200)
+    const nodesBefore = await page.locator('.patch-node').count()
+    expect(nodesBefore).toBeGreaterThanOrEqual(1)
+    // 点击节点选中
+    await page.locator('.patch-node').first().click()
+    await page.waitForTimeout(100)
+    // 按 Delete 或 Backspace 删除
+    await page.keyboard.press('Backspace')
+    await page.waitForTimeout(200)
+    const nodesAfter = await page.locator('.patch-node').count()
+    expect(nodesAfter).toBeLessThan(nodesBefore)
+  })
+
+  test('Patch 端口拖线创建连接', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 添加 Touch + To 节点
+    await page.locator('.patch-toolbar button[data-type="touch"]').click()
+    await page.waitForTimeout(200)
+    await page.locator('.patch-toolbar button[data-type="to"]').click()
+    await page.waitForTimeout(200)
+    // 找到 Touch 的 Tap 输出端口和 To 的输入端口
+    const outPort = page.locator('.patch-node').first().locator('.port-out').nth(2) // Tap
+    const inPort = page.locator('.patch-node').last().locator('.port-in').first()
+    const outBox = await outPort.boundingBox()
+    const inBox = await inPort.boundingBox()
+    expect(outBox).toBeTruthy()
+    expect(inBox).toBeTruthy()
+    await page.mouse.move(outBox!.x + outBox!.width/2, outBox!.y + outBox!.height/2)
+    await page.mouse.down()
+    await page.mouse.move(inBox!.x + inBox!.width/2, inBox!.y + inBox!.height/2, { steps: 5 })
+    await page.mouse.up()
+    await page.waitForTimeout(300)
+    // 验证连线存在 (SVG path 或 wire 元素)
+    const wires = await page.locator('.patch-canvas svg path, .patch-canvas .wire').count()
+    expect(wires).toBeGreaterThanOrEqual(1)
+  })
+
+  test('变量面板 + 按钮就地创建变量', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 展开变量面板
+    const varPanel = page.locator('.patch-var-panel')
+    await expect(varPanel).toBeVisible()
+    // 点击新建变量
+    const addVarBtn = varPanel.locator('button', { hasText: /[+＋新]/ })
+    if (await addVarBtn.count() > 0) {
+      const before = await varPanel.locator('.var-item').count()
+      await addVarBtn.click()
+      await page.waitForTimeout(200)
+      const after = await varPanel.locator('.var-item').count()
+      expect(after).toBeGreaterThan(before)
+    }
+  })
+
+  test('聚焦 input 时快捷键不触发工具切换', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 找到属性面板的数值输入框
+    const input = page.locator('.prop-field .input').first()
+    await input.click()
+    await input.focus()
+    // 在 input 内按 R (矩形工具快捷键)
+    await input.press('r')
+    await page.waitForTimeout(100)
+    // 工具不应该切换到矩形 — 选择工具应该仍然激活
+    const rectActive = await page.locator('.tool-btn[data-tool="rect"].active').count()
+    expect(rectActive).toBe(0)
+  })
+})

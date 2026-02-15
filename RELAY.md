@@ -429,6 +429,7 @@ Review 流程:
 | | `folme/Ani.ts` | 单属性动画实例 (双模驱动: Force/Easing) |
 | | `folme/AniRequest.ts` | 动画请求生命周期 + 边界处理 |
 | | `folme/FolmeManager.ts` | 元素级动画管理 (to/setTo/cancel) |
+| | `folme/index.ts` | barrel export (FolmeManager + SpringEngine) |
 | | `folme/Easing.ts` | 缓动插值器 + 贝塞尔 |
 | | `folme/FolmeEase.ts` | 曲线工厂 |
 | **手势** | `gesture/SpeedTracker.ts` | 速度追踪 (惯性用) |
@@ -475,6 +476,8 @@ Review 流程:
 | | `PatchVarPanel.vue` | 变量管理面板 (增删改名/类型/默认值，可折叠) |
 | 根级 | `ContextMenu.vue` | 右键菜单 |
 | | `ExportDialog.vue` | 导出对话框 |
+| | `App.vue` | 根组件 (四栏布局 + Patch 行) |
+| | `main.ts` | 应用入口 (createApp + Pinia) |
 
 ### Store 层 (`src/store/`)
 
@@ -529,7 +532,7 @@ Review 流程:
 # 确保 dev server 在跑
 pnpm dev &
 
-# 全量 BDD 测试 (61 项)
+# 全量 BDD 测试 (66 项)
 npx playwright test tests/intera.spec.ts --reporter=list
 
 # 只跑某个 Feature (用 --grep)
@@ -563,6 +566,7 @@ ls tests/screenshots/
 | 综合集成 | 3 | 端到端工作流 + 10 图层压力测试 + 保存恢复 |
 | Drag 行为 | 1 | behaviorDrag 绑定图层后拖拽跟手 |
 | UI 打磨回归 | 7 | 状态栏/工具栏激活态、描边默认值、Patch滚动、曲线精确输入、data-testid、spinner隐藏 |
+| Review #1 补缺 | 5 | 状态命名格式、Patch节点删除、端口拖线连接、变量就地创建、input内快捷键屏蔽 |
 
 ### 源码 → Feature 映射 (改哪个模块，跑哪个测试)
 
