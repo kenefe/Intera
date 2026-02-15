@@ -203,7 +203,7 @@ const ACTIONS: Action[] = [
       const sliders = rp.locator('.param-slider')
       await expect(sliders).not.toHaveCount(0)
       // 数值显示可读
-      const vals = rp.locator('.param-val')
+      const vals = rp.locator('.param-input')
       await expect(vals.first()).toBeVisible()
       // 滚动到曲线面板，确保截图完整
       await page.locator('.curve-panel').scrollIntoViewIfNeeded()
