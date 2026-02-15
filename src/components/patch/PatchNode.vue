@@ -271,6 +271,8 @@ function onAddVar(): void {
 </script>
 
 <style scoped>
+@import './patch-config.css';
+
 .patch-node {
   position: absolute;
   width: 180px;
@@ -365,6 +367,4 @@ function onAddVar(): void {
 }
 .port-label.out { text-align: right; flex: 1; }
 
-/* ── 配置区 ── */
-@import './patch-config.css';
 </style>
