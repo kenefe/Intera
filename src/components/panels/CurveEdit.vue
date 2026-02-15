@@ -9,21 +9,21 @@
     .param-row
       span.param-label 响应
       input.param-slider(type="range" min="0.05" max="2" step="0.01" :value="curve.response ?? 0.35" @input="e => emit('update', { response: num(e) })")
-      span.param-val {{ (curve.response ?? 0.35).toFixed(2) }}
+      input.param-input(type="number" min="0.05" max="2" step="0.01" :value="(curve.response ?? 0.35).toFixed(2)" @change="e => emit('update', { response: num(e) })")
     .param-row
       span.param-label 阻尼
       input.param-slider(type="range" min="0.01" max="2" step="0.01" :value="curve.damping ?? 0.95" @input="e => emit('update', { damping: num(e) })")
-      span.param-val {{ (curve.damping ?? 0.95).toFixed(2) }}
+      input.param-input(type="number" min="0.01" max="2" step="0.01" :value="(curve.damping ?? 0.95).toFixed(2)" @change="e => emit('update', { damping: num(e) })")
   template(v-if="curve.type === 'friction'")
     .param-row
       span.param-label 摩擦
       input.param-slider(type="range" min="0.01" max="1" step="0.01" :value="curve.friction ?? 0.48" @input="e => emit('update', { friction: num(e) })")
-      span.param-val {{ (curve.friction ?? 0.48).toFixed(2) }}
+      input.param-input(type="number" min="0.01" max="1" step="0.01" :value="(curve.friction ?? 0.48).toFixed(2)" @change="e => emit('update', { friction: num(e) })")
   template(v-if="curve.type === 'bezier' || curve.type === 'linear'")
     .param-row
       span.param-label 时长
       input.param-slider(type="range" min="0.05" max="3" step="0.05" :value="curve.duration ?? 0.3" @input="e => emit('update', { duration: num(e) })")
-      span.param-val {{ (curve.duration ?? 0.3).toFixed(1) }}s
+      input.param-input(type="number" min="0.05" max="3" step="0.05" :value="(curve.duration ?? 0.3).toFixed(2)" @change="e => emit('update', { duration: num(e) })")
 </template>
 
 <script setup lang="ts">
@@ -98,11 +98,26 @@ function onType(e: Event): void {
   cursor: pointer;
 }
 
-.param-val {
+.param-input {
+  width: 48px;
   font-size: 10px;
   font-family: 'SF Mono', 'Fira Code', monospace;
-  opacity: 0.5;
-  min-width: 32px;
   text-align: right;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  color: #e0e0e0;
+  padding: 2px 4px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.param-input::-webkit-inner-spin-button,
+.param-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.param-input:focus {
+  border-color: rgba(136, 136, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
 }
 </style>
