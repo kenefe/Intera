@@ -76,5 +76,5 @@
 
 1. [x] 补全 RELAY.md 代码地图 (folme/index.ts, main.ts, App.vue)
 2. [x] 补 5 个缺失的 BDD 测试 → 66/66 全部通过
-3. [ ] 拆分 PropertiesPanel.vue (558 行)
-4. [ ] 拆分 PatchNode.vue (441 行)
+3. [x] 拆分 PropertiesPanel.vue (558→337 行) → PropTextGroup + PropLayoutGroup + PropAppearanceGroup
+4. [x] 拆分 PatchNode.vue (441→370 行) → patch-config.css 提取
