@@ -84,6 +84,9 @@ export function useKeyboard(): void {
     if (meta && e.key === 's') {
       e.preventDefault(); project.save(); return
     }
+    if (meta && e.key === 'o') {
+      e.preventDefault(); project.openFile(); return
+    }
 
     // ── 工具快捷键 — 文本编辑中除外，数值/颜色 input 中仍生效 ──
 
