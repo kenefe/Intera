@@ -359,6 +359,8 @@ git commit -m "fix: {修复了什么摩擦点}"
 | **导出** | `export/CSSExporter.ts` | 独立 HTML 导出 (内嵌弹簧引擎) |
 | | `export/LottieExporter.ts` | Lottie JSON |
 | | `export/VideoExporter.ts` | WebM 视频 (Canvas2D + MediaRecorder) |
+| | `export/SpringSim.ts` | 导出用弹簧模拟器 (独立于 folme，嵌入导出产物) |
+| | `export/resolve.ts` | 状态属性解析 (导出时合并 override) |
 | **其他** | `UndoManager.ts` | 通用撤销/重做栈 |
 | | `ProjectStorage.ts` | localStorage + 文件 IO |
 
@@ -370,15 +372,19 @@ git commit -m "fix: {修复了什么摩擦点}"
 | | `ArtboardGrid.vue` | 多状态网格布局 |
 | | `Artboard.vue` | 单个画板渲染 |
 | | `StateBar.vue` | 状态栏 (切换/新增状态) |
+| | `SelectionOverlay.vue` | 选中图层的边框/手柄/多选框 |
 | `panels/` | `PreviewPanel.vue` | 实时交互预览面板 (左栏常驻) |
 | | `LayerPanel.vue` | 图层树面板 |
+| | `LayerIcon.vue` | 图层类型图标 (矩形/椭圆/Frame/文本) |
 | | `PropertiesPanel.vue` | 属性检查器 |
 | | `KeyPropertyPanel.vue` | 关键属性标记 |
 | | `CurvePanel.vue` | 曲线编辑 (三级覆盖) |
-| | `CurveEdit.vue` | 曲线可视化编辑 |
+| | `CurveEdit.vue` | 曲线可视化编辑 (slider + 精确数值输入) |
 | `patch/` | `PatchCanvas.vue` | Patch 编辑器画布 |
 | | `PatchNode.vue` | 单个 Patch 节点 |
-|| | `PatchVarPanel.vue` | 变量管理面板 (增删改名/类型/默认值，可折叠) |
+| | `PatchVarPanel.vue` | 变量管理面板 (增删改名/类型/默认值，可折叠) |
+| 根级 | `ContextMenu.vue` | 右键菜单 |
+| | `ExportDialog.vue` | 导出对话框 |
 
 ### Store 层 (`src/store/`)
 
@@ -395,7 +401,13 @@ git commit -m "fix: {修复了什么摩擦点}"
 |---|---|
 | `renderer/DOMRenderer.ts` | DOM 渲染器 (实现 Renderer 接口) |
 | `renderer/types.ts` | Renderer 抽象接口 |
-| `composables/use*.ts` | Vue composable (交互/绘制/文本/手势/快捷键) |
+| `composables/useLayerInteraction.ts` | 图层选择 + 拖拽移动 |
+| `composables/useLayerDrag.ts` | 图层拖拽细节 (偏移计算) |
+| `composables/useDrawTool.ts` | 绘制工具 (矩形/椭圆/Frame) |
+| `composables/useTextTool.ts` | 文本工具 (点击创建 + contenteditable) |
+| `composables/usePreviewGesture.ts` | 预览模式手势绑定 (Patch 触发 + Behavior 驱动) |
+| `composables/useKeyboard.ts` | 全局快捷键 (工具/撤销/保存/打开/方向键微调) |
+| `composables/useTransition.ts` | 状态切换过渡辅助 |
 | `reference/` | AS3 源码参考 (只读，不要修改) |
 
 ---

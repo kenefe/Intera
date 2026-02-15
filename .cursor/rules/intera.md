@@ -33,7 +33,7 @@ alwaysApply: true
 
 ## 编码铁律
 
-- 文件 ≤ 200 行，函数 ≤ 20 行，缩进 ≤ 3 层
+- 纯 TS 文件 ≤ 200 行，Vue SFC ≤ 400 行，函数 ≤ 20 行，缩进 ≤ 3 层
 - 禁止 `any`，禁止 `// @ts-ignore`
 - Engine 零 UI 依赖，不 import Vue/DOM/Pinia
 - Vue 组件用 Pug + Composition API
