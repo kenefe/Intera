@@ -434,6 +434,13 @@ function onGapChange(e: Event): void {
   outline: none;
   padding: 4px 0;
   min-width: 0;
+  -moz-appearance: textfield;
+}
+/* 隐藏 number input spinner 箭头 — 防止误触 */
+.input::-webkit-inner-spin-button,
+.input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .color-input {
