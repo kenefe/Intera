@@ -78,18 +78,18 @@ export function patchCategory(type: PatchType): PatchCategory {
 
 function defaultConfig(type: PatchType): PatchConfig {
   const map: Record<PatchType, () => PatchConfig> = {
-    touch:          () => ({ type: 'touch' }),
-    drag:           () => ({ type: 'drag' }),
-    scroll:         () => ({ type: 'scroll' }),
+    touch:          () => ({ type: 'touch', layerId: '' }),
+    drag:           () => ({ type: 'drag', layerId: '' }),
+    scroll:         () => ({ type: 'scroll', layerId: '' }),
     timer:          () => ({ type: 'timer' }),
-    variableChange: () => ({ type: 'variableChange' }),
-    condition:      () => ({ type: 'condition' }),
-    toggleVariable: () => ({ type: 'toggleVariable' }),
+    variableChange: () => ({ type: 'variableChange', variableId: '' }),
+    condition:      () => ({ type: 'condition', variableId: '' }),
+    toggleVariable: () => ({ type: 'toggleVariable', variableId: '' }),
     delay:          () => ({ type: 'delay' }),
     counter:        () => ({ type: 'counter' }),
-    to:             () => ({ type: 'to' }),
-    setTo:          () => ({ type: 'setTo' }),
-    setVariable:    () => ({ type: 'setVariable' }),
+    to:             () => ({ type: 'to', stateId: '', groupId: '' }),
+    setTo:          () => ({ type: 'setTo', stateId: '', groupId: '' }),
+    setVariable:    () => ({ type: 'setVariable', variableId: '' }),
     behaviorDrag:   () => ({ type: 'behaviorDrag', axis: 'both', layerId: '' }),
     behaviorScroll: () => ({ type: 'behaviorScroll', axis: 'y', overscroll: true, layerId: '' }),
   }
