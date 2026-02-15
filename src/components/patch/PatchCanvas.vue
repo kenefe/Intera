@@ -275,7 +275,7 @@ function onClickConnection(conn: PatchConnection, e: MouseEvent): void {
   min-width: 0;
   height: 100%;
   background: #12122a;
-  overflow: hidden;
+  overflow: auto;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   outline: none;
 }

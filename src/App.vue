@@ -202,8 +202,9 @@ onUnmounted(() => {
 
 .patch-row {
   display: flex;
-  height: 250px;
+  height: 320px;
   min-height: 200px;
+  max-height: 45vh;
 }
 
 .canvas-area {
