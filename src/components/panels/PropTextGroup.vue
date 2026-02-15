@@ -84,3 +84,125 @@ function setTextAlign(align: string): void {
   props.layer.textAlign = align
 }
 </script>
+
+<style scoped>
+/* ── 文本属性区样式 —— 与 PropertiesPanel / PropAppearanceGroup 保持一致 ── */
+
+.prop-group { margin-bottom: 12px; }
+.prop-label { font-size: 10px; opacity: 0.4; margin-bottom: 6px; letter-spacing: 0.5px; }
+.prop-row { display: flex; gap: 6px; margin-bottom: 4px; }
+
+.prop-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 3px 6px;
+  transition: border-color 0.12s, background 0.12s;
+}
+.prop-field:hover { border-color: rgba(255, 255, 255, 0.2); }
+.prop-field:focus-within { border-color: rgba(136, 136, 255, 0.5); background: rgba(255, 255, 255, 0.1); }
+
+.label {
+  font-size: 10px;
+  opacity: 0.45;
+  min-width: 32px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.unit { font-size: 9px; opacity: 0.35; flex-shrink: 0; }
+
+.input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  width: 100%;
+  outline: none;
+  padding: 4px 0;
+  min-width: 0;
+  -moz-appearance: textfield;
+}
+.input::-webkit-inner-spin-button,
+.input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ── 文本输入框 ── */
+
+.text-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.12s, background 0.12s;
+  min-height: 36px;
+}
+.text-input:hover { border-color: rgba(255, 255, 255, 0.2); }
+.text-input:focus { border-color: rgba(136, 136, 255, 0.5); background: rgba(255, 255, 255, 0.1); }
+
+/* ── 下拉选择框 ── */
+
+.select-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  padding: 4px 0;
+  cursor: pointer;
+  min-width: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.select-input option {
+  background: #1e1e2e;
+  color: #e0e0e0;
+}
+
+/* ── 对齐按钮组 ── */
+
+.align-group {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+
+.align-btn {
+  flex: 1;
+  padding: 3px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.align-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+.align-btn.active {
+  background: rgba(136, 136, 255, 0.2);
+  border-color: rgba(136, 136, 255, 0.4);
+  color: #aaaaff;
+  font-weight: 600;
+}
+</style>
