@@ -17,7 +17,7 @@
       :class="{ selected: ix.selectedConnIds.has(conn.id), threatened: ix.cutThreatened.has(conn.id) }"
       @click.stop="ix.onClickConnection(conn, $event)"
     )
-    path.temp-line(v-if="ix.tempPath" :d="ix.tempPath")
+    path.temp-line(v-if="tempPath" :d="tempPath")
     rect.box-select(
       v-if="ix.box.active"
       :x="ix.box.x" :y="ix.box.y"
@@ -122,6 +122,9 @@ function isToolbar(e: PointerEvent): boolean {
 }
 
 const ix = usePatchInteraction({ canvasXY, findPort, findNode, portPos, nodeRect, isToolbar })
+
+// 顶层暴露 ref → 模板自动解包 .value (嵌套在普通对象里的 ref 不会自动解包)
+const tempPath = ix.tempPath
 
 // ── Pointer Capture (确保拖线/框选跟手) ──
 

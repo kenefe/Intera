@@ -204,6 +204,9 @@ const ACTIONS = {
   mouse:      async ({ x, y }) => page.mouse.click(x, y),
   dblclick:   async ({ x, y }) => page.mouse.dblclick(x, y),
   rightclick: async ({ x, y }) => page.mouse.click(x, y, { button: 'right' }),
+  mousedown:  async ({ x, y, button }) => { await page.mouse.move(x, y); await page.mouse.down({ button: button || 'left' }) },
+  mousemove:  async ({ x, y, steps }) => page.mouse.move(x, y, { steps: steps || 1 }),
+  mouseup:    async ({ x, y, button }) => { if (x != null) await page.mouse.move(x, y); await page.mouse.up({ button: button || 'left' }) },
   hover:      async ({ x, y }) => page.mouse.move(x, y),
   drag:       async ({ x1, y1, x2, y2, steps = 10 }) => {
     await page.mouse.move(x1, y1)
