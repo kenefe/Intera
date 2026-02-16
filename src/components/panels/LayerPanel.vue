@@ -142,9 +142,13 @@ function openCtx(id: string, e: MouseEvent): void {
   Object.assign(ctx, { show: true, x: e.clientX, y: e.clientY, id })
 }
 
+const ctxLayer = computed(() => project.project.layers[ctx.id])
+
 const ctxItems = computed<MenuItem[]>(() => [
   { id: 'rename', label: '重命名', shortcut: '双击' },
   { id: 'dup', label: '复制图层', shortcut: '⌘D' },
+  { divider: true },
+  { id: 'comp', label: '创建组件', disabled: ctxLayer.value?.type !== 'frame' },
   { divider: true },
   { id: 'up', label: '上移一层', shortcut: '⌘[' },
   { id: 'down', label: '下移一层', shortcut: '⌘]' },
@@ -158,11 +162,22 @@ function onCtxAction(action: string): void {
   const actions: Record<string, () => void> = {
     rename: () => beginRename(id),
     dup: () => dupLayer(id),
+    comp: () => makeComponent(id),
     up: () => moveUp(id),
     down: () => moveDown(id),
     del: () => onDelete(id),
   }
   actions[action]?.()
+}
+
+// ━━━ 创建组件 (Frame → 独立 StateGroup) ━━━
+
+function makeComponent(id: string): void {
+  const layer = project.project.layers[id]
+  if (!layer || layer.type !== 'frame') return
+  const g = project.addStateGroup(layer.name, id)
+  const s = project.addDisplayState(g.id, '默认')
+  if (s) project.switchState(g.id, s.id)
 }
 
 function dupLayer(id: string): void {

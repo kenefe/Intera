@@ -17,18 +17,22 @@ import { DOMRenderer } from '@renderer/DOMRenderer'
 const props = defineProps<{
   displayState: DisplayState
   isActive: boolean
+  rootLayerId: string | null
 }>()
 
 const store = useProjectStore()
 const frameRef = ref<HTMLElement>()
 const renderer = new DOMRenderer()
 
-// ── 画板尺寸 ──
+// ── 画板尺寸 (组件 → 根图层 resolved 尺寸, 主画面 → canvasSize) ──
 
-const frameStyle = computed(() => ({
-  width: `${store.project.canvasSize.width}px`,
-  height: `${store.project.canvasSize.height}px`,
-}))
+const frameStyle = computed(() => {
+  if (props.rootLayerId) {
+    const r = store.states.getResolvedProps(props.displayState.id, props.rootLayerId)
+    if (r) return { width: `${r.width}px`, height: `${r.height}px` }
+  }
+  return { width: `${store.project.canvasSize.width}px`, height: `${store.project.canvasSize.height}px` }
+})
 
 // ── 图层同步 ──
 
@@ -41,36 +45,42 @@ function syncLayers(): void {
   if (!mounted) return
   const { layers, rootLayerIds } = store.project
   const stateId = props.displayState.id
-  const allIds = new Set(Object.keys(layers))
 
-  // 移除已删除的图层
+  // 作用域: 组件 → 仅渲染子树, 主画面 → 全部图层
+  const rid = props.rootLayerId
+  const scope = rid
+    ? new Set([rid, ...store.scene.descendants(rid)])
+    : new Set(Object.keys(layers))
+
+  // 移除不在作用域内的图层
   for (const id of rendered) {
-    if (!allIds.has(id)) { renderer.removeLayer(id); rendered.delete(id) }
+    if (!scope.has(id)) { renderer.removeLayer(id); rendered.delete(id) }
   }
 
   // 创建或更新图层
-  for (const id of allIds) {
+  for (const id of scope) {
+    const layer = layers[id]
+    if (!layer) continue
     const resolved = store.states.getResolvedProps(stateId, id)
     if (!resolved) continue
     if (rendered.has(id)) {
       renderer.updateLayer(id, resolved)
     } else {
-      renderer.createLayer(id, layers[id].type, resolved)
+      renderer.createLayer(id, layer.type, resolved)
       rendered.add(id)
     }
-    // 文本图层: 同步文本内容
-    const layer = layers[id]
-    if (layer?.type === 'text') {
+    if (layer.type === 'text') {
       renderer.setTextContent(id, layer.text ?? '', layer.fontSize ?? 16, layer.fontFamily, layer.fontWeight, layer.textAlign)
     }
   }
 
-  // 层级顺序 + 父子关系
-  for (const id of allIds) {
+  // 层级顺序 + 父子关系 (组件根 → 视为画板根)
+  for (const id of scope) {
     const layer = layers[id]
-    if (layer) renderer.setLayerParent(id, layer.parentId)
+    if (!layer) continue
+    renderer.setLayerParent(id, id === rid ? null : layer.parentId)
   }
-  renderer.setLayerOrder(rootLayerIds)
+  renderer.setLayerOrder(rid ? [rid] : rootLayerIds)
 }
 
 // ── 生命周期 ──

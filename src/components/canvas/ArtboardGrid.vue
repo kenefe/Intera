@@ -1,6 +1,10 @@
 <template lang="pug">
 .artboard-grid
-  .state-group-row(v-for="group in groups" :key="group.id")
+  .state-group-row(
+    v-for="group in groups" :key="group.id"
+    :class="{ active: group.id === canvas.activeGroupId }"
+    @click="canvas.setActiveGroup(group.id)"
+  )
     .row-label {{ group.name }}
     .row-artboards
       Artboard(
@@ -8,16 +12,19 @@
         :key="state.id"
         :display-state="state"
         :is-active="state.id === group.activeDisplayStateId"
+        :root-layer-id="group.rootLayerId"
       )
-      .add-state-btn(@click="onAddState(group.id)") +
+      .add-state-btn(@click.stop="onAddState(group.id)") +
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useProjectStore } from '@store/project'
+import { useCanvasStore } from '@store/canvas'
 import Artboard from './Artboard.vue'
 
 const store = useProjectStore()
+const canvas = useCanvasStore()
 const groups = computed(() => store.project.stateGroups)
 
 function onAddState(groupId: string): void {
@@ -39,7 +46,9 @@ function onAddState(groupId: string): void {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  cursor: pointer;
 }
+.state-group-row.active > .row-label { color: rgba(136, 136, 255, 0.7); }
 
 .row-label {
   font-size: 12px;

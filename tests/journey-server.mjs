@@ -245,6 +245,12 @@ const ACTIONS = {
     await page.mouse.wheel(deltaX, deltaY)
   },
 
+  // 调试: 在浏览器上下文中执行 JS 表达式
+  evaluate: async ({ expr }) => {
+    const result = await page.evaluate(expr)
+    return { result }
+  },
+
   // 保存设计文件 — 先触发 Pinia store 写入 localStorage，再导出
   save: async () => {
     await page.evaluate(() => {

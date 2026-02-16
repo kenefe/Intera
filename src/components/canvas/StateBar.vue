@@ -1,5 +1,14 @@
 <template lang="pug">
 .state-bar
+  //- ── 多组选择器 (仅多于一组时显示) ──
+  .group-selector(v-if="groups.length > 1")
+    .group-pill(
+      v-for="g in groups" :key="g.id"
+      :class="{ active: g.id === canvas.activeGroupId }"
+      @click="canvas.setActiveGroup(g.id)"
+    ) {{ g.name }}
+    .group-divider
+  //- ── 状态标签页 ──
   .state-tabs
     .state-tab(
       v-for="(state, idx) in displayStates"
@@ -39,14 +48,19 @@
 
 import { computed, ref, reactive, nextTick } from 'vue'
 import { useProjectStore } from '@store/project'
+import { useCanvasStore } from '@store/canvas'
 import ContextMenu from '../ContextMenu.vue'
 import type { MenuItem } from '../ContextMenu.vue'
 
 const store = useProjectStore()
+const canvas = useCanvasStore()
 
-// ── 当前状态组 (取第一组) ──
+// ── 当前状态组 (跟随 activeGroupId) ──
 
-const group = computed(() => store.project.stateGroups[0])
+const groups = computed(() => store.project.stateGroups)
+const group = computed(() =>
+  groups.value.find(g => g.id === canvas.activeGroupId) ?? groups.value[0],
+)
 const displayStates = computed(() => group.value?.displayStates ?? [])
 const activeId = computed(() => group.value?.activeDisplayStateId)
 
@@ -167,5 +181,21 @@ function onDup(id: string): void {
 .add-btn:hover {
   color: rgba(136, 136, 255, 0.9); background: rgba(136, 136, 255, 0.1);
   border-color: rgba(136, 136, 255, 0.3);
+}
+
+/* ── 组选择器 ── */
+.group-selector { display: flex; gap: 3px; align-items: center; margin-right: 4px; }
+
+.group-pill {
+  padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 500;
+  color: rgba(255, 255, 255, 0.35); cursor: pointer;
+  transition: background 0.12s, color 0.12s; user-select: none;
+  letter-spacing: 0.3px;
+}
+.group-pill:hover { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.6); }
+.group-pill.active { background: rgba(91, 91, 240, 0.2); color: #9090ff; }
+
+.group-divider {
+  width: 1px; height: 16px; background: rgba(255, 255, 255, 0.1); margin: 0 6px;
 }
 </style>
