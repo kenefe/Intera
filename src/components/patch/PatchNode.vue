@@ -15,6 +15,7 @@
         :data-patch-id="patch.id"
         :data-port-id="port.id"
         :data-port-dir="'in'"
+        :class="{ connected: connectedKeys.has(patch.id + ':' + port.id) }"
       )
       .port-label {{ port.name }}
     .port-row(v-for="port in patch.outputs" :key="port.id")
@@ -23,6 +24,7 @@
         :data-patch-id="patch.id"
         :data-port-id="port.id"
         :data-port-dir="'out'"
+        :class="{ connected: connectedKeys.has(patch.id + ':' + port.id) }"
       )
 
   //- ── 节点配置区 ──
@@ -139,7 +141,7 @@ import { patchCategory } from '@engine/state/PatchDefs'
 import { useProjectStore } from '@store/project'
 import { usePatchStore } from '@store/patch'
 
-const props = defineProps<{ patch: Patch; selected: boolean }>()
+const props = defineProps<{ patch: Patch; selected: boolean; connectedKeys: Set<string> }>()
 defineEmits<{ delete: [] }>()
 const project = useProjectStore()
 const patchStore = usePatchStore()
@@ -286,8 +288,8 @@ function onAddVar(): void {
 }
 .patch-node:hover { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); }
 .patch-node.selected {
-  border-color: rgba(136, 136, 255, 0.6);
-  box-shadow: 0 0 0 1px rgba(136, 136, 255, 0.3), 0 2px 12px rgba(0, 0, 0, 0.4);
+  border-color: #8888ff;
+  box-shadow: 0 0 0 2px rgba(136, 136, 255, 0.4), 0 0 12px rgba(136, 136, 255, 0.3);
 }
 
 .node-header {
@@ -358,6 +360,8 @@ function onAddVar(): void {
   border-color: #8888ff;
   box-shadow: 0 0 6px rgba(136, 136, 255, 0.6);
 }
+/* 已连接端口 — 实心圆点 */
+.port-dot.connected { background: #8888ff; border-color: #8888ff; }
 /* 输出端口着色以区分方向 */
 .port-out { border-color: rgba(136, 136, 255, 0.4); }
 

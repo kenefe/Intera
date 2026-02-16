@@ -2,7 +2,7 @@
 .patch-canvas(
   ref="canvasRef"
   tabindex="0"
-  @pointerdown="ix.onDown"
+  @pointerdown="onCanvasDown"
   @pointermove="ix.onMove"
   @pointerup="ix.onUp"
   @keydown="ix.onKey"
@@ -35,6 +35,7 @@
       v-for="p in project.project.patches" :key="p.id"
       :patch="p"
       :selected="ix.selected.has(p.id)"
+      :connectedKeys="connectedKeys"
       @delete="ix.onDeleteNode(p.id)"
     )
 
@@ -49,14 +50,16 @@
 //  DOM 查询在此, 交互逻辑 → usePatchInteraction
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { PatchType, Patch } from '@engine/scene/types'
 import { useProjectStore } from '@store/project'
+import { useCanvasStore } from '@store/canvas'
 import { usePatchStore } from '@store/patch'
 import { usePatchInteraction } from '@composables/usePatchInteraction'
 import PatchNode from './PatchNode.vue'
 
 const project = useProjectStore()
+const canvas = useCanvasStore()
 const patch = usePatchStore()
 const canvasRef = ref<HTMLElement | null>(null)
 const NODE_W = 180
@@ -119,6 +122,24 @@ function isToolbar(e: PointerEvent): boolean {
 }
 
 const ix = usePatchInteraction({ canvasXY, findPort, findNode, portPos, nodeRect, isToolbar })
+
+// ── Pointer Capture (确保拖线/框选跟手) ──
+
+function onCanvasDown(e: PointerEvent): void {
+  ix.onDown(e)
+  if (!isToolbar(e)) canvasRef.value?.setPointerCapture(e.pointerId)
+}
+
+// ── 已连接端口键集合 (供 PatchNode 渲染实心圆点) ──
+
+const connectedKeys = computed(() => {
+  const keys = new Set<string>()
+  for (const c of project.project.connections) {
+    keys.add(`${c.fromPatchId}:${c.fromPortId}`)
+    keys.add(`${c.toPatchId}:${c.toPortId}`)
+  }
+  return keys
+})
 onMounted(() => canvasRef.value?.focus())
 
 // ── 节点添加 ──
@@ -135,12 +156,16 @@ const ADD_TYPES: Array<{ type: PatchType; label: string; name: string }> = [
   { type: 'behaviorScroll', label: 'Scroll', name: '滚动行为' },
 ]
 
+const LAYER_TYPES = new Set<PatchType>(['touch', 'drag', 'behaviorDrag', 'behaviorScroll'])
+
 let addIdx = 0
 function onAddNode(type: PatchType, name: string): void {
   const x = 40 + (addIdx % 4) * 220
   const y = 60 + Math.floor(addIdx / 4) * 140
   addIdx++
-  const p = patch.addPatchNode(type, { x, y }, {}, name)
+  // 自动关联当前选中图层 (Touch / Drag / 行为类节点)
+  const layerId = LAYER_TYPES.has(type) ? canvas.selectedLayerIds[0] : undefined
+  const p = patch.addPatchNode(type, { x, y }, layerId ? { layerId } : {}, name)
   ix.selected.clear()
   ix.selected.add(p.id)
 }
@@ -160,17 +185,17 @@ function onAddNode(type: PatchType, name: string): void {
 .connection-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
 .connection {
   fill: none;
-  stroke: rgba(136, 136, 255, 0.4);
-  stroke-width: 2;
+  stroke: rgba(136, 136, 255, 0.7);
+  stroke-width: 2.5;
   pointer-events: stroke;
   cursor: pointer;
   transition: stroke 0.12s, stroke-width 0.12s;
 }
-.connection:hover { stroke: #ff6060; stroke-width: 2.5; }
-.connection.selected { stroke: #6c6cff; stroke-width: 3; }
-.connection.threatened { stroke: #ff4040; stroke-width: 2.5; stroke-dasharray: 4 3; }
-.temp-line { fill: none; stroke: rgba(136, 136, 255, 0.6); stroke-width: 2; stroke-dasharray: 6 4; }
-.box-select { fill: rgba(100, 100, 255, 0.08); stroke: rgba(100, 100, 255, 0.5); stroke-width: 1; stroke-dasharray: 4 3; }
+.connection:hover { stroke: #ff6060; stroke-width: 3; }
+.connection.selected { stroke: #8888ff; stroke-width: 3.5; }
+.connection.threatened { stroke: #ff4040; stroke-width: 3; stroke-dasharray: 4 3; }
+.temp-line { fill: none; stroke: rgba(136, 136, 255, 0.8); stroke-width: 2; stroke-dasharray: 6 4; }
+.box-select { fill: rgba(100, 100, 255, 0.15); stroke: rgba(100, 100, 255, 0.8); stroke-width: 1; stroke-dasharray: 4 3; }
 .cut-line { stroke: rgba(255, 80, 80, 0.8); stroke-width: 2; stroke-dasharray: 6 4; }
 .node-layer { position: absolute; inset: 0; }
 .patch-toolbar {

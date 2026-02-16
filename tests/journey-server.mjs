@@ -214,6 +214,15 @@ const ACTIONS = {
     await page.waitForTimeout(80)
     await page.mouse.up()
   },
+  rightdrag:  async ({ x1, y1, x2, y2, steps = 10 }) => {
+    await page.mouse.move(x1, y1)
+    await page.waitForTimeout(80)
+    await page.mouse.down({ button: 'right' })
+    await page.waitForTimeout(80)
+    await page.mouse.move(x2, y2, { steps })
+    await page.waitForTimeout(80)
+    await page.mouse.up({ button: 'right' })
+  },
   press:      async ({ key }) => page.keyboard.press(key),
   keyboard:   async ({ text }) => page.keyboard.type(text),
 

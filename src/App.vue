@@ -42,7 +42,6 @@
           StateBar
         .panel-right
           PropertiesPanel
-          KeyPropertyPanel
           CurvePanel
       .patch-row
         PatchCanvas
@@ -59,7 +58,6 @@ import StateBar from './components/canvas/StateBar.vue'
 import PreviewPanel from './components/panels/PreviewPanel.vue'
 import LayerPanel from './components/panels/LayerPanel.vue'
 import PropertiesPanel from './components/panels/PropertiesPanel.vue'
-import KeyPropertyPanel from './components/panels/KeyPropertyPanel.vue'
 import CurvePanel from './components/panels/CurvePanel.vue'
 import PatchCanvas from './components/patch/PatchCanvas.vue'
 import PatchVarPanel from './components/patch/PatchVarPanel.vue'

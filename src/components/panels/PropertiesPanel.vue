@@ -17,19 +17,23 @@
     CollapsibleGroup(title="位置 / 尺寸")
       .prop-row
         .prop-field(:class="{ overridden: has('x') }")
+          span.key-dot(v-if="!isDefaultState" :class="{ active: has('x') }" @click.stop="toggleKey('x')") ◆
           span.label X
           input.input(type="number" :value="dpx(resolved.x)" step="1" @change="e => set({ x: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('x')" @click.stop="reset('x')" title="重置为基础值") ↺
         .prop-field(:class="{ overridden: has('y') }")
+          span.key-dot(v-if="!isDefaultState" :class="{ active: has('y') }" @click.stop="toggleKey('y')") ◆
           span.label Y
           input.input(type="number" :value="dpx(resolved.y)" step="1" @change="e => set({ y: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('y')" @click.stop="reset('y')" title="重置为基础值") ↺
       .prop-row
         .prop-field(:class="{ overridden: has('width') }")
+          span.key-dot(v-if="!isDefaultState" :class="{ active: has('width') }" @click.stop="toggleKey('width')") ◆
           span.label W
           input.input(type="number" :value="dpx(resolved.width)" step="1" @change="e => set({ width: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('width')" @click.stop="reset('width')" title="重置为基础值") ↺
         .prop-field(:class="{ overridden: has('height') }")
+          span.key-dot(v-if="!isDefaultState" :class="{ active: has('height') }" @click.stop="toggleKey('height')") ◆
           span.label H
           input.input(type="number" :value="dpx(resolved.height)" step="1" @change="e => set({ height: px(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('height')" @click.stop="reset('height')" title="重置为基础值") ↺
@@ -38,16 +42,19 @@
     CollapsibleGroup(title="变换" :collapsed="true")
       .prop-row
         .prop-field(:class="{ overridden: has('rotation') }")
+          span.key-dot(v-if="!isDefaultState" :class="{ active: has('rotation') }" @click.stop="toggleKey('rotation')") ◆
           span.label 旋转
           input.input(type="number" :value="dpx(resolved.rotation)" step="1" @change="e => set({ rotation: px(e) })" @blur="onEditEnd")
           span.unit °
           button.btn-reset(v-if="has('rotation')" @click.stop="reset('rotation')" title="重置为基础值") ↺
       .prop-row
         .prop-field(:class="{ overridden: has('scaleX') }")
+          span.key-dot(v-if="!isDefaultState" :class="{ active: has('scaleX') }" @click.stop="toggleKey('scaleX')") ◆
           span.label 缩放X
           input.input(type="number" :value="resolved.scaleX" step="0.1" @change="e => set({ scaleX: num(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('scaleX')" @click.stop="reset('scaleX')" title="重置为基础值") ↺
         .prop-field(:class="{ overridden: has('scaleY') }")
+          span.key-dot(v-if="!isDefaultState" :class="{ active: has('scaleY') }" @click.stop="toggleKey('scaleY')") ◆
           span.label 缩放Y
           input.input(type="number" :value="resolved.scaleY" step="0.1" @change="e => set({ scaleY: num(e) })" @blur="onEditEnd")
           button.btn-reset(v-if="has('scaleY')" @click.stop="reset('scaleY')" title="重置为基础值") ↺
@@ -60,6 +67,7 @@
       :isDefaultState="isDefaultState"
       :set="set"
       :reset="reset"
+      :toggleKey="toggleKey"
       :ensureSnapshot="ensureSnapshot"
       @editEnd="onEditEnd"
     )
@@ -167,6 +175,19 @@ function reset(prop: keyof AnimatableProps): void {
   onEditEnd()
 }
 
+// ── 关键属性开关 (合并自 KeyPropertyPanel) ──
+
+function toggleKey(prop: keyof AnimatableProps): void {
+  if (!layerId.value || !activeStateId.value || isDefaultState.value) return
+  ensureSnapshot()
+  if (has(prop)) {
+    store.clearOverride(activeStateId.value, layerId.value, prop)
+  } else {
+    const base = layer.value?.props[prop]
+    if (base !== undefined) store.setOverride(activeStateId.value, layerId.value, { [prop]: base })
+  }
+}
+
 function onEditEnd(): void { snapped = false }
 </script>
 
@@ -224,6 +245,18 @@ function onEditEnd(): void { snapped = false }
   margin-bottom: 6px;
   letter-spacing: 0.5px;
 }
+
+/* ── 关键属性菱形 ── */
+
+.key-dot {
+  font-size: 7px;
+  opacity: 0.15;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+.key-dot:hover { opacity: 0.5; }
+.key-dot.active { opacity: 1; color: #8888ff; }
 
 .empty-state {
   padding: 40px 16px;

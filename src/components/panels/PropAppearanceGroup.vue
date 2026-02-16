@@ -3,16 +3,19 @@
   .prop-label 外观
   .prop-row
     .prop-field(:class="{ overridden: has('opacity') }")
+      span.key-dot(v-if="!isDefaultState" :class="{ active: has('opacity') }" @click.stop="toggleKey('opacity')") ◆
       span.label 透明度
       input.input(type="number" :value="resolved.opacity" step="0.1" min="0" max="1" @change="e => set({ opacity: num(e) })" @blur="$emit('editEnd')")
       button.btn-reset(v-if="has('opacity')" @click.stop="reset('opacity')" title="重置为基础值") ↺
   .prop-row
     .prop-field(:class="{ overridden: has('fill') }")
+      span.key-dot(v-if="!isDefaultState" :class="{ active: has('fill') }" @click.stop="toggleKey('fill')") ◆
       span.label 填充
       ColorPicker(:modelValue="resolved.fill" @update:modelValue="v => set({ fill: v })" @change="$emit('editEnd')")
       button.btn-reset(v-if="has('fill')" @click.stop="reset('fill')" title="重置为基础值") ↺
   .prop-row
     .prop-field(:class="{ overridden: has('stroke') || has('strokeWidth') }")
+      span.key-dot(v-if="!isDefaultState" :class="{ active: has('strokeWidth') }" @click.stop="toggleKey('strokeWidth')") ◆
       span.label 描边
       label.stroke-toggle
         input.checkbox(type="checkbox" :checked="strokeEnabled" @change="onToggleStroke")
@@ -29,6 +32,7 @@
       span.unit px
   .prop-row
     .prop-field(:class="{ overridden: has('borderRadius') }")
+      span.key-dot(v-if="!isDefaultState" :class="{ active: has('borderRadius') }" @click.stop="toggleKey('borderRadius')") ◆
       span.label 圆角
       input.input(type="number" :value="dpx(resolved.borderRadius)" step="1" min="0" @change="e => set({ borderRadius: px(e) })" @blur="$emit('editEnd')")
       span.unit px
@@ -48,6 +52,7 @@ const props = defineProps<{
   isDefaultState: boolean
   set: (partial: Partial<AnimatableProps>) => void
   reset: (prop: keyof AnimatableProps) => void
+  toggleKey: (prop: keyof AnimatableProps) => void
   ensureSnapshot: () => void
 }>()
 const emit = defineEmits<{ editEnd: [] }>()
@@ -100,4 +105,16 @@ function onToggleStroke(): void {
   opacity: 0.3;
   flex: 1;
 }
+
+/* ── 关键属性菱形 ── */
+
+.key-dot {
+  font-size: 7px;
+  opacity: 0.15;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+.key-dot:hover { opacity: 0.5; }
+.key-dot.active { opacity: 1; color: #8888ff; }
 </style>
