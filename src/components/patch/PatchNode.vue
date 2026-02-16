@@ -41,11 +41,19 @@
             :selected="cfgLayerId === l.id"
           ) {{ l.name }}
 
-    //- To / SetTo → 状态选择
+    //- To / SetTo → 目标组 + 状态选择
     template(v-if="patch.type === 'to' || patch.type === 'setTo'")
       .cfg-row
+        .cfg-label 目标
+        select.cfg-select(@change="onGroupPick")
+          option(value="" :selected="!cfgGroupId") 选择…
+          option(
+            v-for="g in groups" :key="g.id" :value="g.id"
+            :selected="cfgGroupId === g.id"
+          ) {{ g.name }}
+      .cfg-row
         .cfg-label 状态
-        select.cfg-select(@change="onStatePick")
+        select.cfg-select(@change="onStatePick" :disabled="!cfgGroupId")
           option(value="" :selected="!cfgStateId") 选择…
           option(
             v-for="s in states" :key="s.id" :value="s.id"
@@ -140,13 +148,10 @@ import type { Patch, PatchConfig } from '@engine/scene/types'
 import { patchCategory } from '@engine/state/PatchDefs'
 import { useProjectStore } from '@store/project'
 import { usePatchStore } from '@store/patch'
-import { useActiveGroup } from '@/composables/useActiveGroup'
-
 const props = defineProps<{ patch: Patch; selected: boolean; connectedKeys: Set<string> }>()
 defineEmits<{ delete: [] }>()
 const project = useProjectStore()
 const patchStore = usePatchStore()
-const { activeGroup } = useActiveGroup()
 
 const category = patchCategory(props.patch.type)
 
@@ -164,6 +169,10 @@ const showConfig = CONFIG_TYPES.includes(props.patch.type)
 const cfgLayerId = computed(() => {
   const c = props.patch.config
   return 'layerId' in c ? (c.layerId as string | undefined) : undefined
+})
+const cfgGroupId = computed(() => {
+  const c = props.patch.config
+  return 'groupId' in c ? (c.groupId as string | undefined) : undefined
 })
 const cfgStateId = computed(() => {
   const c = props.patch.config
@@ -196,8 +205,17 @@ const layers = computed(() =>
   Object.values(project.project.layers).map(l => ({ id: l.id, name: l.name })),
 )
 
+// ── 目标组列表 (主画面 + 组件) ──
+const groups = computed(() =>
+  project.project.stateGroups.map(g => ({ id: g.id, name: g.name })),
+)
+
+// ── 状态列表: 用 config.groupId 解析目标组 ──
 const states = computed(() => {
-  const group = activeGroup.value
+  const gid = cfgGroupId.value
+  const group = gid
+    ? project.project.stateGroups.find(g => g.id === gid)
+    : null
   return group ? group.displayStates.map(s => ({ id: s.id, name: s.name })) : []
 })
 
@@ -220,10 +238,16 @@ function onLayerPick(e: Event): void {
   }
 }
 
+function onGroupPick(e: Event): void {
+  const c = cfg(); if (!c) return
+  const gid = (e.target as HTMLSelectElement).value
+  if ('groupId' in c) c.groupId = gid || undefined
+  if ('stateId' in c) c.stateId = undefined // 切换目标 → 清空状态
+}
+
 function onStatePick(e: Event): void {
   const c = cfg(); if (!c) return
   if ('stateId' in c) c.stateId = (e.target as HTMLSelectElement).value
-  if ('groupId' in c) c.groupId = activeGroup.value?.id
 }
 
 function onDelayChange(e: Event): void {

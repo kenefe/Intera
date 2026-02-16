@@ -18,27 +18,20 @@ export function useTextTool(viewportRef: Ref<HTMLElement | undefined>) {
   const editor = useEditorStore()
   const project = useProjectStore()
 
-  /** 查找画板 frame: 事件目标 → 激活画板 → null */
+  /** 查找画板 frame: 仅匹配点击目标所在的画板 */
   function resolveFrame(e: PointerEvent): HTMLElement | null {
     return (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
-      ?? document.querySelector<HTMLElement>('.artboard.active .artboard-frame')
   }
 
   /** 屏幕坐标 → 画板本地坐标 */
   function toArtboard(e: PointerEvent): { x: number; y: number } {
     const frame = resolveFrame(e)
-    if (frame) {
-      const r = frame.getBoundingClientRect()
-      const bw = 2 * canvas.zoom // 边框 2px 经 zoom 缩放
-      return {
-        x: Math.round((e.clientX - r.left - bw) / canvas.zoom),
-        y: Math.round((e.clientY - r.top - bw) / canvas.zoom),
-      }
-    }
-    const r = viewportRef.value!.getBoundingClientRect()
+    if (!frame) return { x: 0, y: 0 } // 安全兜底，实际不会到达
+    const r = frame.getBoundingClientRect()
+    const bw = 2 * canvas.zoom // 边框 2px 经 zoom 缩放
     return {
-      x: Math.round((e.clientX - r.left - canvas.panX) / canvas.zoom),
-      y: Math.round((e.clientY - r.top - canvas.panY) / canvas.zoom),
+      x: Math.round((e.clientX - r.left - bw) / canvas.zoom),
+      y: Math.round((e.clientY - r.top - bw) / canvas.zoom),
     }
   }
 
@@ -56,6 +49,7 @@ export function useTextTool(viewportRef: Ref<HTMLElement | undefined>) {
 
   function down(e: PointerEvent): void {
     if (editor.tool !== 'text') return
+    if (!resolveFrame(e)) return // 画板外不创建文本
     const abs = toArtboard(e)
 
     // 检测是否在 Frame 内
