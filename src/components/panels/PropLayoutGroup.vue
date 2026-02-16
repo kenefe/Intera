@@ -39,42 +39,7 @@ function onGapChange(e: Event): void {
 </script>
 
 <style scoped>
-.prop-group { margin-bottom: 12px; }
-.prop-label { font-size: 10px; opacity: 0.4; margin-bottom: 6px; letter-spacing: 0.5px; }
-.prop-row { display: flex; gap: 6px; margin-bottom: 4px; }
-
-.prop-field {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  padding: 3px 6px;
-  transition: border-color 0.12s, background 0.12s;
-}
-.prop-field:hover { border-color: rgba(255, 255, 255, 0.2); }
-.prop-field:focus-within { border-color: rgba(136, 136, 255, 0.5); background: rgba(255, 255, 255, 0.1); }
-
-.label { font-size: 10px; opacity: 0.45; min-width: 32px; flex-shrink: 0; white-space: nowrap; }
-.unit { font-size: 9px; opacity: 0.35; flex-shrink: 0; }
-
-.input {
-  flex: 1;
-  background: none;
-  border: none;
-  color: #e0e0e0;
-  font-size: 12px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  width: 100%;
-  outline: none;
-  padding: 4px 0;
-  min-width: 0;
-  -moz-appearance: textfield;
-}
-.input::-webkit-inner-spin-button,
-.input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+@import './prop-shared.css';
 
 .align-group { display: flex; gap: 2px; flex: 1; }
 

@@ -28,16 +28,13 @@
 
 <script setup lang="ts">
 import type { CurveConfig, CurveType } from '@engine/scene/types'
+import { num } from '@/utils/propHelpers'
 
 defineProps<{ curve: CurveConfig }>()
 
 const emit = defineEmits<{
   update: [partial: Partial<CurveConfig>]
 }>()
-
-function num(e: Event): number {
-  return parseFloat((e.target as HTMLInputElement).value) || 0
-}
 
 // 切换类型时重置为该类型的默认参数
 const DEFAULTS: Record<CurveType, CurveConfig> = {

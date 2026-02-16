@@ -8,9 +8,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 const props = defineProps<{ title: string; collapsed?: boolean }>()
 const open = ref(!props.collapsed)
+watch(() => props.collapsed, v => { open.value = !v })
 </script>
 
 <style scoped>

@@ -50,7 +50,7 @@ export function usePreviewGesture() {
 
     // ── 检查是否有 behaviorDrag 绑定到此图层 ──
     const inst: BehaviorInstance | undefined =
-      patchStore.runtime.behaviors.findByLayer(activeId)
+      patchStore.runtime.behaviors.ensureByLayer(activeId)
     if (inst?.engine) {
       activeDrag = inst.engine
       dragLayerId = activeId

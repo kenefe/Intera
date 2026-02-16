@@ -82,6 +82,7 @@ import PropTextGroup from './PropTextGroup.vue'
 import PropLayoutGroup from './PropLayoutGroup.vue'
 import PropAppearanceGroup from './PropAppearanceGroup.vue'
 import CollapsibleGroup from './CollapsibleGroup.vue'
+import { num, px, dpx, str } from '@/utils/propHelpers'
 
 const canvas = useCanvasStore()
 const store = useProjectStore()
@@ -138,13 +139,6 @@ function has(prop: keyof AnimatableProps): boolean {
   return prop in overrides.value
 }
 
-// ── 工具函数 ──
-
-function num(e: Event): number { return parseFloat((e.target as HTMLInputElement).value) || 0 }
-function px(e: Event): number { return Math.round(num(e)) }
-function dpx(v: number | undefined): number { return Math.round(v ?? 0) }
-function str(e: Event): string { return (e.target as HTMLInputElement).value }
-
 // ── 快照管理 ──
 
 let snapped = false
@@ -177,6 +171,8 @@ function onEditEnd(): void { snapped = false }
 </script>
 
 <style scoped>
+@import './prop-shared.css';
+
 .properties-panel { padding: 12px; }
 
 /* ── 图层信息头 ── */
@@ -222,106 +218,12 @@ function onEditEnd(): void { snapped = false }
   flex-shrink: 0;
 }
 
-/* ── 属性分组 ── */
-
-.prop-group { margin-bottom: 12px; }
-
 .prop-label {
   font-size: 10px;
   opacity: 0.4;
   margin-bottom: 6px;
   letter-spacing: 0.5px;
 }
-
-.prop-row { display: flex; gap: 6px; margin-bottom: 4px; }
-
-.prop-field {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  padding: 3px 6px;
-  transition: border-color 0.12s, background 0.12s;
-}
-.prop-field:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-}
-.prop-field:focus-within {
-  border-color: rgba(136, 136, 255, 0.5);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* 覆盖态 —— 橙色边框提示 */
-.prop-field.overridden {
-  border-color: rgba(255, 152, 0, 0.4);
-  background: rgba(255, 152, 0, 0.05);
-}
-.prop-field.overridden:hover {
-  border-color: rgba(255, 152, 0, 0.6);
-}
-
-.label { font-size: 10px; opacity: 0.45; min-width: 32px; flex-shrink: 0; white-space: nowrap; }
-
-.unit {
-  font-size: 9px;
-  opacity: 0.35;
-  flex-shrink: 0;
-}
-
-.input {
-  flex: 1;
-  background: none;
-  border: none;
-  color: #e0e0e0;
-  font-size: 12px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  width: 100%;
-  outline: none;
-  padding: 4px 0;
-  min-width: 0;
-  -moz-appearance: textfield;
-}
-/* 隐藏 number input spinner 箭头 — 防止误触 */
-.input::-webkit-inner-spin-button,
-.input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.color-input {
-  width: 100%;
-  height: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  background: none;
-  cursor: pointer;
-  transition: border-color 0.12s;
-  flex: 1;
-}
-.color-input:hover { border-color: rgba(136, 136, 255, 0.4); }
-
-/* ── 重置按钮 ── */
-
-.btn-reset {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 3px;
-  background: rgba(255, 152, 0, 0.15);
-  color: #ffb74d;
-  font-size: 11px;
-  cursor: pointer;
-  transition: background 0.1s;
-  padding: 0;
-}
-.btn-reset:hover { background: rgba(255, 152, 0, 0.35); }
 
 .empty-state {
   padding: 40px 16px;

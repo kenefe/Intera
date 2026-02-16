@@ -544,6 +544,7 @@ Review 流程:
 | | `PropAppearanceGroup.vue` | 外观属性子组件 (透明度/填充/描边/圆角) |
 | | `ColorPicker.vue` | 自定义颜色选择器 (hex 输入 + 30 色色板) |
 | | `CollapsibleGroup.vue` | 可折叠分组容器 (▾ 箭头 + 点击折叠) |
+| | `prop-shared.css` | 属性面板共享样式 (.prop-row/.prop-field/.input 等) |
 | | `KeyPropertyPanel.vue` | 关键属性标记 |
 | | `CurvePanel.vue` | 曲线编辑 (三级覆盖) |
 | | `CurveEdit.vue` | 曲线可视化编辑 (slider + 精确数值输入) |
@@ -578,6 +579,7 @@ Review 流程:
 | `composables/usePreviewGesture.ts` | 预览模式手势绑定 (Patch 触发 + Behavior 驱动) |
 | `composables/useKeyboard.ts` | 全局快捷键 (工具/撤销/保存/打开/方向键微调) |
 | `composables/useTransition.ts` | 状态切换过渡辅助 |
+| `utils/propHelpers.ts` | 属性面板共享工具函数 (num/px/dpx/str) |
 | `reference/` | AS3 源码参考 (只读，不要修改) |
 
 ---
