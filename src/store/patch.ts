@@ -5,6 +5,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { defineStore } from 'pinia'
+import { watch } from 'vue'
 import type { PatchType, Vec2, Patch, PatchConnection, Variable, VariableValue, ConfigFor } from '../engine/scene/types'
 import { VariableManager } from '../engine/state/VariableManager'
 import { PatchRuntime } from '../engine/state/PatchRuntime'
@@ -24,6 +25,12 @@ export const usePatchStore = defineStore('patch', () => {
     p.patches, p.connections, variables,
     (gid, sid) => project.transitionToState(gid, sid),
     (gid, sid) => project.setToState(gid, sid),
+  )
+
+  // ── 数据恢复同步: load/undo/redo 后自动重建索引 ──
+  watch(
+    () => p.patches.length + p.connections.length * 1000,
+    () => { runtime.rebuild(); variables.sync() },
   )
 
   // ── 变量 CRUD ──

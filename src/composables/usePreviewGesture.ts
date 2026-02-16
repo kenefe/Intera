@@ -10,14 +10,6 @@ import type { BehaviorInstance } from '@engine/state/BehaviorManager'
 import { usePatchStore } from '@store/patch'
 import { useProjectStore } from '@store/project'
 
-// ── DOM 辅助: 从事件目标找图层 ID ──
-
-function layerIdFrom(e: PointerEvent): string | null {
-  return (e.target as HTMLElement)
-    .closest<HTMLElement>('[data-layer-id]')
-    ?.dataset.layerId ?? null
-}
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  Composable
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -25,6 +17,35 @@ function layerIdFrom(e: PointerEvent): string | null {
 export function usePreviewGesture() {
   const patchStore = usePatchStore()
   const projectStore = useProjectStore()
+
+  // ── 交互层穿透: 点击穿过非交互图层到达最近的交互绑定 ──
+  //    1. elementsFromPoint 取得点击处所有图层 (前→后)
+  //    2. 每个图层沿父链冒泡找交互绑定
+  //    3. 无命中则回退到最顶层 (供 auto-cycle 用)
+  function interactiveLayerAt(e: PointerEvent): string | null {
+    const { layers, patches } = projectStore.project
+    const bound = new Set(
+      patches
+        .filter(p => 'layerId' in p.config)
+        .map(p => (p.config as { layerId?: string }).layerId),
+    )
+    const elements = document.elementsFromPoint(e.clientX, e.clientY)
+    let fallback: string | null = null
+
+    for (const el of elements) {
+      const lid = (el as HTMLElement).dataset?.layerId
+      if (!lid) continue
+      fallback ??= lid
+      // 直接命中 / 沿父链冒泡
+      let cur: string | null = lid
+      while (cur) {
+        if (bound.has(cur)) return cur
+        cur = layers[cur]?.parentId ?? null
+      }
+    }
+    return fallback
+  }
+
   let activeId: string | null = null
   let activeDrag: DragEngine | null = null
   let dragLayerId: string | null = null
@@ -43,7 +64,7 @@ export function usePreviewGesture() {
   }
 
   function down(e: PointerEvent): void {
-    activeId = layerIdFrom(e)
+    activeId = interactiveLayerAt(e)
     if (!activeId) return
     gesture.pointerDown(e.clientX, e.clientY)
     patchStore.fireTrigger(activeId, 'down')
