@@ -1,6 +1,5 @@
 <template lang="pug">
 .prop-group
-  .prop-label 布局
   .prop-row
     .prop-field
       span.label 方向

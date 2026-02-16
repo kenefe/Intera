@@ -140,11 +140,13 @@ import type { Patch, PatchConfig } from '@engine/scene/types'
 import { patchCategory } from '@engine/state/PatchDefs'
 import { useProjectStore } from '@store/project'
 import { usePatchStore } from '@store/patch'
+import { useActiveGroup } from '@/composables/useActiveGroup'
 
 const props = defineProps<{ patch: Patch; selected: boolean; connectedKeys: Set<string> }>()
 defineEmits<{ delete: [] }>()
 const project = useProjectStore()
 const patchStore = usePatchStore()
+const { activeGroup } = useActiveGroup()
 
 const category = patchCategory(props.patch.type)
 
@@ -195,7 +197,7 @@ const layers = computed(() =>
 )
 
 const states = computed(() => {
-  const group = project.project.stateGroups[0]
+  const group = activeGroup.value
   return group ? group.displayStates.map(s => ({ id: s.id, name: s.name })) : []
 })
 
@@ -221,7 +223,7 @@ function onLayerPick(e: Event): void {
 function onStatePick(e: Event): void {
   const c = cfg(); if (!c) return
   if ('stateId' in c) c.stateId = (e.target as HTMLSelectElement).value
-  if ('groupId' in c) c.groupId = project.project.stateGroups[0]?.id
+  if ('groupId' in c) c.groupId = activeGroup.value?.id
 }
 
 function onDelayChange(e: Event): void {

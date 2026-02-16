@@ -13,6 +13,7 @@ import { createPatch } from '../engine/state/PatchDefs'
 import { makeId } from '../engine/idFactory'
 import * as Sugar from '../engine/state/SugarPresets'
 import { useProjectStore } from './project'
+import { useCanvasStore } from './canvas'
 
 export const usePatchStore = defineStore('patch', () => {
   const project = useProjectStore()
@@ -123,8 +124,15 @@ export const usePatchStore = defineStore('patch', () => {
 
   // ── Sugar 预设 ──
 
+  /** 解析当前激活的状态组 ID (跟随画布选择) */
+  function resolveGroupId(): string | undefined {
+    const canvas = useCanvasStore()
+    return p.stateGroups.find(g => g.id === canvas.activeGroupId)?.id
+      ?? p.stateGroups[0]?.id
+  }
+
   function applyButtonFeedback(layerId: string): void {
-    const gid = p.stateGroups[0]?.id
+    const gid = resolveGroupId()
     if (gid) {
       project.snapshot()
       Sugar.buttonFeedback(project.states, p.patches, p.connections, layerId, gid)
@@ -132,7 +140,7 @@ export const usePatchStore = defineStore('patch', () => {
   }
 
   function applyToggleExpand(layerId: string): void {
-    const gid = p.stateGroups[0]?.id
+    const gid = resolveGroupId()
     if (gid) {
       project.snapshot()
       Sugar.toggleExpand(project.states, p.patches, p.connections, p.variables, layerId, gid)

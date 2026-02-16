@@ -8,6 +8,7 @@ import { useCanvasStore } from '@store/canvas'
 import { useEditorStore } from '@store/editor'
 import type { ToolType } from '@store/editor'
 import { useProjectStore } from '@store/project'
+import { useActiveGroup } from './useActiveGroup'
 
 // ── 常量 ──
 
@@ -31,6 +32,7 @@ export function useKeyboard(): void {
   const canvas = useCanvasStore()
   const editor = useEditorStore()
   const project = useProjectStore()
+  const { activeGroup, activeStateId, isDefaultState } = useActiveGroup()
 
   /** 是否正在编辑文本内容 (文本 input / textarea / contentEditable) */
   function isEditingText(e: KeyboardEvent): boolean {
@@ -48,22 +50,20 @@ export function useKeyboard(): void {
     const ids = canvas.selectedLayerIds
     if (!ids.length) return
 
-    const group = project.project.stateGroups[0]
-    const stateId = group?.activeDisplayStateId
-    if (!stateId) return
+    const sid = activeStateId.value
+    if (!sid) return
 
     project.snapshot()
-    const isDefault = group.displayStates[0]?.id === stateId
 
     for (const lid of ids) {
-      const cur = project.states.getResolvedProps(stateId, lid)
+      const cur = project.states.getResolvedProps(sid, lid)
       if (!cur) continue
       const nx = Math.round(cur.x + dx)
       const ny = Math.round(cur.y + dy)
-      if (isDefault) {
+      if (isDefaultState.value) {
         project.updateLayerProps(lid, { x: nx, y: ny })
       } else {
-        project.setOverride(stateId, lid, { x: nx, y: ny })
+        project.setOverride(sid, lid, { x: nx, y: ny })
       }
     }
   }

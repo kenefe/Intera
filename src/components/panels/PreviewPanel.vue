@@ -31,11 +31,13 @@ import { ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import type { AnimatableProps } from '@engine/scene/types'
 import { useProjectStore } from '@store/project'
 import { usePatchStore } from '@store/patch'
+import { useActiveGroup } from '@/composables/useActiveGroup'
 import { DOMRenderer } from '@renderer/DOMRenderer'
 import { usePreviewGesture } from '@/composables/usePreviewGesture'
 
 const store = useProjectStore()
 const patchStore = usePatchStore()
+const { activeGroup, activeStateId } = useActiveGroup()
 const preview = usePreviewGesture()
 
 const containerRef = ref<HTMLElement>()
@@ -79,12 +81,10 @@ const frameStyle = computed(() => {
 //  状态信息
 // ═══════════════════════════════════
 
-const activeStateId = computed(() =>
-  store.project.stateGroups[0]?.activeDisplayStateId ?? null,
-)
+// ── activeStateId 由 useActiveGroup 提供 ──
 
 const stateList = computed(() =>
-  store.project.stateGroups[0]?.displayStates ?? [],
+  activeGroup.value?.displayStates ?? [],
 )
 
 const activeStateName = computed(() =>
@@ -145,7 +145,7 @@ function onUp(e: PointerEvent): void {
 }
 
 function autoCycle(): void {
-  const group = store.project.stateGroups[0]
+  const group = activeGroup.value
   if (!group) return
   const list = group.displayStates
   const idx = list.findIndex(s => s.id === group.activeDisplayStateId)
@@ -159,17 +159,15 @@ function autoCycle(): void {
 
 function syncLayers(): void {
   const { layers, rootLayerIds } = store.project
-  const stateId = activeStateId.value
-  if (!stateId) return
-
   const allIds = new Set(Object.keys(layers))
 
   for (const id of rendered) {
     if (!allIds.has(id)) { renderer.removeLayer(id); rendered.delete(id) }
   }
 
+  // ── 多组合并解析: 叠加所有组的活跃状态覆盖 ──
   for (const id of allIds) {
-    const resolved = store.states.getResolvedProps(stateId, id)
+    const resolved = store.states.getMultiGroupResolvedProps(id)
     if (!resolved) continue
     const live = store.liveValues[id]
     const merged = live ? { ...resolved, ...live } : resolved
@@ -179,7 +177,6 @@ function syncLayers(): void {
       renderer.createLayer(id, layers[id].type, merged as AnimatableProps)
       rendered.add(id)
     }
-    // 文本图层: 同步文本内容
     const layer = layers[id]
     if (layer?.type === 'text') {
       renderer.setTextContent(id, layer.text ?? '', layer.fontSize ?? 16, layer.fontFamily, layer.fontWeight, layer.textAlign)
@@ -208,9 +205,12 @@ watchEffect(() => {
 function onReset(): void {
   patchStore.runtime.reset()
   patchStore.variables.reset()
-  const group = store.project.stateGroups[0]
-  if (group?.displayStates[0]) {
-    store.transitionToState(group.id, group.displayStates[0].id)
+  // ── 重置所有组到默认状态 (非仅当前组) ──
+  for (const g of store.project.stateGroups) {
+    const defaultId = g.displayStates[0]?.id
+    if (defaultId && g.activeDisplayStateId !== defaultId) {
+      store.setToState(g.id, defaultId)
+    }
   }
 }
 
@@ -238,7 +238,6 @@ onUnmounted(() => {
 })
 
 watch(() => store.project, syncLayers, { deep: true })
-watch(activeStateId, syncLayers)
 </script>
 
 <style scoped>

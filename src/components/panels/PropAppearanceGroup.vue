@@ -1,6 +1,5 @@
 <template lang="pug">
 .prop-group
-  .prop-label 外观
   .prop-row
     .prop-field(:class="{ overridden: has('opacity') }")
       span.key-dot(v-if="!isDefaultState" :class="{ active: has('opacity') }" @click.stop="toggleKey('opacity')") ◆
@@ -106,15 +105,5 @@ function onToggleStroke(): void {
   flex: 1;
 }
 
-/* ── 关键属性菱形 ── */
-
-.key-dot {
-  font-size: 7px;
-  opacity: 0.15;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: opacity 0.1s, color 0.1s;
-}
-.key-dot:hover { opacity: 0.5; }
-.key-dot.active { opacity: 1; color: #8888ff; }
+/* .key-dot 已迁移至 prop-shared.css */
 </style>

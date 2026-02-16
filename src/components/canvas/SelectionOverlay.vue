@@ -27,10 +27,12 @@ import type { AnimatableProps } from '@engine/scene/types'
 import { useCanvasStore } from '@store/canvas'
 import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
+import { useActiveGroup } from '@/composables/useActiveGroup'
 
 const canvas = useCanvasStore()
 const editor = useEditorStore()
 const project = useProjectStore()
+const { activeStateId, isDefaultState } = useActiveGroup()
 const root = ref<HTMLElement>()
 
 // ── 绘制模式标记: 非选择工具时手柄不拦截指针 ──
@@ -71,9 +73,7 @@ function anchorAt(p: AnimatableProps, fx: number, fy: number): [number, number] 
 //  响应式数据
 // ═══════════════════════════════════
 
-const activeStateId = computed(() =>
-  project.project.stateGroups[0]?.activeDisplayStateId ?? null,
-)
+// ── activeStateId / isDefaultState 由 useActiveGroup 提供 ──
 
 // ═══════════════════════════════════
 //  选框计算 (多选支持)
@@ -156,9 +156,7 @@ function writeProps(partial: Partial<AnimatableProps>): void {
   const lid = canvas.selectedLayerIds[0]
   const sid = activeStateId.value
   if (!lid || !sid) return
-  const group = project.project.stateGroups[0]
-  const isDefault = group?.displayStates[0]?.id === sid
-  if (isDefault) project.updateLayerProps(lid, partial)
+  if (isDefaultState.value) project.updateLayerProps(lid, partial)
   else project.setOverride(sid, lid, partial)
 }
 

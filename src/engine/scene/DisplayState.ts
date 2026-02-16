@@ -128,4 +128,20 @@ export class DisplayStateManager {
     const ov = this.findState(stateId)?.overrides[layerId]
     return ov ? Object.keys(ov) as (keyof AnimatableProps)[] : []
   }
+
+  // ── 多组合并解析 (Preview 专用) ──
+
+  /** 叠加所有组的活跃状态覆盖 → 完整属性 */
+  getMultiGroupResolvedProps(layerId: string): AnimatableProps | undefined {
+    const layer = this.layers[layerId]
+    if (!layer) return undefined
+    const props = { ...layer.props }
+    for (const g of this.groups) {
+      const sid = g.activeDisplayStateId
+      if (!sid) continue
+      const ov = this.findState(sid)?.overrides[layerId]
+      if (ov) Object.assign(props, ov)
+    }
+    return props
+  }
 }

@@ -100,6 +100,7 @@ function numericObj(p: AnimatableProps): Record<string, number> {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export function exportCSS(project: Project): string {
+  // 导出目标: 主画面 (stateGroups[0]) — 未来可扩展为接受 groupId 参数
   const defaultState = project.stateGroups[0]?.displayStates[0]
   const stateId = defaultState?.id ?? ''
   const { width: cw, height: ch } = project.canvasSize

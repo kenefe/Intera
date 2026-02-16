@@ -70,6 +70,27 @@
   margin: 0;
 }
 
+/* ── 区块标题 ── */
+
+.prop-label {
+  font-size: 10px;
+  opacity: 0.4;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ── 关键属性菱形 ── */
+
+.key-dot {
+  font-size: 7px;
+  opacity: 0.15;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+.key-dot:hover { opacity: 0.5; }
+.key-dot.active { opacity: 1; color: #8888ff; }
+
 /* ── 重置按钮 (覆盖态回退) ── */
 
 .btn-reset {

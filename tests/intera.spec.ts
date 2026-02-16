@@ -241,7 +241,7 @@ test.describe('Feature: 属性面板', () => {
     await drawRect(page)
     await expect(page.locator('.layer-header')).toBeVisible()
     await expect(page.locator('.group-title', { hasText: '位置 / 尺寸' })).toBeVisible()
-    await expect(page.locator('.prop-label', { hasText: '外观' })).toBeVisible()
+    await expect(page.locator('.group-title', { hasText: '外观' })).toBeVisible()
   })
 
   test('属性面板显示正确的宽高值', async ({ page }) => {
@@ -600,7 +600,7 @@ test.describe('Feature: 关键属性', () => {
     await drawRect(page)
     const keyPanel = page.locator('.panel-right')
     // 应有关键属性相关的 UI
-    for (const prop of ['X', 'Y', '宽度', '高度']) {
+    for (const prop of ['X', 'Y', 'W', 'H']) {
       await expect(keyPanel).toContainText(prop)
     }
     await page.screenshot({ path: 'tests/screenshots/07-key-props.png' })
@@ -993,12 +993,12 @@ test.describe('Feature: 摩擦点修复回归', () => {
     expect(await palette.count()).toBeGreaterThan(0)
   })
 
-  test('属性面板位置/尺寸/变换使用可折叠分组', async ({ page }) => {
+  test('属性面板所有区块统一使用 CollapsibleGroup', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    // 应该有 CollapsibleGroup 组件
-    const groups = page.locator('.properties-panel .collapsible-group')
-    expect(await groups.count()).toBeGreaterThanOrEqual(2)
+    // 矩形: 位置/尺寸 + 变换 + 外观 + 过渡曲线 = 4 个 CollapsibleGroup
+    const groups = page.locator('.panel-right .collapsible-group')
+    expect(await groups.count()).toBeGreaterThanOrEqual(4)
     // 变换组默认收起 — chevron 应该有 collapsed 类
     const chevrons = page.locator('.properties-panel .chevron.collapsed')
     expect(await chevrons.count()).toBeGreaterThanOrEqual(1)
@@ -1007,8 +1007,8 @@ test.describe('Feature: 摩擦点修复回归', () => {
   test('折叠分组点击可展开/收起', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    // 找到变换组 (默认收起) — 最后一个 collapsible-group
-    const group = page.locator('.properties-panel .collapsible-group').last()
+    // 找到变换组 (默认收起) — 按标题定位
+    const group = page.locator('.collapsible-group', { has: page.locator('.group-title', { hasText: '变换' }) })
     const header = group.locator('.group-header')
     const body = group.locator('.group-body')
     // 默认收起 — body 不可见
@@ -1039,5 +1039,253 @@ test.describe('Feature: 摩擦点修复回归', () => {
     const rectActive = await page.locator('.tool-btn.active')
     const tool = await rectActive.getAttribute('data-tool')
     expect(tool).toBe('rectangle')
+  })
+})
+
+// ══════════════════════════════════════
+//  Feature: 视觉一致性 — 区块标题统一
+// ══════════════════════════════════════
+
+test.describe('Feature: 视觉一致性', () => {
+
+  test('矩形图层 — 所有属性区块标题使用 .group-title', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 矩形应有: 位置/尺寸 + 变换 + 外观 (properties) + 过渡曲线 (curve)
+    for (const title of ['位置 / 尺寸', '变换', '外观', '过渡曲线']) {
+      await expect(page.locator('.group-title', { hasText: title })).toBeVisible()
+    }
+    // 不应有旧的 .prop-label (已全部迁移为 CollapsibleGroup)
+    expect(await page.locator('.panel-right .prop-label').count()).toBe(0)
+  })
+
+  test('文本图层 — 文本区块也使用 CollapsibleGroup', async ({ page }) => {
+    await load(page)
+    await page.keyboard.press('t')
+    await drawOnCanvas(page, -30, -10, 30, 10)
+    await page.waitForTimeout(200)
+    // 文本图层应有: 文本 + 位置/尺寸 + 变换 + 外观 + 过渡曲线
+    for (const title of ['文本', '位置 / 尺寸', '外观']) {
+      await expect(page.locator('.group-title', { hasText: title })).toBeVisible()
+    }
+  })
+
+  test('所有 .group-title 视觉权重一致 (font-size + opacity)', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    const titles = page.locator('.panel-right .group-title')
+    const count = await titles.count()
+    expect(count).toBeGreaterThanOrEqual(3)
+    // 采样每个标题的 computed style
+    const styles = await titles.evaluateAll(els =>
+      els.map(el => {
+        const s = getComputedStyle(el)
+        return { fontSize: s.fontSize, opacity: s.opacity }
+      }),
+    )
+    // 所有标题的 font-size 和 opacity 应该相同
+    const ref = styles[0]
+    for (const s of styles) {
+      expect(s.fontSize).toBe(ref.fontSize)
+      expect(s.opacity).toBe(ref.opacity)
+    }
+  })
+
+  test('过渡曲线面板标题不再使用 .section-title', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    // 旧的 .section-title 不应存在
+    expect(await page.locator('.curve-panel .section-title').count()).toBe(0)
+    // 替代的 CollapsibleGroup 应存在
+    await expect(page.locator('.curve-panel .collapsible-group')).toBeVisible()
+  })
+})
+
+// ══════════════════════════════════════
+//  Feature: 组件状态组 (stateGroups[0] 修复)
+// ══════════════════════════════════════
+
+test.describe('Feature: 组件状态组', () => {
+
+  /** 辅助: 创建容器图层并转为组件 */
+  async function createComponent(page: Page) {
+    // 绘制 Frame
+    await page.keyboard.press('f')
+    await drawOnCanvas(page, -60, -40, 60, 40)
+    await page.waitForTimeout(200)
+    // 图层面板右键 → 创建组件
+    const frameItem = page.locator('.layer-item').first()
+    await frameItem.click({ button: 'right' })
+    await page.waitForTimeout(200)
+    const compMenuItem = page.locator('.ctx-item', { hasText: '创建组件' })
+    await compMenuItem.click()
+    await page.waitForTimeout(300)
+  }
+
+  test('Frame 右键菜单有"创建组件"选项', async ({ page }) => {
+    await load(page)
+    await page.keyboard.press('f')
+    await drawOnCanvas(page, -40, -30, 40, 30)
+    await page.waitForTimeout(200)
+    await page.locator('.layer-item').first().click({ button: 'right' })
+    await page.waitForTimeout(200)
+    await expect(page.locator('.ctx-item', { hasText: '创建组件' })).toBeVisible()
+  })
+
+  test('非 Frame 图层的"创建组件"选项禁用', async ({ page }) => {
+    await load(page)
+    await drawRect(page) // 矩形，不是 frame
+    await page.locator('.layer-item').first().click({ button: 'right' })
+    await page.waitForTimeout(200)
+    const compItem = page.locator('.ctx-item', { hasText: '创建组件' })
+    // 应该有 disabled 类
+    await expect(compItem).toHaveClass(/disabled/)
+  })
+
+  test('创建组件后状态栏出现 group pill', async ({ page }) => {
+    await load(page)
+    await createComponent(page)
+    // 应出现 2 个 group-pill (主画面 + 组件)
+    const pills = page.locator('.group-pill')
+    await expect(pills).toHaveCount(2)
+  })
+
+  test('点击 group pill 切换状态组', async ({ page }) => {
+    await load(page)
+    await createComponent(page)
+    const pills = page.locator('.group-pill')
+    // 点击第二个 pill (组件组)
+    await pills.nth(1).click()
+    await page.waitForTimeout(200)
+    // 第二个 pill 应该 active
+    await expect(pills.nth(1)).toHaveClass(/active/)
+    // 状态标签列表应更新 (组件组有独立的状态)
+    const tabs = page.locator('.state-tab')
+    expect(await tabs.count()).toBeGreaterThanOrEqual(1)
+  })
+
+  test('组件非默认状态编辑属性 → 产生覆盖', async ({ page }) => {
+    await load(page)
+    await createComponent(page)
+    // 切到组件组
+    await page.locator('.group-pill').nth(1).click()
+    await page.waitForTimeout(200)
+    // 添加第二状态
+    await page.locator('.add-btn').click()
+    await page.waitForTimeout(200)
+    // 切换到第二状态
+    await page.locator('.state-tab').nth(1).click()
+    await page.waitForTimeout(200)
+    // 选中组件内的图层 (点击图层面板)
+    if (await page.locator('.layer-item').count() > 0) {
+      await page.locator('.layer-item').first().click()
+      await page.waitForTimeout(200)
+    }
+    // 面板头应显示"覆盖" badge (限定属性面板内)
+    const badge = page.locator('.properties-panel .state-badge')
+    await expect(badge).toBeVisible()
+    // 通过 Pinia 验证 stateGroups 数据正确性
+    const groupData = await page.evaluate(() => {
+      const app = (document.querySelector('#app') as any)?.__vue_app__
+      const pinia = app?.config?.globalProperties?.$pinia
+      const store = pinia?._s?.get('project')
+      return store?.project?.stateGroups?.map((g: any) => ({
+        id: g.id,
+        name: g.name,
+        stateCount: g.displayStates?.length,
+      }))
+    })
+    // 应有 2 个状态组
+    expect(groupData?.length).toBeGreaterThanOrEqual(2)
+    // 组件组应有 2 个状态
+    const compGroup = groupData?.find((g: any) => g.stateCount >= 2)
+    expect(compGroup).toBeTruthy()
+  })
+
+  test('组件状态编辑位置 → 覆盖写入正确的状态组', async ({ page }) => {
+    const errors = collectErrors(page)
+    await load(page)
+    await createComponent(page)
+    // 切到组件组
+    await page.locator('.group-pill').nth(1).click()
+    await page.waitForTimeout(300)
+    // 添加第二状态
+    await page.locator('.add-btn').click()
+    await page.waitForTimeout(300)
+    // 切到第二状态
+    await page.locator('.state-tab').nth(1).click()
+    await page.waitForTimeout(300)
+    // 选中图层
+    await page.locator('.layer-item').first().click()
+    await page.waitForTimeout(300)
+    // 定位「位置/尺寸」组内的 X 输入框 (Frame 首个 prop-field 是布局方向按钮)
+    const posGroup = page.locator('.collapsible-group', {
+      has: page.locator('.group-title', { hasText: '位置 / 尺寸' }),
+    })
+    const xInput = posGroup.locator('.prop-field').first().locator('.input')
+    await expect(xInput).toBeVisible({ timeout: 3000 })
+    // 修改 X 坐标
+    await xInput.fill('999')
+    await xInput.press('Enter')
+    await page.waitForTimeout(300)
+    // 验证覆盖写入组件组 (非 stateGroups[0])
+    const overrideCheck = await page.evaluate(() => {
+      const app = (document.querySelector('#app') as any)?.__vue_app__
+      const pinia = app?.config?.globalProperties?.$pinia
+      const store = pinia?._s?.get('project')
+      const groups = store?.project?.stateGroups
+      if (!groups || groups.length < 2) return { ok: false, reason: 'groups < 2' }
+      const compGroup = groups.find((g: any) => g.rootLayerId !== null)
+      if (!compGroup) return { ok: false, reason: 'no comp group' }
+      const state2 = compGroup.displayStates?.[1]
+      if (!state2) return { ok: false, reason: 'no state 2' }
+      const hasOverrides = Object.keys(state2.overrides || {}).length > 0
+      return { ok: hasOverrides, hasOverrides, reason: 'checked' }
+    })
+    expect(overrideCheck.ok).toBe(true)
+    expect(errors).toHaveLength(0)
+  })
+
+  test('组件状态切回默认后属性值恢复', async ({ page }) => {
+    await load(page)
+    await createComponent(page)
+    // 切到组件组
+    await page.locator('.group-pill').nth(1).click()
+    await page.waitForTimeout(300)
+    // 选中图层
+    await page.locator('.layer-item').first().click()
+    await page.waitForTimeout(300)
+    // 定位「位置/尺寸」组内的 X 输入框
+    const posGroup = page.locator('.collapsible-group', {
+      has: page.locator('.group-title', { hasText: '位置 / 尺寸' }),
+    })
+    const xInput = posGroup.locator('.prop-field').first().locator('.input')
+    await expect(xInput).toBeVisible({ timeout: 3000 })
+    // 记录默认状态的 X
+    const defaultX = await xInput.inputValue()
+    // 添加第二状态
+    await page.locator('.add-btn').click()
+    await page.waitForTimeout(300)
+    // 切到第二状态
+    await page.locator('.state-tab').nth(1).click()
+    await page.waitForTimeout(300)
+    // 重新选中图层
+    await page.locator('.layer-item').first().click()
+    await page.waitForTimeout(300)
+    await expect(xInput).toBeVisible({ timeout: 3000 })
+    // 修改 X
+    await xInput.fill('888')
+    await xInput.press('Enter')
+    await page.waitForTimeout(300)
+    // 切回默认状态
+    await page.locator('.state-tab').first().click()
+    await page.waitForTimeout(300)
+    // 重新选中图层
+    await page.locator('.layer-item').first().click()
+    await page.waitForTimeout(300)
+    await expect(xInput).toBeVisible({ timeout: 3000 })
+    // X 应恢复为默认值 (不是 888)
+    const restoredX = await xInput.inputValue()
+    expect(restoredX).toBe(defaultX)
   })
 })

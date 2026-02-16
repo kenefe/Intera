@@ -64,6 +64,7 @@ function sampleProps(base: AnimatableProps, traj: Trajectory, frame: number): An
 
 export async function exportVideo(project: Project): Promise<Blob> {
   const { width: cw, height: ch } = project.canvasSize
+  // 导出目标: 主画面 (stateGroups[0]) — 未来可扩展为接受 groupId 参数
   const group = project.stateGroups[0]
   const states = group?.displayStates ?? []
   const fromState = states[0]

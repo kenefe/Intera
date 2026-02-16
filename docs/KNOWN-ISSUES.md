@@ -50,8 +50,11 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 状态系统 | states | ✅ |
 | 状态 · 曲线 | states, curves | ✅ |
 | 状态 · 节点 | states, patch | ✅ |
+| 状态 · 组件 | states, component | ⬜ |
 | 状态 · 曲线 · 节点 | states, curves, patch | ✅ |
-| 全能力 | states, curves, patch, folme | ✅ |
+| 状态 · 组件 · 曲线 | states, component, curves | ⬜ |
+| 状态 · 组件 · 节点 | states, component, patch | ⬜ |
+| 全能力 | states, curves, patch, folme, component | ✅ |
 
 > ⬜ 待探索 / ✅ 通过 / 🔄 迭代中
 > 旅程探索 = AI 自己打开浏览器逐步操作 (Flow E)，不是自动化测试
@@ -148,3 +151,7 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-16 | **画完自动切回 Select** (P1) — 连续绘制需反复按快捷键 | useDrawTool Shift 松手保持当前绘制工具 |
 | 2026-02-16 | **画布重叠图层选不中下层** (P2) — DOM 事件只命中最上层 | useLayerInteraction Alt+Click 穿透选择 (geoHitTest 几何命中) |
 | 2026-02-16 | **曲线面板需大量滚动** (P3) — 位置/尺寸/变换占满右侧面板 | CollapsibleGroup 折叠组件; 位置+尺寸合并; 变换默认收起 |
+| 2026-02-16 | **组件 group 编辑走错状态组** (P0) — 11 文件 20+ 处硬编码 `stateGroups[0]`，组件属性编辑/拖拽/预览全指向主画面 | `useActiveGroup` composable 统一 group 解析; 8 个编辑/交互文件迁移; 3 个导出文件保持语义 |
+| 2026-02-16 | **属性面板区块标题视觉不一致** (P2) — "文本"/"外观" 大号无样式 vs "位置/尺寸"/"变换" CollapsibleGroup 小号标题。根因: `.prop-label` 在父 scoped CSS，子组件无法继承 | `.prop-label`/`.key-dot` 迁移至 `prop-shared.css`; 所有区块统一 CollapsibleGroup 包裹; CurvePanel 标题统一 |
+| 2026-02-16 | **Patch 动画不执行** (P0) — 根因: `transitionToState` 的 `fromId === stateId` 早退。编辑态泄漏 — 用户切到目标状态编辑覆盖后 `activeDisplayStateId` 已指向目标，运行时触发认为"已在目标"跳过动画 | `useTransition` 编辑态泄漏防护 (fallback 默认状态); `DisplayStateManager.getMultiGroupResolvedProps` 多组合并; `PreviewPanel.syncLayers` 多组解析; `onReset` 全组重置 |
+| 2026-02-16 | **To 节点跨组状态显示 "选择..."** (P3) — 在 A 组设置 To.state 后切到 B 组，下拉文本变为 "选择..."。底层 stateId/groupId 数据正确，仅 UI 显示问题 | `states` computed 应考虑 config.groupId 而非当前 activeGroup |

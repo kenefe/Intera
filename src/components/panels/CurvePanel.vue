@@ -1,35 +1,35 @@
 <template lang="pug">
 .curve-panel
-  .section-title 过渡曲线
-  template(v-if="activeState")
-    //- ── 全局曲线 ──
-    .curve-group
-      .group-label 全局
-      CurveEdit(:curve="activeState.transition.curve" @update="setGlobal")
-
-    //- ── 元素级覆盖 + 延迟 + 属性级覆盖 ──
-    template(v-if="layer")
+  CollapsibleGroup(title="过渡曲线")
+    template(v-if="activeState")
+      //- ── 全局曲线 ──
       .curve-group
-        label.group-header
-          input.toggle(type="checkbox" :checked="!!elemCurve" @change="toggleElem")
-          span.group-label 元素覆盖
-        CurveEdit(v-if="elemCurve" :curve="elemCurve" @update="setElem")
+        .group-label 全局
+        CurveEdit(:curve="activeState.transition.curve" @update="setGlobal")
 
-      //- 属性级覆盖 (仅关键属性)
-      template(v-if="keyedProps.length")
-        .curve-group(v-for="prop in keyedProps" :key="prop")
+      //- ── 元素级覆盖 + 延迟 + 属性级覆盖 ──
+      template(v-if="layer")
+        .curve-group
           label.group-header
-            input.toggle(type="checkbox" :checked="!!getPropCurve(prop)" @change="toggleProp(prop)")
-            span.group-label {{ prop }}
-          CurveEdit(v-if="getPropCurve(prop)" :curve="getPropCurve(prop)" @update="p => setProp(prop, p)")
+            input.toggle(type="checkbox" :checked="!!elemCurve" @change="toggleElem")
+            span.group-label 元素覆盖
+          CurveEdit(v-if="elemCurve" :curve="elemCurve" @update="setElem")
 
-      //- 延迟
-      .curve-group
-        .group-label 延迟
-        .delay-row
-          input.delay-input(type="number" :value="elemDelay" @change="onDelay" min="0" step="50")
-          span.delay-unit ms
-  .empty-state(v-else) 无激活状态
+        //- 属性级覆盖 (仅关键属性)
+        template(v-if="keyedProps.length")
+          .curve-group(v-for="prop in keyedProps" :key="prop")
+            label.group-header
+              input.toggle(type="checkbox" :checked="!!getPropCurve(prop)" @change="toggleProp(prop)")
+              span.group-label {{ prop }}
+            CurveEdit(v-if="getPropCurve(prop)" :curve="getPropCurve(prop)" @update="p => setProp(prop, p)")
+
+        //- 延迟
+        .curve-group
+          .group-label 延迟
+          .delay-row
+            input.delay-input(type="number" :value="elemDelay" @change="onDelay" min="0" step="50")
+            span.delay-unit ms
+    .empty-state(v-else) 无激活状态
 </template>
 
 <script setup lang="ts">
@@ -37,14 +37,16 @@ import { computed } from 'vue'
 import type { CurveConfig, AnimatableProps } from '@engine/scene/types'
 import { useCanvasStore } from '@store/canvas'
 import { useProjectStore } from '@store/project'
+import { useActiveGroup } from '@/composables/useActiveGroup'
 import CurveEdit from './CurveEdit.vue'
+import CollapsibleGroup from './CollapsibleGroup.vue'
 
 const canvas = useCanvasStore()
 const store = useProjectStore()
 
-// ── 当前上下文 ──
+// ── 当前上下文 (跟随激活状态组) ──
 
-const group = computed(() => store.project.stateGroups[0])
+const { activeGroup: group } = useActiveGroup()
 
 const activeState = computed(() => {
   const id = group.value?.activeDisplayStateId
@@ -141,15 +143,6 @@ function onDelay(e: Event): void {
 
 <style scoped>
 .curve-panel { padding: 12px; }
-
-.section-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.5;
-  margin-bottom: 10px;
-}
 
 .curve-group {
   margin-bottom: 10px;

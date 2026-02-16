@@ -8,6 +8,7 @@ import type { Ref } from 'vue'
 import { useCanvasStore } from '@store/canvas'
 import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
+import { useActiveGroup } from './useActiveGroup'
 
 // ── DOM 查找 ──
 
@@ -51,6 +52,7 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
   const canvas = useCanvasStore()
   const editor = useEditorStore()
   const project = useProjectStore()
+  const { activeGroup, isDefaultState } = useActiveGroup()
 
   // ── 拖拽状态 ──
 
@@ -63,11 +65,11 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
   // ── 状态感知写入 ──
 
   function writeXY(lid: string, x: number, y: number): void {
-    const group = project.project.stateGroups[0]
-    const isDefault = group?.displayStates[0]?.id === group?.activeDisplayStateId
-    if (isDefault) {
+    const group = activeGroup.value
+    if (!group) return
+    if (isDefaultState.value) {
       project.updateLayerProps(lid, { x, y })
-    } else if (group?.activeDisplayStateId) {
+    } else if (group.activeDisplayStateId) {
       project.setOverride(group.activeDisplayStateId, lid, { x, y })
     }
   }
@@ -79,7 +81,7 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
 
     // 点击画板 → 切换到该画板的状态
     const clickedStateId = findStateId(e)
-    const group = project.project.stateGroups[0]
+    const group = activeGroup.value
     if (clickedStateId && group && group.activeDisplayStateId !== clickedStateId) {
       group.activeDisplayStateId = clickedStateId
     }

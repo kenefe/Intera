@@ -32,7 +32,14 @@ export function useTransition(project: Project, states: DisplayStateManager) {
     const group = states.findGroup(groupId)
       ?? project.stateGroups.find(g => g.displayStates.some(s => s.id === stateId))
     if (!group) return
-    const fromId = group.activeDisplayStateId
+
+    let fromId = group.activeDisplayStateId
+
+    // ── 编辑态泄漏防护: 若已处于目标状态，从默认状态出发 (允许重新触发) ──
+    if (fromId === stateId) {
+      fromId = group.displayStates[0]?.id ?? null
+    }
+
     group.activeDisplayStateId = stateId
     if (!fromId || fromId === stateId) return
 

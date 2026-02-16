@@ -50,6 +50,10 @@
 **注意**: 所有修改图层属性的代码路径 (PropertiesPanel / useLayerInteraction 拖拽 / 未来新功能)
 都必须遵守此规则。否则用户在非默认状态的修改会污染所有状态。
 
+**多组警告**: 状态读写操作必须通过 `useActiveGroup()` composable 获取当前激活状态组，
+禁止硬编码 `stateGroups[0]`。编辑/交互上下文只有导出路径（exportCSS/Video/Lottie）
+可使用 `stateGroups[0]`（导出主画面是正确语义）。
+
 ### Level 0 自动循环 (PreviewPanel)
 
 ```

@@ -8,10 +8,12 @@
       .state-badge(v-if="!isDefaultState") 覆盖
 
     //- ── 文本 (仅 text 类型) ──
-    PropTextGroup(v-if="isTextLayer" :layer="layer" :ensureSnapshot="ensureSnapshot" @editEnd="onEditEnd")
+    CollapsibleGroup(v-if="isTextLayer" title="文本")
+      PropTextGroup(:layer="layer" :ensureSnapshot="ensureSnapshot" @editEnd="onEditEnd")
 
     //- ── 布局 (仅容器类型) ──
-    PropLayoutGroup(v-if="isFrameLayer" :layer="layer" :ensureSnapshot="ensureSnapshot" @editEnd="onEditEnd")
+    CollapsibleGroup(v-if="isFrameLayer" title="布局")
+      PropLayoutGroup(:layer="layer" :ensureSnapshot="ensureSnapshot" @editEnd="onEditEnd")
 
     //- ── 位置 + 尺寸 (可折叠) ──
     CollapsibleGroup(title="位置 / 尺寸")
@@ -60,17 +62,18 @@
           button.btn-reset(v-if="has('scaleY')" @click.stop="reset('scaleY')" title="重置为基础值") ↺
 
     //- ── 外观 ──
-    PropAppearanceGroup(
-      v-if="resolved"
-      :resolved="resolved"
-      :overrides="overrides"
-      :isDefaultState="isDefaultState"
-      :set="set"
-      :reset="reset"
-      :toggleKey="toggleKey"
-      :ensureSnapshot="ensureSnapshot"
-      @editEnd="onEditEnd"
-    )
+    CollapsibleGroup(title="外观")
+      PropAppearanceGroup(
+        v-if="resolved"
+        :resolved="resolved"
+        :overrides="overrides"
+        :isDefaultState="isDefaultState"
+        :set="set"
+        :reset="reset"
+        :toggleKey="toggleKey"
+        :ensureSnapshot="ensureSnapshot"
+        @editEnd="onEditEnd"
+      )
 
   .empty-state(v-else) 未选中图层
 </template>
@@ -86,6 +89,7 @@ import { computed } from 'vue'
 import type { AnimatableProps } from '@engine/scene/types'
 import { useCanvasStore } from '@store/canvas'
 import { useProjectStore } from '@store/project'
+import { useActiveGroup } from '@/composables/useActiveGroup'
 import PropTextGroup from './PropTextGroup.vue'
 import PropLayoutGroup from './PropLayoutGroup.vue'
 import PropAppearanceGroup from './PropAppearanceGroup.vue'
@@ -94,12 +98,7 @@ import { num, px, dpx, str } from '@/utils/propHelpers'
 
 const canvas = useCanvasStore()
 const store = useProjectStore()
-
-// ── 当前激活状态 ──
-
-const activeStateId = computed(() =>
-  store.project.stateGroups[0]?.activeDisplayStateId ?? null,
-)
+const { activeStateId, isDefaultState } = useActiveGroup()
 
 // ── 选中图层 ──
 
@@ -129,12 +128,7 @@ const resolved = computed<AnimatableProps | null>(() => {
   return store.states.getResolvedProps(activeStateId.value, layerId.value) ?? null
 })
 
-// ── 默认状态判定 ──
-
-const isDefaultState = computed(() => {
-  const group = store.project.stateGroups[0]
-  return group?.displayStates[0]?.id === activeStateId.value
-})
+// ── 默认状态判定 (由 useActiveGroup 提供) ──
 
 // ── 覆盖检测 (仅非默认状态时生效) ──
 
@@ -239,24 +233,7 @@ function onEditEnd(): void { snapped = false }
   flex-shrink: 0;
 }
 
-.prop-label {
-  font-size: 10px;
-  opacity: 0.4;
-  margin-bottom: 6px;
-  letter-spacing: 0.5px;
-}
-
-/* ── 关键属性菱形 ── */
-
-.key-dot {
-  font-size: 7px;
-  opacity: 0.15;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: opacity 0.1s, color 0.1s;
-}
-.key-dot:hover { opacity: 0.5; }
-.key-dot.active { opacity: 1; color: #8888ff; }
+/* .prop-label 和 .key-dot 已迁移至 prop-shared.css */
 
 .empty-state {
   padding: 40px 16px;

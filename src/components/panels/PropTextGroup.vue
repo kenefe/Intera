@@ -1,6 +1,5 @@
 <template lang="pug">
 .prop-group
-  .prop-label 文本
   .prop-row
     textarea.text-input(
       :value="layer?.text ?? ''"

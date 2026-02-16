@@ -80,6 +80,7 @@ function buildLayer(
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export function exportLottie(project: Project): Record<string, unknown> {
+  // 导出目标: 主画面 (stateGroups[0]) — 未来可扩展为接受 groupId 参数
   const group = project.stateGroups[0]
   const states = group?.displayStates ?? []
   const fromState = states[0]
