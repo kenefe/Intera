@@ -86,19 +86,25 @@ export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) 
 
     let id = findLayerId(e)
 
+    /** 几何命中: 屏幕坐标 → 画板坐标 → geoHitTest */
+    const geoHit = (skip: Set<string>): string | null => {
+      const frame = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
+      if (!frame) return null
+      const r = frame.getBoundingClientRect()
+      const z = canvas.zoom
+      return geoHitTest(
+        (e.clientX - r.left) / z, (e.clientY - r.top) / z,
+        project.project.layers, project.project.rootLayerIds, skip,
+      )
+    }
+
     // Alt+Click → 穿透选择: 跳过当前选中图层，命中下层
     if (e.altKey && id && canvas.selectedLayerIds.includes(id)) {
-      const frame = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
-      if (frame) {
-        const r = frame.getBoundingClientRect()
-        const z = canvas.zoom
-        const lx = (e.clientX - r.left) / z
-        const ly = (e.clientY - r.top) / z
-        const skip = new Set(canvas.selectedLayerIds)
-        const deeper = geoHitTest(lx, ly, project.project.layers, project.project.rootLayerIds, skip)
-        if (deeper) id = deeper
-      }
+      id = geoHit(new Set(canvas.selectedLayerIds)) ?? id
     }
+
+    // DOM 未命中 → 几何回退 (选中 Frame 空白区等)
+    if (!id) id = geoHit(new Set())
 
     if (!id) { canvas.clearSelection(); return }
 

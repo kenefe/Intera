@@ -5,6 +5,7 @@
     textarea.text-input(
       :value="layer?.text ?? ''"
       @input="onTextInput"
+      @keydown="onTextKeydown"
       @blur="$emit('editEnd')"
       rows="2"
       placeholder="输入文本..."
@@ -58,6 +59,14 @@ function onTextInput(e: Event): void {
   if (!props.layer) return
   props.ensureSnapshot()
   props.layer.text = (e.target as HTMLTextAreaElement).value
+}
+
+// Enter → 确认 (blur)，Shift+Enter → 换行
+function onTextKeydown(e: KeyboardEvent): void {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    ;(e.target as HTMLTextAreaElement).blur()
+  }
 }
 
 function onFontSizeChange(e: Event): void {

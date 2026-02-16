@@ -116,11 +116,15 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
     if (!drawId) return
     const abs = toArtboard(e)
     const local = toParentLocal(abs.x, abs.y)
+    let w = Math.abs(local.x - originX)
+    let h = Math.abs(local.y - originY)
+    // Shift → 约束等比 (正圆/正方形)
+    if (e.shiftKey) { const s = Math.max(w, h); w = h = s }
     project.updateLayerProps(drawId, {
-      x: Math.min(local.x, originX),
-      y: Math.min(local.y, originY),
-      width: Math.abs(local.x - originX),
-      height: Math.abs(local.y - originY),
+      x: local.x < originX ? originX - w : originX,
+      y: local.y < originY ? originY - h : originY,
+      width: w,
+      height: h,
     })
   }
 
