@@ -182,7 +182,6 @@ function onAddNode(type: PatchType, name: string): void {
   height: 100%;
   background: var(--surface-0);
   overflow: auto;
-  border-top: 1px solid var(--border-subtle);
   outline: none;
 }
 

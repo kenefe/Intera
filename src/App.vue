@@ -124,8 +124,12 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--sp-4);
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(30, 30, 40, 0.80);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-toolbar);
+  z-index: 2;
+  position: relative;
 }
 
 .toolbar-tools { display: flex; gap: 2px; }
@@ -203,7 +207,9 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   background: var(--surface-1);
-  border-right: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-panel);
+  z-index: 1;
+  position: relative;
 }
 
 .layers-section {
@@ -217,7 +223,9 @@ onUnmounted(() => {
   width: 280px;
   min-width: 280px;
   background: var(--surface-1);
-  border-left: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-panel);
+  z-index: 1;
+  position: relative;
   overflow-y: auto;
 }
 
@@ -230,7 +238,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   background: var(--surface-1);
-  border-top: 1px solid var(--border-subtle);
   flex-shrink: 0;
   transition: background var(--duration-fast) var(--ease-out);
 }

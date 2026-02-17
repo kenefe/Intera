@@ -137,7 +137,7 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeyDown); window.rem
   position: relative;
   cursor: default;
   background: var(--surface-0);
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.024) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 

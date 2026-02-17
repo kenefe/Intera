@@ -114,7 +114,7 @@ function download(content: string, filename: string, mime: string): void {
   max-height: 80vh;
   background: var(--surface-2);
   border: 1px solid var(--border-default);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;

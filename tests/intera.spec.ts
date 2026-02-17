@@ -1437,3 +1437,57 @@ test.describe('Feature: Design Token 体系', () => {
     expect(scrollbarWidth).toBeLessThanOrEqual(8)
   })
 })
+
+// ══════════════════════════════════════
+//  Feature: UI 现代化 (Figma/Paper 风格)
+// ══════════════════════════════════════
+
+test.describe('Feature: UI 现代化', () => {
+
+  test('面板间无硬边框线 — 使用阴影分层', async ({ page }) => {
+    await load(page)
+    const left = page.locator('.panel-left')
+    const right = page.locator('.panel-right')
+    // 面板不应有 border-right / border-left
+    const leftBR = await left.evaluate(el => getComputedStyle(el).borderRightStyle)
+    const rightBL = await right.evaluate(el => getComputedStyle(el).borderLeftStyle)
+    expect(leftBR).toBe('none')
+    expect(rightBL).toBe('none')
+    // 面板应有 box-shadow
+    const leftShadow = await left.evaluate(el => getComputedStyle(el).boxShadow)
+    const rightShadow = await right.evaluate(el => getComputedStyle(el).boxShadow)
+    expect(leftShadow).not.toBe('none')
+    expect(rightShadow).not.toBe('none')
+  })
+
+  test('工具栏有毛玻璃效果 (backdrop-filter)', async ({ page }) => {
+    await load(page)
+    const toolbar = page.locator('.toolbar')
+    const blur = await toolbar.evaluate(el => {
+      const s = getComputedStyle(el)
+      return s.backdropFilter || s.webkitBackdropFilter || ''
+    })
+    expect(blur).toContain('blur')
+  })
+
+  test('圆角升级 — radius-md 为 8px', async ({ page }) => {
+    await load(page)
+    const val = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--radius-md').trim(),
+    )
+    expect(val).toBe('8px')
+  })
+
+  test('多层阴影 token 已加载', async ({ page }) => {
+    await load(page)
+    const tokens = await page.evaluate(() => {
+      const s = getComputedStyle(document.documentElement)
+      return {
+        panel: s.getPropertyValue('--shadow-panel').trim(),
+        toolbar: s.getPropertyValue('--shadow-toolbar').trim(),
+      }
+    })
+    expect(tokens.panel).toBeTruthy()
+    expect(tokens.toolbar).toBeTruthy()
+  })
+})

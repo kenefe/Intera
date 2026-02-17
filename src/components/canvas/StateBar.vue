@@ -141,7 +141,6 @@ function onDup(id: string): void {
   align-items: center;
   padding: 0 var(--sp-4);
   background: var(--surface-2);
-  border-top: 1px solid var(--border-subtle);
 }
 
 .state-tabs { display: flex; gap: 2px; align-items: center; }

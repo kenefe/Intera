@@ -114,8 +114,9 @@ function onDelete(id: string): void {
   width: 160px;
   min-width: 160px;
   background: var(--surface-1);
-  border-left: 1px solid var(--border-subtle);
-  border-top: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-panel);
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;

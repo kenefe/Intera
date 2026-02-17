@@ -2,9 +2,11 @@
 
 ## 设计语言
 
-- **暗色主题**，高对比度，线性品牌感
-- 无圆角 icon，干净锐利
+- **暗色主题**，色差分层 (面板/画布/弹层三级深度)
+- 无硬边框分隔面板 — 用阴影 + 背景色差创造层次
+- 圆润圆角 (8-12px)，多层柔和阴影
 - 最少 chrome，最大画布空间
+- 工具栏半透明 + 毛玻璃，增加质感
 - 交互反馈用弹簧动效（自己的工具自己用）
 
 ---
@@ -20,14 +22,14 @@
 
 | Token | 值 | 用途 |
 |---|---|---|
-| `--surface-0` | `#0e0e16` | 最深背景 (画布/app) |
-| `--surface-1` | `#1a1a28` | 面板/工具栏背景 |
-| `--surface-2` | `#22222e` | 卡片/输入框背景 |
-| `--surface-3` | `#2a2a38` | 悬浮/弹窗背景 |
+| `--surface-0` | `#0c0c14` | 最深背景 (画布/app) |
+| `--surface-1` | `#16161e` | 面板背景 |
+| `--surface-2` | `#1e1e28` | 工具栏/卡片 |
+| `--surface-3` | `#272734` | 悬浮/弹层 |
 | `--text-primary` | `rgba(255,255,255,0.90)` | 主文字 |
 | `--text-secondary` | `rgba(255,255,255,0.56)` | 次文字 |
 | `--text-tertiary` | `rgba(255,255,255,0.34)` | 辅助文字 |
-| `--text-disabled` | `rgba(255,255,255,0.20)` | 禁用文字 |
+| `--text-disabled` | `rgba(255,255,255,0.18)` | 禁用文字 |
 | `--accent` | `#6366f1` | Indigo 主色调 |
 | `--accent-text` | `#a5b4fc` | 激活态文字 |
 
@@ -48,11 +50,21 @@
 
 ### 圆角
 
-`--radius-sm` = 4px, `--radius-md` = 6px, `--radius-lg` = 8px
+`--radius-sm` = 4px, `--radius-md` = 8px, `--radius-lg` = 12px
 
 ### 边框
 
-`--border-subtle` (6% 白) / `--border-default` (10% 白) / `--border-strong` (16% 白)
+`--border-subtle` (4% 白) / `--border-default` (8% 白) / `--border-hover` (14% 白)
+
+### 阴影 (多层柔和体系)
+
+| Token | 用途 |
+|---|---|
+| `--shadow-sm` | 轻微浮起 (2 层) |
+| `--shadow-md` | 中等浮起 (2 层) |
+| `--shadow-lg` | 深度浮起 — 弹窗/菜单 (2 层) |
+| `--shadow-panel` | 面板专用 — 替代硬边框分隔 |
+| `--shadow-toolbar` | 工具栏专用 — 底部投影 |
 
 ### 约束
 
