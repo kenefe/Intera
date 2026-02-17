@@ -32,19 +32,42 @@ function select(id?: string) { if (id) { emit('select', id); emit('close') } }
 .ctx-overlay { position: fixed; inset: 0; z-index: 9998; }
 
 .ctx-menu {
-  position: fixed; z-index: 9999; min-width: 180px; padding: 4px;
-  background: #252540; border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  position: fixed;
+  z-index: 9999;
+  min-width: 180px;
+  padding: var(--sp-1);
+  background: var(--surface-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .ctx-item {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 12px; border-radius: 4px; font-size: 12px;
-  cursor: pointer; color: rgba(255, 255, 255, 0.8); transition: background 0.08s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background var(--duration-fast) var(--ease-out);
 }
-.ctx-item:hover { background: rgba(91, 91, 240, 0.2); }
+
+.ctx-item:hover { background: var(--accent-bg); }
 .ctx-item.disabled { opacity: 0.3; pointer-events: none; }
 
-.shortcut { font-size: 10px; opacity: 0.4; margin-left: 16px; }
-.ctx-sep { height: 1px; background: rgba(255, 255, 255, 0.08); margin: 4px 0; }
+.shortcut {
+  font-size: var(--text-xs);
+  color: var(--text-disabled);
+  margin-left: var(--sp-5);
+}
+
+.ctx-sep {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--sp-1) 0;
+}
 </style>

@@ -15,31 +15,37 @@ watch(() => props.collapsed, v => { open.value = !v })
 </script>
 
 <style scoped>
-.collapsible-group { margin-bottom: 8px; }
+.collapsible-group { margin-bottom: var(--sp-3); }
 
 .group-header {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 0;
+  gap: var(--sp-1);
+  padding: var(--sp-1) 0;
   cursor: pointer;
   user-select: none;
 }
 
 .group-title {
-  font-size: 10px;
-  opacity: 0.4;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
   letter-spacing: 0.5px;
+  transition: color var(--duration-fast);
 }
 
+.group-header:hover .group-title { color: var(--text-secondary); }
+
 .chevron {
-  font-size: 10px;
-  opacity: 0.35;
-  transition: transform 0.15s;
+  font-size: var(--text-xs);
+  color: var(--text-disabled);
+  transition: transform var(--duration-normal) var(--ease-out),
+              color var(--duration-fast);
   display: inline-block;
   width: 12px;
   text-align: center;
 }
+
+.group-header:hover .chevron { color: var(--text-tertiary); }
 .chevron.collapsed { transform: rotate(-90deg); }
 
 .group-body { padding-left: 0; }

@@ -45,16 +45,18 @@ function onAddState(groupId: string): void {
 .state-group-row {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--sp-4);
   cursor: pointer;
 }
-.state-group-row.active > .row-label { color: rgba(136, 136, 255, 0.7); }
+
+.state-group-row.active > .row-label { color: var(--accent-light); }
 
 .row-label {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.35);
+  font-size: var(--text-base);
+  color: var(--text-tertiary);
   letter-spacing: 1px;
-  padding-left: 4px;
+  padding-left: var(--sp-1);
+  transition: color var(--duration-fast);
 }
 
 .row-artboards {
@@ -69,17 +71,20 @@ function onAddState(groupId: string): void {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.25);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  color: var(--text-disabled);
   font-size: 20px;
   cursor: pointer;
   align-self: center;
-  transition: border-color 0.15s, color 0.15s;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
 }
 
 .add-state-btn:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  color: rgba(255, 255, 255, 0.6);
+  border-color: var(--accent-border);
+  color: var(--accent-light);
+  background: var(--accent-bg);
 }
 </style>

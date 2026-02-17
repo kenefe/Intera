@@ -45,19 +45,26 @@ function onGapChange(e: Event): void {
 .align-btn {
   flex: 1;
   padding: 3px 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
   cursor: pointer;
-  transition: all 0.12s;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
 }
-.align-btn:hover { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.7); }
+
+.align-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
 .align-btn.active {
-  background: rgba(136, 136, 255, 0.2);
-  border-color: rgba(136, 136, 255, 0.4);
-  color: #aaaaff;
+  background: var(--accent-bg-hover);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
   font-weight: 600;
 }
 </style>

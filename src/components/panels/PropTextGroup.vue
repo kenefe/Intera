@@ -100,70 +100,73 @@ function setTextAlign(align: string): void {
 
 .text-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  padding: 6px 8px;
-  color: #e0e0e0;
-  font-size: 12px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-family: var(--font-mono);
   resize: vertical;
   outline: none;
-  transition: border-color 0.12s, background 0.12s;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
   min-height: 36px;
 }
-.text-input:hover { border-color: rgba(255, 255, 255, 0.2); }
-.text-input:focus { border-color: rgba(136, 136, 255, 0.5); background: rgba(255, 255, 255, 0.1); }
+
+.text-input:hover { border-color: var(--border-hover); }
+.text-input:focus { border-color: var(--accent-border); background: rgba(255, 255, 255, 0.06); }
 
 /* ── 下拉选择框 ── */
 
 .select-input {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: none;
-  color: #e0e0e0;
-  font-size: 12px;
+  color: var(--text-primary);
+  font-size: var(--text-base);
   font-family: inherit;
   outline: none;
-  padding: 4px 0;
+  padding: var(--sp-1) 0;
   cursor: pointer;
   min-width: 0;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
+
 .select-input option {
-  background: #1e1e2e;
-  color: #e0e0e0;
+  background: var(--surface-2);
+  color: var(--text-primary);
 }
 
 /* ── 对齐按钮组 ── */
 
-.align-group {
-  display: flex;
-  gap: 2px;
-  flex: 1;
-}
+.align-group { display: flex; gap: 2px; flex: 1; }
 
 .align-btn {
   flex: 1;
   padding: 3px 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
   cursor: pointer;
-  transition: all 0.12s;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
 }
+
 .align-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
 }
+
 .align-btn.active {
-  background: rgba(136, 136, 255, 0.2);
-  border-color: rgba(136, 136, 255, 0.4);
-  color: #aaaaff;
+  background: var(--accent-bg-hover);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
   font-weight: 600;
 }
 </style>

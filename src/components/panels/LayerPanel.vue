@@ -207,53 +207,110 @@ function moveDown(id: string): void {
 </script>
 
 <style scoped>
-.layer-panel { padding: 12px 0; }
+.layer-panel { padding: var(--sp-4) 0; }
 
 .section-title {
-  font-size: 11px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 1px; opacity: 0.5; padding: 0 12px; margin-bottom: 8px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-tertiary);
+  padding: 0 var(--sp-4);
+  margin-bottom: var(--sp-3);
 }
 
 .layer-list { display: flex; flex-direction: column; }
 
 .layer-item {
-  display: flex; align-items: center; gap: 4px;
-  padding: 4px 8px; cursor: pointer; font-size: 12px;
-  transition: background 0.1s; user-select: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  cursor: pointer;
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+  user-select: none;
 }
-.layer-item:hover { background: rgba(255, 255, 255, 0.04); }
-.layer-item.selected { background: rgba(91, 91, 240, 0.15); color: #a0a0ff; }
+
+.layer-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+
+.layer-item.selected {
+  background: var(--accent-bg);
+  color: var(--accent-text);
+}
 
 /* ── 拖拽放置指示 ── */
-.layer-item.drop-before { box-shadow: inset 0 2px 0 0 #5b5bf0; }
-.layer-item.drop-after { box-shadow: inset 0 -2px 0 0 #5b5bf0; }
-.layer-item.drop-inside { background: rgba(91, 91, 240, 0.12); outline: 1px dashed rgba(91, 91, 240, 0.5); }
+.layer-item.drop-before { box-shadow: inset 0 2px 0 0 var(--accent); }
+.layer-item.drop-after  { box-shadow: inset 0 -2px 0 0 var(--accent); }
+.layer-item.drop-inside {
+  background: var(--accent-bg);
+  outline: 1px dashed var(--accent-border);
+}
 
 /* ── 展开/折叠箭头 ── */
 .expand {
-  width: 14px; text-align: center; font-size: 10px;
-  opacity: 0.5; cursor: pointer; flex-shrink: 0; line-height: 1;
+  width: 14px;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color var(--duration-fast);
 }
-.expand:hover { opacity: 1; }
+
+.expand:hover { color: var(--text-primary); }
 .expand.blank { cursor: default; }
 
-.layer-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.layer-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .layer-name-input {
-  flex: 1; background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(91, 91, 240, 0.5); border-radius: 3px;
-  color: inherit; font: inherit; padding: 1px 4px; outline: none;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font: inherit;
+  padding: 1px var(--sp-1);
+  outline: none;
 }
 
 /* ── 删除按钮 ── */
 .layer-delete {
-  opacity: 0; width: 18px; height: 18px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; border-radius: 3px; cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
+  opacity: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity var(--duration-fast), background var(--duration-fast);
 }
-.layer-item:hover .layer-delete { opacity: 0.4; }
-.layer-delete:hover { opacity: 1 !important; background: rgba(255, 80, 80, 0.2); color: #ff6b6b; }
 
-.empty-state { padding: 40px 16px; text-align: center; font-size: 12px; opacity: 0.3; }
+.layer-item:hover .layer-delete { opacity: 0.4; }
+
+.layer-delete:hover {
+  opacity: 1 !important;
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.empty-state {
+  padding: 40px var(--sp-5);
+  text-align: center;
+  font-size: var(--text-base);
+  color: var(--text-disabled);
+}
 </style>

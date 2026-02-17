@@ -283,12 +283,12 @@ onUnmounted(() => {
   z-index: 10;
 }
 
-/* ── 选中框 (旋转对齐) ── */
+/* ── 选中框 ── */
 
 .select-box {
   position: absolute;
   pointer-events: none;
-  border: 1.5px solid #5b5bf0;
+  border: 1.5px solid var(--accent);
   transform-origin: center center;
   box-sizing: border-box;
 }
@@ -297,10 +297,10 @@ onUnmounted(() => {
 
 .handle {
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   background: #fff;
-  border: 1.5px solid #5b5bf0;
+  border: 1.5px solid var(--accent);
   border-radius: 1px;
   pointer-events: auto;
   transform: translate(-50%, -50%);
@@ -325,7 +325,7 @@ onUnmounted(() => {
   top: -24px;
   width: 1px;
   height: 24px;
-  background: #5b5bf0;
+  background: var(--accent);
   pointer-events: none;
   transform: translateX(-50%);
 }
@@ -337,7 +337,7 @@ onUnmounted(() => {
   width: 10px;
   height: 10px;
   background: #fff;
-  border: 1.5px solid #5b5bf0;
+  border: 1.5px solid var(--accent);
   border-radius: 50%;
   pointer-events: auto;
   transform: translate(-50%, 0);

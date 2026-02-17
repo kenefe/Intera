@@ -111,30 +111,31 @@ watchEffect(() => {
 .artboard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-3);
 }
 
 .artboard-frame {
-  background: #1e1e3a;
-  border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface-3);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-subtle);
   overflow: hidden;
   position: relative;
-  transition: border-color 0.15s;
+  transition: border-color var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
 }
 
 .active .artboard-frame {
-  border-color: #5b5bf0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-border);
 }
 
 .artboard-label {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
   text-align: center;
   letter-spacing: 0.5px;
+  transition: color var(--duration-fast);
 }
 
-.active .artboard-label {
-  color: #5b5bf0;
-}
+.active .artboard-label { color: var(--accent); }
 </style>

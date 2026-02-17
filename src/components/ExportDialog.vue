@@ -100,103 +100,114 @@ function download(content: string, filename: string, mime: string): void {
 .export-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.60);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 200;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .export-dialog {
   width: 580px;
   max-height: 80vh;
-  background: #1e1e3a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: var(--shadow-lg);
 }
 
 .dialog-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.dialog-title { font-size: 13px; font-weight: 600; }
+.dialog-title { font-size: var(--text-lg); font-weight: 600; }
 
 .close-btn {
-  width: 24px; height: 24px;
-  border: none; border-radius: 4px;
-  background: transparent; color: rgba(255, 255, 255, 0.4);
-  font-size: 16px; cursor: pointer; transition: color 0.1s;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: color var(--duration-fast), background var(--duration-fast);
 }
-.close-btn:hover { color: #fff; }
+
+.close-btn:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.06); }
 
 .tab-bar {
   display: flex;
   gap: 2px;
-  padding: 8px 16px 0;
+  padding: var(--sp-3) var(--sp-5) 0;
 }
 
 .tab {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 4px 4px 0 0;
+  padding: var(--sp-2) 14px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 11px;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
 }
-.tab:hover { color: #fff; }
-.tab.active { background: rgba(91, 91, 240, 0.15); color: #8888ff; }
+
+.tab:hover { color: var(--text-primary); }
+.tab.active { background: var(--accent-bg); color: var(--accent-text); }
 
 .tab-body {
   flex: 1;
-  padding: 16px;
+  padding: var(--sp-5);
   overflow-y: auto;
 }
 
 .code-preview {
   max-height: 300px;
   overflow: auto;
-  background: #12122a;
-  border-radius: 6px;
-  margin-bottom: 12px;
+  background: var(--surface-0);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: var(--sp-4);
 }
 
 .code-block {
-  padding: 12px;
-  font-family: 'SF Mono', Menlo, monospace;
-  font-size: 10px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.6);
+  padding: var(--sp-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--text-secondary);
   white-space: pre-wrap;
   word-break: break-all;
 }
 
 .info-text {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  margin-bottom: 12px;
+  font-size: var(--text-base);
+  color: var(--text-tertiary);
+  margin-bottom: var(--sp-4);
 }
 
-.action-row { display: flex; gap: 8px; }
+.action-row { display: flex; gap: var(--sp-3); }
 
 .action-btn {
-  padding: 6px 16px;
-  border: none;
-  border-radius: 5px;
-  background: #5b5bf0;
+  padding: var(--sp-2) var(--sp-5);
+  border-radius: var(--radius-md);
+  background: var(--accent);
   color: #fff;
-  font-size: 11px;
+  font-size: var(--text-sm);
+  font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.1s;
+  transition: opacity var(--duration-fast);
 }
-.action-btn:hover { opacity: 0.85; }
-.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.action-btn:hover { opacity: 0.88; }
+.action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 </style>

@@ -252,25 +252,25 @@ watch(() => store.project, syncLayers, { deep: true })
 .preview-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .preview-title {
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.4;
+  letter-spacing: 1.2px;
+  color: var(--text-tertiary);
 }
 
 .state-badge {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: rgba(91, 91, 240, 0.18);
-  color: #a0a0ff;
+  font-size: var(--text-xs);
+  padding: 1px var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--accent-bg);
+  color: var(--accent-text);
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -279,16 +279,20 @@ watch(() => store.project, syncLayers, { deep: true })
 
 .reset-btn {
   margin-left: auto;
-  padding: 2px 8px;
-  border: none;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 10px;
+  padding: 2px var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
 }
-.reset-btn:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text-primary);
+}
 
 .preview-device {
   flex: 1;
@@ -299,20 +303,20 @@ watch(() => store.project, syncLayers, { deep: true })
 }
 
 .preview-frame {
-  background: #1e1e3a;
-  border-radius: 8px;
+  background: var(--surface-3);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   position: absolute;
   top: 0;
   left: 0;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 1px var(--border-subtle), var(--shadow-sm);
 }
 
 .preview-hint {
-  padding: 6px 12px;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.25);
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--text-xs);
+  color: var(--text-disabled);
   text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--border-subtle);
 }
 </style>

@@ -1,13 +1,13 @@
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-/*  prop-shared —— 属性面板共享样式       */
+/*  prop-shared — 属性面板共享样式       */
 /*  供 PropertiesPanel 及其子组件复用     */
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 /* ── 布局骨架 ── */
 
-.prop-group { margin-bottom: 12px; }
+.prop-group { margin-bottom: var(--sp-4); }
 
-.prop-row { display: flex; gap: 6px; margin-bottom: 4px; }
+.prop-row { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-1); }
 
 /* ── 属性字段容器 ── */
 
@@ -15,37 +15,47 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  padding: 3px 6px;
-  transition: border-color 0.12s, background 0.12s;
-}
-.prop-field:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-}
-.prop-field:focus-within {
-  border-color: rgba(136, 136, 255, 0.5);
-  background: rgba(255, 255, 255, 0.1);
+  gap: var(--sp-1);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 3px var(--sp-2);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
 }
 
-/* 覆盖态 —— 橙色边框提示 */
-.prop-field.overridden {
-  border-color: rgba(255, 152, 0, 0.4);
-  background: rgba(255, 152, 0, 0.05);
+.prop-field:hover {
+  border-color: var(--border-hover);
 }
+
+.prop-field:focus-within {
+  border-color: var(--accent-border);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* 覆盖态 — 橙色边框提示 */
+.prop-field.overridden {
+  border-color: var(--override-border);
+  background: var(--override-bg);
+}
+
 .prop-field.overridden:hover {
-  border-color: rgba(255, 152, 0, 0.6);
+  border-color: rgba(245, 158, 11, 0.50);
 }
 
 /* ── 标签与单位 ── */
 
-.label { font-size: 10px; opacity: 0.45; min-width: 32px; flex-shrink: 0; white-space: nowrap; }
+.label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  min-width: 32px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 
 .unit {
   font-size: 9px;
-  opacity: 0.35;
+  color: var(--text-disabled);
   flex-shrink: 0;
 }
 
@@ -55,15 +65,16 @@
   flex: 1;
   background: none;
   border: none;
-  color: #e0e0e0;
-  font-size: 12px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-family: var(--font-mono);
   width: 100%;
   outline: none;
-  padding: 4px 0;
+  padding: var(--sp-1) 0;
   min-width: 0;
   -moz-appearance: textfield;
 }
+
 .input::-webkit-inner-spin-button,
 .input::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -73,9 +84,9 @@
 /* ── 区块标题 ── */
 
 .prop-label {
-  font-size: 10px;
-  opacity: 0.4;
-  margin-bottom: 6px;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--sp-2);
   letter-spacing: 0.5px;
 }
 
@@ -83,13 +94,14 @@
 
 .key-dot {
   font-size: 7px;
-  opacity: 0.15;
+  color: var(--text-disabled);
   cursor: pointer;
   flex-shrink: 0;
-  transition: opacity 0.1s, color 0.1s;
+  transition: opacity var(--duration-fast), color var(--duration-fast);
 }
-.key-dot:hover { opacity: 0.5; }
-.key-dot.active { opacity: 1; color: #8888ff; }
+
+.key-dot:hover { color: var(--text-tertiary); }
+.key-dot.active { color: var(--accent); opacity: 1; }
 
 /* ── 重置按钮 (覆盖态回退) ── */
 
@@ -101,12 +113,13 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 3px;
-  background: rgba(255, 152, 0, 0.15);
-  color: #ffb74d;
-  font-size: 11px;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--override);
+  font-size: var(--text-sm);
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background var(--duration-fast) var(--ease-out);
   padding: 0;
 }
-.btn-reset:hover { background: rgba(255, 152, 0, 0.35); }
+
+.btn-reset:hover { background: rgba(245, 158, 11, 0.28); }

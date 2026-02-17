@@ -180,41 +180,63 @@ function onAddNode(type: PatchType, name: string): void {
   flex: 1;
   min-width: 0;
   height: 100%;
-  background: #12122a;
+  background: var(--surface-0);
   overflow: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-subtle);
   outline: none;
 }
+
 .connection-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+
 .connection {
   fill: none;
-  stroke: rgba(136, 136, 255, 0.7);
-  stroke-width: 2.5;
+  stroke: rgba(99, 102, 241, 0.6);
+  stroke-width: 2;
   pointer-events: stroke;
   cursor: pointer;
-  transition: stroke 0.12s, stroke-width 0.12s;
+  transition: stroke var(--duration-fast), stroke-width var(--duration-fast);
 }
-.connection:hover { stroke: #ff6060; stroke-width: 3; }
-.connection.selected { stroke: #8888ff; stroke-width: 3.5; }
-.connection.threatened { stroke: #ff4040; stroke-width: 3; stroke-dasharray: 4 3; }
-.temp-line { fill: none; stroke: rgba(136, 136, 255, 0.8); stroke-width: 2; stroke-dasharray: 6 4; }
-.box-select { fill: rgba(100, 100, 255, 0.15); stroke: rgba(100, 100, 255, 0.8); stroke-width: 1; stroke-dasharray: 4 3; }
-.cut-line { stroke: rgba(255, 80, 80, 0.8); stroke-width: 2; stroke-dasharray: 6 4; }
+
+.connection:hover { stroke: var(--danger); stroke-width: 2.5; }
+.connection.selected { stroke: var(--accent-light); stroke-width: 2.5; }
+.connection.threatened { stroke: #ff4040; stroke-width: 2.5; stroke-dasharray: 4 3; }
+.temp-line { fill: none; stroke: rgba(99, 102, 241, 0.7); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.box-select { fill: rgba(99, 102, 241, 0.10); stroke: var(--accent); stroke-width: 1; stroke-dasharray: 4 3; }
+.cut-line { stroke: rgba(239, 68, 68, 0.7); stroke-width: 1.5; stroke-dasharray: 6 4; }
+
 .node-layer { position: absolute; inset: 0; }
+
 .patch-toolbar {
   position: absolute;
-  top: 8px; left: 8px;
-  display: flex; gap: 6px; padding: 4px;
-  background: rgba(0, 0, 0, 0.3); border-radius: 6px;
+  top: var(--sp-3);
+  left: var(--sp-3);
+  display: flex;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: rgba(0, 0, 0, 0.40);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle);
 }
+
 .node-btn {
-  padding: 5px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 11px; font-weight: 500; cursor: pointer;
-  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
 }
-.node-btn:hover { background: rgba(91, 91, 240, 0.2); color: #aaf; border-color: rgba(91, 91, 240, 0.4); }
+
+.node-btn:hover {
+  background: var(--accent-bg);
+  color: var(--accent-text);
+  border-color: var(--accent-border);
+}
 </style>

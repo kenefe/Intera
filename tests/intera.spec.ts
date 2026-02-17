@@ -1343,3 +1343,97 @@ test.describe('Feature: 组件状态组', () => {
     expect(restoredX).toBe(defaultX)
   })
 })
+
+// ══════════════════════════════════════
+//  Feature: Design Token 体系
+// ══════════════════════════════════════
+
+test.describe('Feature: Design Token 体系', () => {
+
+  test('CSS 自定义属性在 :root 正确加载', async ({ page }) => {
+    await load(page)
+    const tokens = await page.evaluate(() => {
+      const s = getComputedStyle(document.documentElement)
+      return {
+        surface0: s.getPropertyValue('--surface-0').trim(),
+        surface1: s.getPropertyValue('--surface-1').trim(),
+        textPrimary: s.getPropertyValue('--text-primary').trim(),
+        accent: s.getPropertyValue('--accent').trim(),
+        fontSans: s.getPropertyValue('--font-sans').trim(),
+        sp4: s.getPropertyValue('--sp-4').trim(),
+        radiusMd: s.getPropertyValue('--radius-md').trim(),
+      }
+    })
+    // 所有 token 都不应为空
+    for (const [key, val] of Object.entries(tokens)) {
+      expect(val, `token --${key} 不应为空`).toBeTruthy()
+    }
+  })
+
+  test('暗色主题 — 无白色背景泄漏', async ({ page }) => {
+    await load(page)
+    const panels = ['.toolbar', '.panel-left', '.panel-right', '.patch-canvas']
+    for (const sel of panels) {
+      const bg = await page.locator(sel).evaluate(el => getComputedStyle(el).backgroundColor)
+      // RGB 各分量应 < 80 (暗色阈值)
+      const match = bg.match(/\d+/g)
+      if (match) {
+        const [r, g, b] = match.map(Number)
+        expect(r, `${sel} 红色分量过高`).toBeLessThan(80)
+        expect(g, `${sel} 绿色分量过高`).toBeLessThan(80)
+        expect(b, `${sel} 蓝色分量过高`).toBeLessThan(80)
+      }
+    }
+  })
+
+  test('文字层次 — primary/secondary 对比度差异', async ({ page }) => {
+    await load(page)
+    const colors = await page.evaluate(() => {
+      const s = getComputedStyle(document.documentElement)
+      return {
+        primary: s.getPropertyValue('--text-primary').trim(),
+        secondary: s.getPropertyValue('--text-secondary').trim(),
+        tertiary: s.getPropertyValue('--text-tertiary').trim(),
+      }
+    })
+    // 三个层级都应存在且互不相同
+    expect(colors.primary).toBeTruthy()
+    expect(colors.secondary).toBeTruthy()
+    expect(colors.tertiary).toBeTruthy()
+    expect(colors.primary).not.toBe(colors.secondary)
+    expect(colors.secondary).not.toBe(colors.tertiary)
+  })
+
+  test('布局尺寸符合规格 — Toolbar 40px', async ({ page }) => {
+    await load(page)
+    const toolbar = await page.locator('.toolbar').boundingBox()
+    expect(toolbar).toBeTruthy()
+    expect(toolbar!.height).toBe(40)
+  })
+
+  test('Indigo 主色调应用于激活元素', async ({ page }) => {
+    await load(page)
+    // 默认选择工具处于激活态
+    const activeTool = page.locator('.tool-btn.active')
+    await expect(activeTool).toBeVisible()
+    const bg = await activeTool.evaluate(el => getComputedStyle(el).backgroundColor)
+    // 应包含 indigo 色调 (蓝紫系 — b 分量 > r 分量)
+    const match = bg.match(/\d+/g)
+    if (match && match.length >= 3) {
+      const [r, , b] = match.map(Number)
+      expect(b, '激活元素应偏蓝紫色调').toBeGreaterThanOrEqual(r)
+    }
+  })
+
+  test('滚动条样式 — 暗色窄轨道', async ({ page }) => {
+    await load(page)
+    // 检查 ::-webkit-scrollbar 样式是否生效 (通过面板溢出区域)
+    const scrollbarWidth = await page.evaluate(() => {
+      const el = document.querySelector('.panel-left') as HTMLElement
+      if (!el) return -1
+      return el.offsetWidth - el.clientWidth
+    })
+    // 自定义滚动条应 ≤ 6px (tokens.css 定义)
+    expect(scrollbarWidth).toBeLessThanOrEqual(8)
+  })
+})

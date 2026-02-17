@@ -89,7 +89,7 @@ function onToggleStroke(): void {
 .checkbox {
   width: 14px;
   height: 14px;
-  accent-color: #8888ff;
+  accent-color: var(--accent);
   cursor: pointer;
   margin: 0;
 }

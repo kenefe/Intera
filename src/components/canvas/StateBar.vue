@@ -135,67 +135,144 @@ function onDup(id: string): void {
 
 <style scoped>
 .state-bar {
-  height: 36px; min-height: 36px; display: flex; align-items: center;
-  padding: 0 12px; background: #16162a;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  height: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-4);
+  background: var(--surface-2);
+  border-top: 1px solid var(--border-subtle);
 }
 
-.state-tabs { display: flex; gap: 4px; align-items: center; }
+.state-tabs { display: flex; gap: 2px; align-items: center; }
 
 .state-tab {
-  display: flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 4px; font-size: 11px;
-  cursor: pointer; color: rgba(255, 255, 255, 0.45);
-  transition: background 0.12s, color 0.12s; user-select: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) 10px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+  user-select: none;
 }
-.state-tab:hover { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.7); }
+
+.state-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+}
+
 .state-tab.active {
-  background: rgba(91, 91, 240, 0.28); color: #b8b8ff;
-  box-shadow: inset 0 -2px 0 #7070ff;
+  background: var(--accent-bg-hover);
+  color: var(--accent-text);
   font-weight: 600;
 }
-.state-tab.animating { box-shadow: 0 0 0 1px rgba(91, 91, 240, 0.4); }
 
-.state-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.state-tab.animating {
+  box-shadow: 0 0 0 1px var(--accent-border);
+}
+
+.state-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
 
 .state-rename-input {
-  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(91, 91, 240, 0.5);
-  border-radius: 3px; color: inherit; font: inherit; padding: 1px 6px;
-  outline: none; max-width: 100px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font: inherit;
+  padding: 1px var(--sp-2);
+  outline: none;
+  max-width: 100px;
 }
 
 .delete-btn {
-  width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;
-  border-radius: 2px; font-size: 10px; opacity: 0; transition: opacity 0.1s;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  font-size: var(--text-xs);
+  opacity: 0;
+  transition: opacity var(--duration-fast);
 }
+
 .state-tab:hover .delete-btn { opacity: 0.5; }
-.delete-btn:hover { opacity: 1 !important; background: rgba(255, 60, 60, 0.2); color: #ff6060; }
+
+.delete-btn:hover {
+  opacity: 1 !important;
+  background: var(--danger-bg);
+  color: var(--danger);
+}
 
 .add-btn {
-  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  border-radius: 4px; font-size: 15px; font-weight: 500;
-  color: rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.05);
-  border: 1px dashed rgba(255, 255, 255, 0.12); cursor: pointer;
-  transition: color 0.12s, background 0.12s, border-color 0.12s;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--border-default);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
 }
+
 .add-btn:hover {
-  color: rgba(136, 136, 255, 0.9); background: rgba(136, 136, 255, 0.1);
-  border-color: rgba(136, 136, 255, 0.3);
+  color: var(--accent-light);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
 }
 
 /* ── 组选择器 ── */
-.group-selector { display: flex; gap: 3px; align-items: center; margin-right: 4px; }
+
+.group-selector {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  margin-right: var(--sp-1);
+}
 
 .group-pill {
-  padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 500;
-  color: rgba(255, 255, 255, 0.35); cursor: pointer;
-  transition: background 0.12s, color 0.12s; user-select: none;
+  padding: 3px var(--sp-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+  user-select: none;
   letter-spacing: 0.3px;
 }
-.group-pill:hover { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.6); }
-.group-pill.active { background: rgba(91, 91, 240, 0.2); color: #9090ff; }
+
+.group-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+}
+
+.group-pill.active {
+  background: var(--accent-bg);
+  color: var(--accent-text);
+}
 
 .group-divider {
-  width: 1px; height: 16px; background: rgba(255, 255, 255, 0.1); margin: 0 6px;
+  width: 1px;
+  height: 16px;
+  background: var(--border-default);
+  margin: 0 var(--sp-2);
 }
 </style>

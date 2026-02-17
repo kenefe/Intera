@@ -1,0 +1,75 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/*  Intera Design Tokens                      */
+/*  全局 CSS 变量 — 色彩 · 排版 · 间距 · 圆角  */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+:root {
+
+  /* ── 表面色 (4 层深度体系) ─────────────── */
+  --surface-0: #0e0e16;          /* 画布底色 — 最深 */
+  --surface-1: #141420;          /* 面板背景 */
+  --surface-2: #1a1a28;          /* 工具栏 / 卡片 */
+  --surface-3: #212130;          /* 悬停 / 弹层 */
+
+  /* ── 文本色 (4 级层次) ────────────────── */
+  --text-primary:   rgba(255, 255, 255, 0.90);
+  --text-secondary: rgba(255, 255, 255, 0.56);
+  --text-tertiary:  rgba(255, 255, 255, 0.34);
+  --text-disabled:  rgba(255, 255, 255, 0.18);
+
+  /* ── 边框 (3 档强度) ──────────────────── */
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-hover:   rgba(255, 255, 255, 0.16);
+
+  /* ── Accent (Indigo 体系) ─────────────── */
+  --accent:         #6366f1;
+  --accent-light:   #818cf8;
+  --accent-text:    #a5b4fc;
+  --accent-bg:      rgba(99, 102, 241, 0.12);
+  --accent-bg-hover:rgba(99, 102, 241, 0.20);
+  --accent-border:  rgba(99, 102, 241, 0.30);
+
+  /* ── 语义色 ────────────────────────────── */
+  --override:       #f59e0b;     /* 覆盖态 — Amber */
+  --override-bg:    rgba(245, 158, 11, 0.08);
+  --override-border:rgba(245, 158, 11, 0.30);
+
+  --danger:         #ef4444;     /* 删除 / 错误 — Red */
+  --danger-bg:      rgba(239, 68, 68, 0.12);
+
+  --success:        #22c55e;     /* 成功 — Green */
+
+  /* ── 排版 ──────────────────────────────── */
+  --font-sans:  -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  --font-mono:  'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs:    10px;            /* 标题标签 / 小标记 */
+  --text-sm:    11px;            /* 正文 / 按钮 */
+  --text-base:  12px;            /* 列表项 / 属性值 */
+  --text-lg:    13px;            /* 面板标题 */
+
+  /* ── 间距 (4px 网格) ───────────────────── */
+  --sp-1:  4px;
+  --sp-2:  6px;
+  --sp-3:  8px;
+  --sp-4:  12px;
+  --sp-5:  16px;
+  --sp-6:  24px;
+
+  /* ── 圆角 ──────────────────────────────── */
+  --radius-sm:   3px;            /* badge / 小控件 */
+  --radius-md:   5px;            /* 按钮 / 输入框 */
+  --radius-lg:   8px;            /* 面板 / 卡片 */
+
+  /* ── 过渡 ──────────────────────────────── */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);   /* spring-like decelerate */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);    /* standard */
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+
+  /* ── 阴影 ──────────────────────────────── */
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.5);
+}

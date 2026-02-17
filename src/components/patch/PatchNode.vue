@@ -304,18 +304,24 @@ function onAddVar(): void {
 .patch-node {
   position: absolute;
   width: 180px;
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: #1e1e3a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
   user-select: none;
   cursor: grab;
-  transition: box-shadow 0.12s;
+  transition: box-shadow var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
 }
-.patch-node:hover { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); }
+
+.patch-node:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
 .patch-node.selected {
-  border-color: #8888ff;
-  box-shadow: 0 0 0 2px rgba(136, 136, 255, 0.4), 0 0 12px rgba(136, 136, 255, 0.3);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--accent-border), var(--shadow-md);
 }
 
 .node-header {
@@ -323,11 +329,12 @@ function onAddVar(): void {
   align-items: center;
   justify-content: space-between;
   padding: 5px 10px;
-  font-size: 11px;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.3px;
   color: #fff;
 }
+
 .header-text { flex: 1; }
 
 .btn-delete {
@@ -336,65 +343,70 @@ function onAddVar(): void {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: rgba(255, 255, 255, 0.3);
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
-  transition: background 0.12s, color 0.12s;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
-.btn-delete:hover { background: rgba(255, 80, 80, 0.5); color: #fff; }
 
-/* 分类配色 */
-.cat-trigger .node-header { background: #2a6b4a; }
-.cat-logic   .node-header { background: #6b5a2a; }
-.cat-action  .node-header { background: #3a3a8b; }
-.cat-behavior .node-header { background: #6b2a5a; }
+.btn-delete:hover { background: rgba(239, 68, 68, 0.4); color: #fff; }
 
-.node-ports { padding: 4px 0; }
+/* ── 分类配色 (更柔和的色调) ── */
+.cat-trigger  .node-header { background: #1a4d35; }
+.cat-logic    .node-header { background: #4d3d1a; }
+.cat-action   .node-header { background: #2d2d6b; }
+.cat-behavior .node-header { background: #4d1a3d; }
+
+.node-ports { padding: var(--sp-1) 0; }
 
 .port-row {
   display: flex;
   align-items: center;
   padding: 3px 10px;
-  gap: 6px;
+  gap: var(--sp-2);
 }
+
 .port-row:has(.out) { flex-direction: row; justify-content: flex-end; }
 
 .port-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  background: #1e1e3a;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  background: var(--surface-2);
   flex-shrink: 0;
   cursor: crosshair;
   position: relative;
-  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  transition: background var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
-/* 扩大命中区域 (24×24) —— 不改变视觉尺寸 */
+
+/* 扩大命中区域 (24×24) */
 .port-dot::after {
   content: '';
   position: absolute;
   inset: -7px;
   border-radius: 50%;
 }
+
 .port-dot:hover {
-  background: #8888ff;
-  border-color: #8888ff;
-  box-shadow: 0 0 6px rgba(136, 136, 255, 0.6);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
 }
+
 /* 已连接端口 — 实心圆点 */
-.port-dot.connected { background: #8888ff; border-color: #8888ff; }
+.port-dot.connected { background: var(--accent); border-color: var(--accent); }
+
 /* 输出端口着色以区分方向 */
-.port-out { border-color: rgba(136, 136, 255, 0.4); }
+.port-out { border-color: rgba(99, 102, 241, 0.35); }
 
 .port-label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
-.port-label.out { text-align: right; flex: 1; }
 
+.port-label.out { text-align: right; flex: 1; }
 </style>

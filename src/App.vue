@@ -100,14 +100,18 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/*  App Shell — 全局布局骨架             */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
 .intera-app {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #1a1a2e;
-  color: #e0e0e0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
   overflow: hidden;
 }
 
@@ -119,59 +123,72 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  background: #16162a;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0 var(--sp-4);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.toolbar-tools { display: flex; gap: 4px; }
+.toolbar-tools { display: flex; gap: 2px; }
 
 .tool-btn {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
   font-weight: 600;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.5);
-  transition: background 0.1s, color 0.1s;
+  color: var(--text-tertiary);
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
 }
 
-.tool-btn:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
-.tool-btn.active { background: rgba(91, 91, 240, 0.3); color: #a0a0ff; box-shadow: inset 0 -2px 0 #7070ff; }
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
 
-/* ── 工具图标 (覆盖 LayerIcon 类型配色，继承按钮状态色) ── */
-.tool-icon { width: 16px; height: 16px; }
+.tool-btn.active {
+  background: var(--accent-bg-hover);
+  color: var(--accent-text);
+}
+
+/* ── 工具图标 ── */
+.tool-icon { width: 15px; height: 15px; }
 .tool-btn :deep(.layer-icon) { color: inherit; }
 
 .toolbar-center { flex: 1; text-align: center; }
 
 .brand {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: 4px;
+  letter-spacing: 5px;
   text-transform: uppercase;
-  opacity: 0.4;
+  color: var(--text-disabled);
 }
 
-.toolbar-actions { display: flex; gap: 4px; align-items: center; }
+.toolbar-actions { display: flex; gap: var(--sp-1); align-items: center; }
 
 /* ── 工具栏按钮 ── */
 
 .btn-action {
-  padding: 4px 10px;
-  border: none;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 11px;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
 }
-.btn-action:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+.btn-action:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text-primary);
+}
 
 /* ── 三栏主体 ── */
 
@@ -185,22 +202,22 @@ onUnmounted(() => {
   min-width: 260px;
   display: flex;
   flex-direction: column;
-  background: #16162a;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface-1);
+  border-right: 1px solid var(--border-subtle);
 }
 
 .layers-section {
   flex: 2;
   min-height: 120px;
   overflow-y: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .panel-right {
   width: 280px;
   min-width: 280px;
-  background: #16162a;
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface-1);
+  border-left: 1px solid var(--border-subtle);
   overflow-y: auto;
 }
 
@@ -212,20 +229,27 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #16162a;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface-1);
+  border-top: 1px solid var(--border-subtle);
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background var(--duration-fast) var(--ease-out);
 }
-.resize-handle:hover { background: rgba(91, 91, 240, 0.15); }
+
+.resize-handle:hover {
+  background: var(--accent-bg);
+}
+
 .resize-grip {
   width: 32px;
   height: 2px;
   border-radius: 1px;
-  background: rgba(255, 255, 255, 0.15);
-  transition: background 0.15s;
+  background: rgba(255, 255, 255, 0.10);
+  transition: background var(--duration-fast) var(--ease-out);
 }
-.resize-handle:hover .resize-grip { background: rgba(255, 255, 255, 0.4); }
+
+.resize-handle:hover .resize-grip {
+  background: var(--accent-light);
+}
 
 .patch-row {
   display: flex;

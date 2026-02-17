@@ -142,57 +142,64 @@ function onDelay(e: Event): void {
 </script>
 
 <style scoped>
-.curve-panel { padding: 12px; }
+.curve-panel { padding: var(--sp-4); }
 
 .curve-group {
-  margin-bottom: 10px;
-  padding: 8px;
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-3);
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
 }
 
 .group-label {
-  font-size: 10px;
-  opacity: 0.45;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
   letter-spacing: 0.5px;
-  margin-bottom: 6px;
+  margin-bottom: var(--sp-2);
 }
 
 .group-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
   cursor: pointer;
-  margin-bottom: 6px;
+  margin-bottom: var(--sp-2);
 }
 
 .toggle {
   width: 12px;
   height: 12px;
-  accent-color: #8888ff;
+  accent-color: var(--accent);
   cursor: pointer;
 }
 
-.delay-row { display: flex; align-items: center; gap: 6px; }
+.delay-row { display: flex; align-items: center; gap: var(--sp-2); }
 
 .delay-input {
   width: 80px;
-  padding: 4px 6px;
-  border: none;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #e0e0e0;
-  font-size: 12px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-family: var(--font-mono);
   outline: none;
+  transition: border-color var(--duration-fast) var(--ease-out);
 }
 
-.delay-unit { font-size: 10px; opacity: 0.35; }
+.delay-input:focus { border-color: var(--accent-border); }
+
+.delay-unit {
+  font-size: var(--text-xs);
+  color: var(--text-disabled);
+}
 
 .empty-state {
-  padding: 24px 16px;
+  padding: var(--sp-6) var(--sp-5);
   text-align: center;
-  font-size: 12px;
-  opacity: 0.3;
+  font-size: var(--text-base);
+  color: var(--text-disabled);
 }
 </style>

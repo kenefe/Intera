@@ -50,29 +50,32 @@ function onType(e: Event): void {
 </script>
 
 <style scoped>
-.curve-edit { display: flex; flex-direction: column; gap: 4px; }
+.curve-edit { display: flex; flex-direction: column; gap: var(--sp-1); }
 
 .type-select {
   width: 100%;
-  padding: 4px 6px;
-  border: none;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #e0e0e0;
-  font-size: 11px;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
   outline: none;
   cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out);
 }
+
+.type-select:focus { border-color: var(--accent-border); }
 
 .param-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
 }
 
 .param-label {
-  font-size: 10px;
-  opacity: 0.4;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
   min-width: 30px;
 }
 
@@ -81,7 +84,7 @@ function onType(e: Event): void {
   height: 3px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;
   outline: none;
 }
@@ -91,30 +94,38 @@ function onType(e: Event): void {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #8888ff;
+  background: var(--accent);
   cursor: pointer;
+  transition: box-shadow var(--duration-fast);
+}
+
+.param-slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
 .param-input {
   width: 48px;
-  font-size: 10px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
   text-align: right;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  color: #e0e0e0;
-  padding: 2px 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 2px var(--sp-1);
   outline: none;
   -moz-appearance: textfield;
+  transition: border-color var(--duration-fast) var(--ease-out);
 }
+
 .param-input::-webkit-inner-spin-button,
 .param-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 .param-input:focus {
-  border-color: rgba(136, 136, 255, 0.5);
-  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-border);
+  background: rgba(255, 255, 255, 0.06);
 }
 </style>

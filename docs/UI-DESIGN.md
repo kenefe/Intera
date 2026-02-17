@@ -9,6 +9,59 @@
 
 ---
 
+## Design Token 体系
+
+所有视觉参数通过 CSS 自定义属性集中管理，避免硬编码分散在组件中。
+
+**入口**: `src/styles/tokens.css` (变量定义) + `src/styles/base.css` (全局重置)
+**引入**: `src/main.ts` 顶部 import，全局生效
+
+### 颜色
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--surface-0` | `#0e0e16` | 最深背景 (画布/app) |
+| `--surface-1` | `#1a1a28` | 面板/工具栏背景 |
+| `--surface-2` | `#22222e` | 卡片/输入框背景 |
+| `--surface-3` | `#2a2a38` | 悬浮/弹窗背景 |
+| `--text-primary` | `rgba(255,255,255,0.90)` | 主文字 |
+| `--text-secondary` | `rgba(255,255,255,0.56)` | 次文字 |
+| `--text-tertiary` | `rgba(255,255,255,0.34)` | 辅助文字 |
+| `--text-disabled` | `rgba(255,255,255,0.20)` | 禁用文字 |
+| `--accent` | `#6366f1` | Indigo 主色调 |
+| `--accent-text` | `#a5b4fc` | 激活态文字 |
+
+### 排版
+
+| Token | 值 |
+|---|---|
+| `--font-sans` | system-ui, -apple-system, ... |
+| `--font-mono` | 'JetBrains Mono', 'Fira Code', monospace |
+| `--text-xs` | 10px |
+| `--text-sm` | 11px |
+| `--text-base` | 12px |
+| `--text-lg` | 13px |
+
+### 间距 (4px 基数)
+
+`--sp-1` = 4px, `--sp-2` = 8px, `--sp-3` = 12px, `--sp-4` = 16px, `--sp-5` = 20px, `--sp-6` = 24px
+
+### 圆角
+
+`--radius-sm` = 4px, `--radius-md` = 6px, `--radius-lg` = 8px
+
+### 边框
+
+`--border-subtle` (6% 白) / `--border-default` (10% 白) / `--border-strong` (16% 白)
+
+### 约束
+
+- 所有组件样式**必须引用 token 变量**，禁止硬编码颜色/间距
+- 语义色 (图层类型色等) 可保留硬编码，但需注释说明原因
+- 未来主题切换只需替换 `:root` 变量值
+
+---
+
 ## 整体布局
 
 ```

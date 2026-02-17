@@ -188,17 +188,17 @@ function onEditEnd(): void { snapped = false }
 <style scoped>
 @import './prop-shared.css';
 
-.properties-panel { padding: 12px; }
+.properties-panel { padding: var(--sp-4); }
 
 /* ── 图层信息头 ── */
 
 .layer-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .layer-type {
@@ -206,17 +206,17 @@ function onEditEnd(): void { snapped = false }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.5);
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
 .layer-name {
-  font-size: 12px;
+  font-size: var(--text-base);
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-primary);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -226,19 +226,17 @@ function onEditEnd(): void { snapped = false }
 .state-badge {
   font-size: 9px;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: rgba(255, 152, 0, 0.15);
-  color: #ffb74d;
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--override-bg);
+  color: var(--override);
   flex-shrink: 0;
 }
 
-/* .prop-label 和 .key-dot 已迁移至 prop-shared.css */
-
 .empty-state {
-  padding: 40px 16px;
+  padding: 40px var(--sp-5);
   text-align: center;
-  font-size: 12px;
-  opacity: 0.3;
+  font-size: var(--text-base);
+  color: var(--text-disabled);
 }
 </style>
