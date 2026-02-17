@@ -1,165 +1,230 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  useLayerInteraction —— 图层选择与拖拽
-//  职责: select 工具下的点击选中、多选、拖拽移动
-//  核心: 多选时拖拽同时移动所有选中图层
+//  useLayerInteraction —— 图层选择/拖拽/框选
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { useCanvasStore } from '@store/canvas'
 import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
 import { useActiveGroup } from './useActiveGroup'
 
-// ── DOM 查找 ──
+type Rect = { left: number; top: number; right: number; bottom: number }
+type MarqueeModel = { visible: boolean; x: number; y: number; width: number; height: number }
+type MarqueeSession = {
+  active: boolean
+  stateId: string
+  additive: boolean
+  startClientX: number
+  startClientY: number
+  viewportRect: DOMRect | null
+  baseSelection: string[]
+}
 
-function findLayerId(e: PointerEvent): string | null {
-  // 优先用 DOM 命中 (最上层 z-index)
-  const el = (e.target as HTMLElement).closest<HTMLElement>('[data-layer-id]')
+export function findLayerIdFromTarget(target: EventTarget | null): string | null {
+  const el = (target as HTMLElement | null)?.closest<HTMLElement>('[data-layer-id]')
   return el?.dataset.layerId ?? null
 }
 
-/**
- * 几何命中测试: 从最上层往下找包含坐标的图层
- * 用于 Alt+Click 穿透选择下层图层
- */
-function geoHitTest(
-  x: number, y: number,
-  layers: Record<string, { props: { x: number; y: number; width: number; height: number }; parentId?: string | null }>,
-  order: string[],
-  skipIds: Set<string>,
+function findStateIdFromTarget(target: EventTarget | null): string | null {
+  const el = (target as HTMLElement | null)?.closest<HTMLElement>('[data-state-id]')
+  return el?.dataset.stateId ?? null
+}
+
+function intersects(a: Rect, b: Rect): boolean {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+}
+
+function clamp(v: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, v))
+}
+
+function findGroupIdByState(
+  stateId: string,
+  groups: Array<{ id: string; displayStates: Array<{ id: string }> }>,
 ): string | null {
-  // 从后往前 (后绘制 = 上层)
-  for (let i = order.length - 1; i >= 0; i--) {
-    const id = order[i]
-    if (skipIds.has(id)) continue
-    const p = layers[id]?.props
-    if (!p) continue
-    if (x >= p.x && x < p.x + p.width && y >= p.y && y < p.y + p.height) return id
+  for (const group of groups) {
+    if (group.displayStates.some(state => state.id === stateId)) return group.id
   }
   return null
 }
 
-function findStateId(e: PointerEvent): string | null {
-  const el = (e.target as HTMLElement).closest<HTMLElement>('[data-state-id]')
-  return el?.dataset.stateId ?? null
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  composable
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-export function useLayerInteraction(_viewportRef: Ref<HTMLElement | undefined>) {
+export function useLayerInteraction(viewportRef: Ref<HTMLElement | undefined>) {
   const canvas = useCanvasStore()
   const editor = useEditorStore()
   const project = useProjectStore()
   const { activeGroup, isDefaultState } = useActiveGroup()
-
-  // ── 拖拽状态 ──
+  const marquee = ref<MarqueeModel>({ visible: false, x: 0, y: 0, width: 0, height: 0 })
 
   let dragIds: string[] = []
-  let startX = 0, startY = 0
-  let layerStarts = new Map<string, { x: number; y: number }>()
+  let dragStartX = 0
+  let dragStartY = 0
   let didDrag = false
   let pendingSingle: string | null = null
+  const layerStarts = new Map<string, { x: number; y: number }>()
+  const marqueeSession: MarqueeSession = {
+    active: false, stateId: '', additive: false, startClientX: 0, startClientY: 0,
+    viewportRect: null, baseSelection: [],
+  }
 
-  // ── 状态感知写入 ──
-
-  function writeXY(lid: string, x: number, y: number): void {
+  function writeXY(layerId: string, x: number, y: number): void {
     const group = activeGroup.value
     if (!group) return
-    if (isDefaultState.value) {
-      project.updateLayerProps(lid, { x, y })
-    } else if (group.activeDisplayStateId) {
-      project.setOverride(group.activeDisplayStateId, lid, { x, y })
-    }
+    if (isDefaultState.value) project.updateLayerProps(layerId, { x, y })
+    else if (group.activeDisplayStateId) project.setOverride(group.activeDisplayStateId, layerId, { x, y })
   }
 
-  function down(e: PointerEvent): void {
-    if (editor.tool !== 'select') return
-    didDrag = false
-    pendingSingle = null
-
-    // 点击画板 → 切换到该画板的状态
-    const clickedStateId = findStateId(e)
-    const group = activeGroup.value
-    if (clickedStateId && group && group.activeDisplayStateId !== clickedStateId) {
-      group.activeDisplayStateId = clickedStateId
-    }
-
-    let id = findLayerId(e)
-
-    /** 几何命中: 屏幕坐标 → 画板坐标 → geoHitTest */
-    const geoHit = (skip: Set<string>): string | null => {
-      const frame = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
-      if (!frame) return null
-      const r = frame.getBoundingClientRect()
-      const z = canvas.zoom
-      return geoHitTest(
-        (e.clientX - r.left) / z, (e.clientY - r.top) / z,
-        project.project.layers, project.project.rootLayerIds, skip,
-      )
-    }
-
-    // Alt+Click → 穿透选择: 跳过当前选中图层，命中下层
-    if (e.altKey && id && canvas.selectedLayerIds.includes(id)) {
-      id = geoHit(new Set(canvas.selectedLayerIds)) ?? id
-    }
-
-    // DOM 未命中 → 几何回退 (选中 Frame 空白区等)
-    if (!id) id = geoHit(new Set())
-
-    if (!id) { canvas.clearSelection(); return }
-
-    // ── 选区逻辑 ──
-    if (e.shiftKey || e.metaKey) {
-      canvas.toggleSelection(id)
-    } else if (canvas.selectedLayerIds.includes(id)) {
-      // 已选中 → 延迟单选到 up (允许拖拽多选)
-      pendingSingle = id
-    } else {
-      canvas.select([id])
-    }
-
-    // ── 准备拖拽所有选中图层 ──
-    const stateId = group?.activeDisplayStateId
-    if (!stateId) return
-
-    project.snapshot()
-    dragIds = [...canvas.selectedLayerIds]
-    startX = e.clientX
-    startY = e.clientY
-
-    layerStarts.clear()
-    for (const lid of dragIds) {
-      const resolved = project.states.getResolvedProps(stateId, lid)
-      if (resolved) layerStarts.set(lid, { x: resolved.x, y: resolved.y })
-    }
-  }
-
-  function move(e: PointerEvent): void {
-    if (dragIds.length === 0) return
-    didDrag = true
-    pendingSingle = null
-
-    const z = canvas.zoom
-    const dx = (e.clientX - startX) / z
-    const dy = (e.clientY - startY) / z
-
-    for (const lid of dragIds) {
-      const start = layerStarts.get(lid)
-      if (start) writeXY(lid, Math.round(start.x + dx), Math.round(start.y + dy))
-    }
-  }
-
-  function up(): void {
-    // 无拖拽 + 已选中 → 单选 (取消其他)
-    if (pendingSingle && !didDrag) {
-      canvas.select([pendingSingle])
-    }
+  function clearDragSession(): void {
     dragIds = []
     layerStarts.clear()
     pendingSingle = null
   }
 
-  return { down, move, up }
+  function resetMarquee(): void {
+    marqueeSession.active = false
+    marqueeSession.stateId = ''
+    marqueeSession.viewportRect = null
+    marqueeSession.baseSelection = []
+    marquee.value = { visible: false, x: 0, y: 0, width: 0, height: 0 }
+  }
+
+  function syncGroupByPointer(e: PointerEvent): string | null {
+    const clickedStateId = findStateIdFromTarget(e.target)
+    if (!clickedStateId) return null
+    const targetGroupId = findGroupIdByState(clickedStateId, project.project.stateGroups)
+    if (targetGroupId && targetGroupId !== canvas.activeGroupId) canvas.setActiveGroup(targetGroupId)
+    const group = activeGroup.value
+    if (group && group.activeDisplayStateId !== clickedStateId) group.activeDisplayStateId = clickedStateId
+    return clickedStateId
+  }
+
+  function startMarquee(e: PointerEvent, stateId: string): void {
+    const vp = viewportRef.value
+    if (!vp) return
+    const vpRect = vp.getBoundingClientRect()
+    marqueeSession.active = true
+    marqueeSession.stateId = stateId
+    marqueeSession.additive = e.shiftKey || e.metaKey
+    marqueeSession.startClientX = clamp(e.clientX, vpRect.left, vpRect.right)
+    marqueeSession.startClientY = clamp(e.clientY, vpRect.top, vpRect.bottom)
+    marqueeSession.viewportRect = vpRect
+    marqueeSession.baseSelection = [...canvas.selectedLayerIds]
+    marquee.value = {
+      visible: true,
+      x: marqueeSession.startClientX - vpRect.left,
+      y: marqueeSession.startClientY - vpRect.top,
+      width: 0,
+      height: 0,
+    }
+  }
+
+  function marqueeRectClient(e: PointerEvent): Rect | null {
+    const vpRect = marqueeSession.viewportRect
+    if (!vpRect) return null
+    const ex = clamp(e.clientX, vpRect.left, vpRect.right)
+    const ey = clamp(e.clientY, vpRect.top, vpRect.bottom)
+    const left = Math.min(marqueeSession.startClientX, ex)
+    const top = Math.min(marqueeSession.startClientY, ey)
+    const right = Math.max(marqueeSession.startClientX, ex)
+    const bottom = Math.max(marqueeSession.startClientY, ey)
+    marquee.value = {
+      visible: true,
+      x: left - vpRect.left,
+      y: top - vpRect.top,
+      width: right - left,
+      height: bottom - top,
+    }
+    return { left, top, right, bottom }
+  }
+
+  function collectMarqueeHits(rect: Rect): string[] {
+    const stateEl = document.querySelector<HTMLElement>(`[data-state-id="${marqueeSession.stateId}"]`)
+    if (!stateEl) return []
+    const map = new Map<string, Rect>()
+    for (const el of stateEl.querySelectorAll<HTMLElement>('[data-layer-id]')) {
+      const id = el.dataset.layerId
+      if (!id || map.has(id)) continue
+      const r = el.getBoundingClientRect()
+      map.set(id, { left: r.left, top: r.top, right: r.right, bottom: r.bottom })
+    }
+    return Array.from(map.entries())
+      .filter(([, box]) => intersects(rect, box))
+      .map(([id]) => id)
+  }
+
+  function updateMarqueeSelection(e: PointerEvent): void {
+    const rect = marqueeRectClient(e)
+    if (!rect) return
+    const hits = collectMarqueeHits(rect)
+    const merged = marqueeSession.additive
+      ? Array.from(new Set([...marqueeSession.baseSelection, ...hits]))
+      : hits
+    canvas.select(merged)
+  }
+
+  function prepareDrag(e: PointerEvent): void {
+    const stateId = activeGroup.value?.activeDisplayStateId
+    if (!stateId) return
+    project.snapshot()
+    dragIds = [...canvas.selectedLayerIds]
+    dragStartX = e.clientX
+    dragStartY = e.clientY
+    layerStarts.clear()
+    for (const layerId of dragIds) {
+      const resolved = project.states.getResolvedProps(stateId, layerId)
+      if (resolved) layerStarts.set(layerId, { x: resolved.x, y: resolved.y })
+    }
+  }
+
+  function down(e: PointerEvent): void {
+    if (editor.tool !== 'select' || e.button !== 0) return
+    didDrag = false
+    resetMarquee()
+    pendingSingle = null
+    syncGroupByPointer(e)
+    const id = findLayerIdFromTarget(e.target)
+    if (!id) {
+      const stateId = activeGroup.value?.activeDisplayStateId
+      if (!stateId) { canvas.clearSelection(); return }
+      startMarquee(e, stateId)
+      return
+    }
+    if (e.shiftKey || e.metaKey) canvas.toggleSelection(id)
+    else if (canvas.selectedLayerIds.includes(id)) pendingSingle = id
+    else canvas.select([id])
+    prepareDrag(e)
+  }
+
+  function move(e: PointerEvent): void {
+    if (marqueeSession.active) {
+      didDrag = true
+      updateMarqueeSelection(e)
+      return
+    }
+    if (dragIds.length === 0) return
+    didDrag = true
+    pendingSingle = null
+    const dx = (e.clientX - dragStartX) / canvas.zoom
+    const dy = (e.clientY - dragStartY) / canvas.zoom
+    for (const layerId of dragIds) {
+      const start = layerStarts.get(layerId)
+      if (start) writeXY(layerId, Math.round(start.x + dx), Math.round(start.y + dy))
+    }
+  }
+
+  function up(): void {
+    if (marqueeSession.active) {
+      const box = marquee.value
+      if (!didDrag || (box.width < 2 && box.height < 2)) {
+        if (!marqueeSession.additive) canvas.clearSelection()
+      }
+      resetMarquee()
+      clearDragSession()
+      return
+    }
+    if (pendingSingle && !didDrag) canvas.select([pendingSingle])
+    clearDragSession()
+  }
+
+  return { down, move, up, marquee }
 }

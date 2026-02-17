@@ -209,6 +209,64 @@ test.describe('Feature: 图层管理', () => {
     await expect(page.locator('.layer-item.selected')).toHaveCount(1)
   })
 
+  test('画布框选可一次选中多个图层（支持画板外起手）', async ({ page }) => {
+    await load(page)
+    await page.evaluate(() => {
+      const app = (document.querySelector('#app') as HTMLElement & {
+        __vue_app__?: { config?: { globalProperties?: { $pinia?: { _s?: Map<string, unknown> } } } }
+      }).__vue_app__
+      const pinia = app?.config?.globalProperties?.$pinia
+      const project = pinia?._s?.get('project') as {
+        addLayer: (type: string) => { id: string }
+        updateLayerProps: (id: string, props: Record<string, number>) => void
+      }
+      const a = project.addLayer('rectangle')
+      const b = project.addLayer('rectangle')
+      project.updateLayerProps(a.id, { x: 40, y: 140, width: 90, height: 90 })
+      project.updateLayerProps(b.id, { x: 200, y: 240, width: 90, height: 90 })
+    })
+    await page.keyboard.press('v')
+    const layers = page.locator('.artboard-frame [data-layer-id]')
+    await expect(layers).toHaveCount(2)
+    const boxes = await layers.evaluateAll((els) => els.map((el) => {
+      const r = el.getBoundingClientRect()
+      return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }
+    }))
+    const left = Math.min(...boxes.map(b => b.left)) - 8
+    const top = Math.min(...boxes.map(b => b.top)) - 8
+    const right = Math.max(...boxes.map(b => b.right)) + 8
+    const bottom = Math.max(...boxes.map(b => b.bottom)) + 8
+    const canvas = await canvasBox(page)
+    const startX = canvas.x + 8
+    const startY = canvas.y + 8
+    await page.mouse.move(startX, startY)
+    await page.mouse.down()
+    await page.mouse.move(right, bottom, { steps: 8 })
+    const marquee = page.locator('.marquee-box')
+    await expect(marquee).toBeVisible()
+    const box = await marquee.boundingBox()
+    const viewport = await page.locator('.canvas-viewport').boundingBox()
+    expect(box).toBeTruthy()
+    expect(viewport).toBeTruthy()
+    const expectedX = Math.min(startX, right) - (viewport?.x ?? 0)
+    const expectedY = Math.min(startY, bottom) - (viewport?.y ?? 0)
+    const actualX = (box?.x ?? 0) - (viewport?.x ?? 0)
+    const actualY = (box?.y ?? 0) - (viewport?.y ?? 0)
+    expect(Math.abs(actualX - expectedX)).toBeLessThanOrEqual(2)
+    expect(Math.abs(actualY - expectedY)).toBeLessThanOrEqual(2)
+    await page.mouse.up()
+    await expect(page.locator('.layer-item.selected')).toHaveCount(2)
+  })
+
+  test('画布右键命中图层时弹出上下文菜单', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    const layer = page.locator('.artboard-frame [data-layer-id]').first()
+    await layer.click({ button: 'right' })
+    await expect(page.locator('.ctx-menu')).toBeVisible()
+    await expect(page.locator('.ctx-item', { hasText: '删除' })).toBeVisible()
+  })
+
   test('绘制图层后属性面板显示有效坐标', async ({ page }) => {
     await load(page)
     await drawRect(page)

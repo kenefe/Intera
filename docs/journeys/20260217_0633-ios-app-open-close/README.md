@@ -91,6 +91,12 @@ Touch(矩形1).Tap → Toggle(isOpen) → Condition(isOpen==true)
 - **根因**: 点击坐标没有精确命中 `data-layer-id` 元素
 - **解决**: 通过 evaluate 获取 Preview 中图层元素的精确 bbox，调整点击坐标
 
+### F-003: 画布框选只支持画板内起手 + 选框偏移
+
+- **现象**: 框选只能在关键帧画板内起手，画板外起手无效；拖拽时选框与光标有偏移
+- **根因**: 框选逻辑基于画板局部坐标，渲染时又叠加了 viewport pan，导致坐标系不一致
+- **解决**: 2026-02-18 重构为 viewport 坐标系框选；命中改为当前激活状态画板 DOM 相交检测；修复 `activeGroup` 同步时序
+
 ---
 
 ## 产出文件
@@ -100,6 +106,34 @@ Touch(矩形1).Tap → Toggle(isOpen) → Condition(isOpen==true)
 - `screenshots/` — 46 步全过程截图
 
 ---
+
+## 2026-02-18 回归验证 (Flow E)
+
+目标: 验证「画布图层编辑 — 框选 / 多选 / 右键」修复是否生效。
+
+关键步骤:
+
+1. 在画布创建两个矩形图层（`矩形 1`、`矩形 2`）
+2. 从画布空白区 (画板外) 起手拖拽进入画板，进行框选
+3. 截取拖拽中间帧，检查选框与光标对齐
+4. 在画布图层上右键，检查上下文菜单触发
+
+结果:
+
+- ✅ 画板外起手框选可用
+- ✅ 框选可一次选中多个图层
+- ✅ 拖拽中选框与光标对齐（BDD 断言误差 <= 2px）
+- ✅ 画布图层右键菜单可触发
+
+证据截图:
+
+- 框选起手与结束: `screenshots/step-30.png`
+- 拖拽中间帧: `screenshots/step-33.png`
+- 右键菜单验证: `screenshots/step-36.png`
+
+对应自动化:
+
+- `npx playwright test tests/intera.spec.ts --grep "Feature: 图层管理"` → `5 passed`
 
 ## 技术洞察
 

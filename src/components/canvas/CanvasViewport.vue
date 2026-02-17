@@ -5,10 +5,18 @@
   @pointerdown="onPointerDown"
   @pointermove="onPointerMove"
   @pointerup="onPointerUp"
+  @contextmenu.prevent="onContextMenu"
 )
   .canvas-world(:style="worldStyle")
     ArtboardGrid
+  .marquee-box(v-if="interaction.marquee.value.visible" :style="marqueeStyle")
   SelectionOverlay
+  ContextMenu(
+    v-if="ctx.show"
+    :x="ctx.x" :y="ctx.y" :items="ctxItems"
+    @close="ctx.show = false"
+    @select="onCtxAction"
+  )
 </template>
 
 <script setup lang="ts">
@@ -18,17 +26,21 @@
 //  预览交互已迁移到 PreviewPanel
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useCanvasStore } from '@store/canvas'
+import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
-import { useLayerInteraction } from '@/composables/useLayerInteraction'
+import { useLayerInteraction, findLayerIdFromTarget } from '@/composables/useLayerInteraction'
 import { useDrawTool } from '@/composables/useDrawTool'
 import { useTextTool } from '@/composables/useTextTool'
 import { useKeyboard } from '@/composables/useKeyboard'
 import ArtboardGrid from './ArtboardGrid.vue'
 import SelectionOverlay from './SelectionOverlay.vue'
+import ContextMenu from '../ContextMenu.vue'
+import type { MenuItem } from '../ContextMenu.vue'
 
 const canvas = useCanvasStore()
+const editor = useEditorStore()
 const project = useProjectStore()
 const viewportRef = ref<HTMLElement>()
 
@@ -43,6 +55,29 @@ const worldStyle = computed(() => ({
   transform: `translate(${canvas.panX}px, ${canvas.panY}px) scale(${canvas.zoom})`,
   transformOrigin: '0 0',
 }))
+
+const marqueeStyle = computed(() => {
+  const box = interaction.marquee.value
+  return {
+    left: `${box.x}px`,
+    top: `${box.y}px`,
+    width: `${box.width}px`,
+    height: `${box.height}px`,
+  }
+})
+
+const ctx = reactive({ show: false, x: 0, y: 0 })
+const ctxItems = computed<MenuItem[]>(() => {
+  const id = canvas.selectedLayerIds[0]
+  const layer = id ? project.project.layers[id] : null
+  const single = canvas.selectedLayerIds.length === 1
+  return [
+    { id: 'dup', label: '复制图层', shortcut: '⌘D' },
+    { id: 'comp', label: '创建组件', disabled: !single || layer?.type !== 'frame' },
+    { divider: true },
+    { id: 'del', label: '删除', shortcut: 'Del' },
+  ]
+})
 
 // ── 滚轮/触控板 → 缩放 or 平移 ──
 //
@@ -98,6 +133,52 @@ function onPointerUp(e: PointerEvent): void {
   interaction.up(); draw.up(e); text.up()
 }
 
+function onContextMenu(e: MouseEvent): void {
+  if (editor.tool !== 'select') return
+  const id = findLayerIdFromTarget(e.target)
+  if (id && !canvas.selectedLayerIds.includes(id)) canvas.select([id])
+  if (!id && canvas.selectedLayerIds.length === 0) return
+  Object.assign(ctx, { show: true, x: e.clientX, y: e.clientY })
+}
+
+function onCtxAction(action: string): void {
+  ctx.show = false
+  const ids = [...canvas.selectedLayerIds]
+  const actions: Record<string, () => void> = {
+    dup: () => duplicateSelection(ids),
+    comp: () => makeComponent(ids[0]),
+    del: () => deleteSelection(ids),
+  }
+  actions[action]?.()
+}
+
+function duplicateSelection(ids: string[]): void {
+  const created: string[] = []
+  for (const id of ids) {
+    const l = project.project.layers[id]
+    if (!l) continue
+    const c = project.addLayer(l.type, l.parentId, undefined, `${l.name} 副本`)
+    project.updateLayerProps(c.id, { ...l.props, x: l.props.x + 12, y: l.props.y + 12 })
+    if (l.text !== undefined) { c.text = l.text; c.fontSize = l.fontSize }
+    created.push(c.id)
+  }
+  if (created.length) canvas.select(created)
+}
+
+function makeComponent(id?: string): void {
+  if (!id) return
+  const layer = project.project.layers[id]
+  if (!layer || layer.type !== 'frame') return
+  const g = project.addStateGroup(layer.name, id)
+  const s = project.addDisplayState(g.id, '默认')
+  if (s) project.switchState(g.id, s.id)
+}
+
+function deleteSelection(ids: string[]): void {
+  for (const id of ids) project.removeLayer(id)
+  canvas.clearSelection()
+}
+
 // ── 初始适配 — 画板缩放+居中至可视区域 ──
 
 function contentBounds(): { w: number; h: number } {
@@ -146,5 +227,13 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeyDown); window.rem
   top: 0;
   left: 0;
   will-change: transform;
+}
+
+.marquee-box {
+  position: absolute;
+  border: 1px solid var(--accent);
+  background: var(--accent-bg);
+  pointer-events: none;
+  z-index: 6;
 }
 </style>
