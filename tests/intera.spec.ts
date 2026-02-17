@@ -519,6 +519,60 @@ test.describe('Feature: Patch 编辑器', () => {
     await expect(panel).not.toHaveClass(/collapsed/)
     await expect(panel.locator('.panel-header')).toBeVisible()
   })
+
+  test('Patch 面板有可拖拽调高度的分割手柄', async ({ page }) => {
+    await load(page)
+    const handle = page.locator('.resize-handle')
+    await expect(handle).toBeVisible()
+    await expect(handle.locator('.resize-grip')).toBeVisible()
+    // 手柄 cursor 应为 row-resize
+    await expect(handle).toHaveCSS('cursor', 'row-resize')
+  })
+
+  test('Patch 面板默认高度约为视口的 1/3', async ({ page }) => {
+    await load(page)
+    const vh = page.viewportSize()!.height
+    const row = page.locator('.patch-row')
+    const box = await row.boundingBox()
+    expect(box).toBeTruthy()
+    // 允许 ±30px 误差 (resize handle 本身占 6px + 边框)
+    expect(box!.height).toBeGreaterThan(vh / 3 - 30)
+    expect(box!.height).toBeLessThan(vh / 3 + 30)
+  })
+
+  test('拖拽分割手柄可改变 Patch 面板高度', async ({ page }) => {
+    await load(page)
+    const handle = page.locator('.resize-handle')
+    const row = page.locator('.patch-row')
+    const before = (await row.boundingBox())!.height
+    // 向上拖 80px → 高度应增加
+    const hBox = (await handle.boundingBox())!
+    await page.mouse.move(hBox.x + hBox.width / 2, hBox.y + hBox.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(hBox.x + hBox.width / 2, hBox.y - 80, { steps: 8 })
+    await page.mouse.up()
+    const after = (await row.boundingBox())!.height
+    expect(after).toBeGreaterThan(before + 50)
+  })
+
+  test('Patch 面板高度在刷新后持久化', async ({ page }) => {
+    await load(page)
+    const handle = page.locator('.resize-handle')
+    const row = page.locator('.patch-row')
+    // 拖拽改变高度
+    const hBox = (await handle.boundingBox())!
+    await page.mouse.move(hBox.x + hBox.width / 2, hBox.y + hBox.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(hBox.x + hBox.width / 2, hBox.y - 100, { steps: 8 })
+    await page.mouse.up()
+    const saved = (await row.boundingBox())!.height
+    // 刷新页面
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    const restored = (await row.boundingBox())!.height
+    // 允许 ±5px 误差
+    expect(Math.abs(restored - saved)).toBeLessThan(5)
+  })
 })
 
 // ══════════════════════════════════════

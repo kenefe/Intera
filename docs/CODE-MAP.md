@@ -93,6 +93,7 @@
 |---|---|
 | `renderer/DOMRenderer.ts` | DOM 渲染器 (实现 Renderer 接口) |
 | `renderer/types.ts` | Renderer 抽象接口 |
+| `composables/usePanelResize.ts` | 面板拖拽调高度 + localStorage 持久化 |
 | `composables/useLayerInteraction.ts` | 图层选择 + 拖拽移动 |
 | `composables/useLayerDrag.ts` | 图层拖拽细节 (偏移计算) |
 | `composables/useDrawTool.ts` | 绘制工具 (矩形/椭圆/Frame) |

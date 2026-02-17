@@ -43,7 +43,9 @@
         .panel-right
           PropertiesPanel
           CurvePanel
-      .patch-row
+      .resize-handle(@pointerdown="patchResize.onPointerDown")
+        .resize-grip
+      .patch-row(:style="{ height: patchResize.height.value + 'px' }")
         PatchCanvas
         PatchVarPanel
 </template>
@@ -62,11 +64,15 @@ import CurvePanel from './components/panels/CurvePanel.vue'
 import PatchCanvas from './components/patch/PatchCanvas.vue'
 import PatchVarPanel from './components/patch/PatchVarPanel.vue'
 import LayerIcon from './components/panels/LayerIcon.vue'
+import { usePanelResize } from './composables/usePanelResize'
 const ExportDialog = defineAsyncComponent(() => import('./components/ExportDialog.vue'))
 
 const editor = useEditorStore()
 const project = useProjectStore()
 const showExport = ref(false)
+const patchResize = usePanelResize('patchHeight', {
+  defaultRatio: 1 / 3, min: 120, maxRatio: 0.6,
+})
 
 const tools: Array<{ key: ToolType; tip: string }> = [
   { key: 'select',    tip: '选择 (V)' },
@@ -198,11 +204,32 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+/* ── Patch 面板分割手柄 ── */
+
+.resize-handle {
+  height: 6px;
+  cursor: row-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #16162a;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.resize-handle:hover { background: rgba(91, 91, 240, 0.15); }
+.resize-grip {
+  width: 32px;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  transition: background 0.15s;
+}
+.resize-handle:hover .resize-grip { background: rgba(255, 255, 255, 0.4); }
+
 .patch-row {
   display: flex;
-  height: 320px;
-  min-height: 200px;
-  max-height: 45vh;
+  flex-shrink: 0;
 }
 
 .canvas-area {
