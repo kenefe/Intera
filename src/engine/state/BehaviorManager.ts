@@ -36,8 +36,9 @@ function buildDragCfg(cfg: BehaviorDragConfig | BehaviorScrollConfig) {
   }
 }
 
+const SNAP_RADIUS = 30
+
 function snapAbsorbs(points: number[]): [number, number][] {
-  const SNAP_RADIUS = 30
   return points.map(p => [p - SNAP_RADIUS, p + SNAP_RADIUS] as [number, number])
 }
 
@@ -59,12 +60,32 @@ function createBehavior(
     dragCfg.absorb = { x: abs, y: abs }
   }
 
+  // ── 拖拽起点追踪 (用于 snap 判定) ──
+  let startX = 0, startY = 0
+
   const engine = new DragEngine(dragCfg, {
-    onBegin: () => fire(patch.id, 'start'),
-    onEnd: () => {
-      fire(patch.id, 'end')
-      const result = engine.scroll()
-      if (result && cfg.snapPoints?.length) fire(patch.id, 'snap')
+    onBegin: (vx, vy) => {
+      startX = vx; startY = vy
+      fire(patch.id, 'start')
+    },
+    onEnd: (spdX, spdY) => {
+      engine.scroll()
+
+      // ── snap/end 互斥: 距离 > 80px 或 速度 > 800px/s → commit ──
+      //    比 absorb 检测更可靠: 快速 flick 不会因越过 absorb 区而漏判
+      let committed = false
+      if (cfg.snapPoints?.length) {
+        const dx = engine.x - startX
+        const dy = engine.y - startY
+        const dist = cfg.axis === 'x' ? Math.abs(dx)
+          : cfg.axis === 'y' ? Math.abs(dy)
+          : Math.hypot(dx, dy)
+        const speed = cfg.axis === 'x' ? Math.abs(spdX)
+          : cfg.axis === 'y' ? Math.abs(spdY)
+          : Math.hypot(spdX, spdY)
+        committed = dist > 80 || speed > 800
+      }
+      fire(patch.id, committed ? 'snap' : 'end')
     },
   })
 

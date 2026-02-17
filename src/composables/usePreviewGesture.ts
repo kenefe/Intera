@@ -63,6 +63,24 @@ export function usePreviewGesture() {
     return v / (previewScale || 1)
   }
 
+  /** 获取图层当前视觉位置 (状态覆盖 > 基础属性) */
+  function visualPos(layerId: string): { x: number; y: number } {
+    // 1. liveValues (过渡中 / 上一次拖拽残留)
+    const live = projectStore.liveValues[layerId]
+    if (live?.x !== undefined || live?.y !== undefined)
+      return { x: live.x ?? 0, y: live.y ?? 0 }
+
+    // 2. 当前激活状态的解析属性
+    for (const g of projectStore.project.stateGroups) {
+      const resolved = projectStore.states.getResolvedProps(g.activeDisplayStateId, layerId)
+      if (resolved) return { x: resolved.x ?? 0, y: resolved.y ?? 0 }
+    }
+
+    // 3. 基础属性
+    const p = projectStore.project.layers[layerId]?.props
+    return { x: p?.x ?? 0, y: p?.y ?? 0 }
+  }
+
   function down(e: PointerEvent): void {
     activeId = interactiveLayerAt(e)
     if (!activeId) return
@@ -75,10 +93,8 @@ export function usePreviewGesture() {
     if (inst?.engine) {
       activeDrag = inst.engine
       dragLayerId = activeId
-      const props = projectStore.project.layers[activeId]?.props
-      const startX = props?.x ?? 0
-      const startY = props?.y ?? 0
-      activeDrag.begin(startX, startY, scaled(e.clientX), scaled(e.clientY))
+      const { x, y } = visualPos(activeId)
+      activeDrag.begin(x, y, scaled(e.clientX), scaled(e.clientY))
     }
   }
 
@@ -105,12 +121,12 @@ export function usePreviewGesture() {
     if (gesture.info.hasMove) patchStore.fireTrigger(activeId, 'end')
 
     // ── 拖拽结束 ──
+    //    hasMove 守卫: 点击不触发 DragEngine 事件，避免与 Touch 冲突
+    //    不写 liveValues: transitionToState 会从 move() 留下的值平滑衔接
     if (activeDrag && dragLayerId) {
-      const spd = gesture.info.speed
-      activeDrag.end(scaled(spd.x), scaled(spd.y))
-      projectStore.liveValues[dragLayerId] = {
-        x: activeDrag.x,
-        y: activeDrag.y,
+      if (gesture.info.hasMove) {
+        const spd = gesture.info.speed
+        activeDrag.end(scaled(spd.x), scaled(spd.y))
       }
       activeDrag = null
       dragLayerId = null

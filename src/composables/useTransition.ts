@@ -43,12 +43,16 @@ export function useTransition(project: Project, states: DisplayStateManager) {
     group.activeDisplayStateId = stateId
     if (!fromId || fromId === stateId) return
 
-    // 解析两个状态的图层属性
+    // ── 解析两个状态的图层属性 ──
+    //    拖拽 liveValues 优先: 若存在，从当前视觉位置起始动画
+    //    这样 drag → 状态转换 的动画会从松手处平滑过渡
     const ids = Object.keys(project.layers)
     const fromP: Record<string, AnimatableProps> = {}
     const toP: Record<string, AnimatableProps> = {}
     for (const id of ids) {
-      fromP[id] = states.getResolvedProps(fromId, id) ?? project.layers[id].props
+      const resolved = states.getResolvedProps(fromId, id) ?? project.layers[id].props
+      const live = liveValues[id]
+      fromP[id] = live ? { ...resolved, ...live } as AnimatableProps : resolved
       toP[id] = states.getResolvedProps(stateId, id) ?? project.layers[id].props
     }
 

@@ -30,6 +30,7 @@ const SHOT_DIR = path.join(DIR, 'screenshots')
 
 // ── 状态 ──
 let browser, page, stepNum = 0
+const completedDownloads = []
 
 // ── 截图 + 元素扫描 ──
 
@@ -304,12 +305,15 @@ const server = http.createServer(async (req, res) => {
 
     const snap = cmd.action === 'save' ? null : await shot()
     res.writeHead(200, { 'Content-Type': 'application/json' })
+    // 收割已完成的下载
+    const dl = completedDownloads.splice(0)
     res.end(JSON.stringify({
       step: stepNum,
       screenshot: snap?.path ?? null,
       viewport: snap ? { width: snap.width, height: snap.height } : undefined,
       elements: snap?.elements,
       ...extra,
+      ...(dl.length ? { downloads: dl } : {}),
     }))
   } catch (err) {
     res.writeHead(500)
@@ -334,6 +338,21 @@ async function main() {
   }
 
   page = await context.newPage()
+
+  // ── 被动下载追踪 — 任何动作触发的浏览器下载都自动落盘 ──
+  page.on('download', async (download) => {
+    const filename = download.suggestedFilename()
+    const savePath = path.join(DIR, filename)
+    try {
+      await download.saveAs(savePath)
+      const size = fs.statSync(savePath).size
+      completedDownloads.push({ filename, path: savePath, size })
+      console.log(`📥 Downloaded: ${filename} (${size} bytes)`)
+    } catch (err) {
+      console.error(`❌ Download failed: ${filename} — ${err.message}`)
+    }
+  })
+
   await page.goto(URL)
   await page.waitForLoadState('networkidle')
 
