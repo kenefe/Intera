@@ -13,6 +13,7 @@ export type PatchType =
   | 'condition' | 'toggleVariable' | 'delay' | 'counter'
   | 'to' | 'setTo' | 'setVariable'
   | 'behaviorDrag' | 'behaviorScroll'
+  | 'transition'
 
 export interface PatchPort {
   id: string
@@ -45,6 +46,16 @@ export interface BehaviorDragConfig {
   snapPoints?: number[]
 }
 
+/** Transition 节点: 将连续数值映射为两个状态间的插值驱动 */
+export interface PatchTransitionConfig {
+  type: 'transition'
+  layerId?: string
+  groupId?: string
+  fromStateId?: string
+  toStateId?: string
+  inputRange?: [number, number]
+}
+
 export interface BehaviorScrollConfig {
   type: 'behaviorScroll'
   layerId?: string
@@ -60,6 +71,7 @@ export type PatchConfig =
   | ConditionConfig | ToggleVarConfig | DelayConfig | CounterConfig
   | ToConfig | SetToConfig | SetVarConfig
   | BehaviorDragConfig | BehaviorScrollConfig
+  | PatchTransitionConfig
 
 export type ConfigFor<T extends PatchType> =
   T extends 'touch' ? TouchConfig :
@@ -76,6 +88,7 @@ export type ConfigFor<T extends PatchType> =
   T extends 'setVariable' ? SetVarConfig :
   T extends 'behaviorDrag' ? BehaviorDragConfig :
   T extends 'behaviorScroll' ? BehaviorScrollConfig :
+  T extends 'transition' ? PatchTransitionConfig :
   never
 
 // ── Patch 节点 ──

@@ -119,6 +119,52 @@
           @change="onValueChange"
         )
 
+    //- Transition → 图层 + 目标组 + 起始/结束状态 + 输入范围
+    template(v-if="patch.type === 'transition'")
+      .cfg-row
+        .cfg-label 图层
+        select.cfg-select(@change="onLayerPick")
+          option(value="" :selected="!cfgLayerId") 选择…
+          option(
+            v-for="l in layers" :key="l.id" :value="l.id"
+            :selected="cfgLayerId === l.id"
+          ) {{ l.name }}
+      .cfg-row
+        .cfg-label 目标
+        select.cfg-select(@change="onGroupPick")
+          option(value="" :selected="!cfgGroupId") 选择…
+          option(
+            v-for="g in groups" :key="g.id" :value="g.id"
+            :selected="cfgGroupId === g.id"
+          ) {{ g.name }}
+      .cfg-row
+        .cfg-label 起始
+        select.cfg-select(@change="onFromStatePick" :disabled="!cfgGroupId")
+          option(value="" :selected="!cfgFromStateId") 选择…
+          option(
+            v-for="s in states" :key="s.id" :value="s.id"
+            :selected="cfgFromStateId === s.id"
+          ) {{ s.name }}
+      .cfg-row
+        .cfg-label 结束
+        select.cfg-select(@change="onToStatePick" :disabled="!cfgGroupId")
+          option(value="" :selected="!cfgToStateId") 选择…
+          option(
+            v-for="s in states" :key="s.id" :value="s.id"
+            :selected="cfgToStateId === s.id"
+          ) {{ s.name }}
+      .cfg-row
+        .cfg-label 范围
+        input.cfg-input(
+          type="number" :value="cfgInputRange?.[0] ?? 0"
+          @change="onRangeLoChange" style="width: 48px"
+        )
+        span ~
+        input.cfg-input(
+          type="number" :value="cfgInputRange?.[1] ?? 1"
+          @change="onRangeHiChange" style="width: 48px"
+        )
+
     //- BehaviorDrag / BehaviorScroll → 图层 + 轴
     template(v-if="patch.type === 'behaviorDrag' || patch.type === 'behaviorScroll'")
       .cfg-row
@@ -160,7 +206,7 @@ const category = patchCategory(props.patch.type)
 const CONFIG_TYPES = [
   'touch', 'drag', 'to', 'setTo', 'delay',
   'condition', 'toggleVariable', 'setVariable',
-  'behaviorDrag', 'behaviorScroll',
+  'behaviorDrag', 'behaviorScroll', 'transition',
 ]
 const showConfig = CONFIG_TYPES.includes(props.patch.type)
 
@@ -197,6 +243,20 @@ const cfgValue = computed(() => {
 const cfgAxis = computed(() => {
   const c = props.patch.config
   return 'axis' in c ? (c.axis as string | undefined) : undefined
+})
+
+// ── Transition 专用 ──
+const cfgFromStateId = computed(() => {
+  const c = props.patch.config
+  return c.type === 'transition' ? c.fromStateId : undefined
+})
+const cfgToStateId = computed(() => {
+  const c = props.patch.config
+  return c.type === 'transition' ? c.toStateId : undefined
+})
+const cfgInputRange = computed(() => {
+  const c = props.patch.config
+  return c.type === 'transition' ? c.inputRange : undefined
 })
 
 // ── 数据源 ──
@@ -242,7 +302,9 @@ function onGroupPick(e: Event): void {
   const c = cfg(); if (!c) return
   const gid = (e.target as HTMLSelectElement).value
   if ('groupId' in c) c.groupId = gid || undefined
-  if ('stateId' in c) c.stateId = undefined // 切换目标 → 清空状态
+  if ('stateId' in c) c.stateId = undefined
+  // Transition: 切换目标组 → 清空两端状态
+  if (c.type === 'transition') { c.fromStateId = undefined; c.toStateId = undefined }
 }
 
 function onStatePick(e: Event): void {
@@ -285,6 +347,31 @@ function onValueChange(e: Event): void {
 function onAxisPick(e: Event): void {
   const c = cfg()
   if (c && 'axis' in c) c.axis = (e.target as HTMLSelectElement).value as 'x' | 'y' | 'both'
+}
+
+// ── Transition 专用事件 ──
+
+function onFromStatePick(e: Event): void {
+  const c = cfg()
+  if (c?.type === 'transition') c.fromStateId = (e.target as HTMLSelectElement).value || undefined
+}
+function onToStatePick(e: Event): void {
+  const c = cfg()
+  if (c?.type === 'transition') c.toStateId = (e.target as HTMLSelectElement).value || undefined
+}
+function onRangeLoChange(e: Event): void {
+  const c = cfg()
+  if (c?.type === 'transition') {
+    const lo = Number((e.target as HTMLInputElement).value) || 0
+    c.inputRange = [lo, c.inputRange?.[1] ?? 1]
+  }
+}
+function onRangeHiChange(e: Event): void {
+  const c = cfg()
+  if (c?.type === 'transition') {
+    const hi = Number((e.target as HTMLInputElement).value) || 1
+    c.inputRange = [c.inputRange?.[0] ?? 0, hi]
+  }
 }
 
 // ── 就地创建变量 (消除空下拉摩擦) ──

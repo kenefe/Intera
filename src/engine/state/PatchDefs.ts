@@ -48,15 +48,24 @@ const DEFS: Record<PatchType, PortDef> = {
 
   // 行为 (有状态，需要 create/destroy 生命周期)
   behaviorDrag: { inputs: [], outputs: [
-    { id: 'start', name: 'Start', dataType: 'pulse' },
-    { id: 'end',   name: 'End',   dataType: 'pulse' },
-    { id: 'snap',  name: 'Snap',  dataType: 'pulse' },
+    { id: 'start',   name: 'Start', dataType: 'pulse' },
+    { id: 'end',     name: 'End',   dataType: 'pulse' },
+    { id: 'snap',    name: 'Snap',  dataType: 'pulse' },
+    { id: 'x',       name: 'X',     dataType: 'number' },
+    { id: 'y',       name: 'Y',     dataType: 'number' },
+    { id: 'offsetX', name: 'ΔX',    dataType: 'number' },
+    { id: 'offsetY', name: 'ΔY',    dataType: 'number' },
   ]},
   behaviorScroll: { inputs: [], outputs: [
     { id: 'start', name: 'Start', dataType: 'pulse' },
     { id: 'end',   name: 'End',   dataType: 'pulse' },
     { id: 'snap',  name: 'Snap',  dataType: 'pulse' },
   ]},
+
+  // 驱动节点: 将上游连续值映射为状态插值
+  transition: { inputs: [
+    { id: 'value', name: 'Value', dataType: 'number' },
+  ], outputs: [] },
 }
 
 // ── 节点分类 (用于 UI 着色) ──
@@ -64,7 +73,7 @@ const DEFS: Record<PatchType, PortDef> = {
 export type PatchCategory = 'trigger' | 'logic' | 'action' | 'behavior'
 
 const TRIGGER_TYPES: PatchType[] = ['touch', 'drag', 'scroll', 'timer', 'variableChange']
-const ACTION_TYPES: PatchType[]  = ['to', 'setTo', 'setVariable']
+const ACTION_TYPES: PatchType[]  = ['to', 'setTo', 'setVariable', 'transition']
 const BEHAVIOR_TYPES: PatchType[] = ['behaviorDrag', 'behaviorScroll']
 
 export function patchCategory(type: PatchType): PatchCategory {
@@ -92,6 +101,7 @@ function defaultConfig(type: PatchType): PatchConfig {
     setVariable:    () => ({ type: 'setVariable', variableId: '' }),
     behaviorDrag:   () => ({ type: 'behaviorDrag', axis: 'both', layerId: '' }),
     behaviorScroll: () => ({ type: 'behaviorScroll', axis: 'y', overscroll: true, layerId: '' }),
+    transition:     () => ({ type: 'transition', layerId: '', groupId: '', fromStateId: '', toStateId: '', inputRange: [0, 1] }),
   }
   return map[type]()
 }

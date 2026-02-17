@@ -37,7 +37,7 @@ import { usePreviewGesture } from '@/composables/usePreviewGesture'
 
 const store = useProjectStore()
 const patchStore = usePatchStore()
-const { activeGroup, activeStateId } = useActiveGroup()
+const { activeGroup } = useActiveGroup()
 const preview = usePreviewGesture()
 
 const containerRef = ref<HTMLElement>()
@@ -81,14 +81,16 @@ const frameStyle = computed(() => {
 //  状态信息
 // ═══════════════════════════════════
 
-// ── activeStateId 由 useActiveGroup 提供 ──
-
 const stateList = computed(() =>
   activeGroup.value?.displayStates ?? [],
 )
 
+function resolvePreviewStateId(groupId: string): string | null {
+  return patchStore.getPreviewStateId(groupId)
+}
+
 const activeStateName = computed(() =>
-  stateList.value.find(s => s.id === activeStateId.value)?.name ?? null,
+  stateList.value.find(s => s.id === resolvePreviewStateId(activeGroup.value?.id ?? ''))?.name ?? null,
 )
 
 const hasLayers = computed(() => Object.keys(store.project.layers).length > 0)
@@ -148,9 +150,10 @@ function autoCycle(): void {
   const group = activeGroup.value
   if (!group) return
   const list = group.displayStates
-  const idx = list.findIndex(s => s.id === group.activeDisplayStateId)
+  const current = resolvePreviewStateId(group.id)
+  const idx = list.findIndex(s => s.id === current)
   const next = list[(idx + 1) % list.length]
-  if (next) store.transitionToState(group.id, next.id)
+  if (next) patchStore.transitionPreviewToState(group.id, next.id)
 }
 
 // ═══════════════════════════════════
@@ -165,11 +168,24 @@ function syncLayers(): void {
     if (!allIds.has(id)) { renderer.removeLayer(id); rendered.delete(id) }
   }
 
+  function resolvedPreviewProps(layerId: string): AnimatableProps | null {
+    const layer = layers[layerId]
+    if (!layer) return null
+    const props = { ...layer.props }
+    for (const group of store.project.stateGroups) {
+      const sid = resolvePreviewStateId(group.id)
+      if (!sid) continue
+      const ov = store.states.getOverrides(sid, layerId)
+      if (Object.keys(ov).length) Object.assign(props, ov)
+    }
+    return props as AnimatableProps
+  }
+
   // ── 多组合并解析: 叠加所有组的活跃状态覆盖 ──
   for (const id of allIds) {
-    const resolved = store.states.getMultiGroupResolvedProps(id)
+    const resolved = resolvedPreviewProps(id)
     if (!resolved) continue
-    const live = store.liveValues[id]
+    const live = store.previewLiveValues[id]
     const merged = live ? { ...resolved, ...live } : resolved
     if (rendered.has(id)) {
       renderer.updateLayer(id, merged)
@@ -193,7 +209,7 @@ function syncLayers(): void {
 // ── 动画帧同步 ──
 
 watchEffect(() => {
-  for (const [id, vals] of Object.entries(store.liveValues)) {
+  for (const [id, vals] of Object.entries(store.previewLiveValues)) {
     if (rendered.has(id)) renderer.updateLayer(id, vals as Partial<AnimatableProps>)
   }
 }, { flush: 'sync' })
@@ -205,13 +221,8 @@ watchEffect(() => {
 function onReset(): void {
   patchStore.runtime.reset()
   patchStore.variables.reset()
-  // ── 重置所有组到默认状态 (非仅当前组) ──
-  for (const g of store.project.stateGroups) {
-    const defaultId = g.displayStates[0]?.id
-    if (defaultId && g.activeDisplayStateId !== defaultId) {
-      store.setToState(g.id, defaultId)
-    }
-  }
+  patchStore.resetPreviewStates()
+  store.clearPreviewLiveTransition()
 }
 
 // ═══════════════════════════════════

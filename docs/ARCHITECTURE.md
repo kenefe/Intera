@@ -271,7 +271,7 @@ PatchRuntime 执行触发器
     │   PatchRuntime 检查条件 → 触发动作
     │       │
     │       ▼
-    │   SmartAnimate.transition('展开状态')    ← 显示状态切换
+    │   SmartAnimate.transition('展开状态')    ← 仅切换 previewStateByGroupId (不写编辑态)
     │       │
     │       ▼
     │   FolmeManager.to(diff, curveConfig)     ← 弹簧动效
@@ -302,6 +302,11 @@ projectStore.liveValues[layerId]  ← 实时位置
     ▼
 DOMRenderer watchEffect  ← 每帧渲染
 ```
+
+注: Preview 和 Canvas 的状态/动画通道均已解耦:
+- Canvas(编辑态): `group.activeDisplayStateId` + `liveValues/liveStateId`
+- Preview(播放态): `previewStateByGroupId` + `previewLiveValues/previewLiveStateId`
+避免播放时污染关键帧编辑上下文或让画布跟播中间帧。
 
 ---
 

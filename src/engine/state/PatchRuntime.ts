@@ -8,11 +8,17 @@ import type {
   Patch, PatchConnection,
   ConditionConfig, ToggleVarConfig, SetVarConfig,
   ToConfig, SetToConfig, DelayConfig, CounterConfig,
+  PatchTransitionConfig,
 } from '../scene/types'
 import type { VariableManager } from './VariableManager'
 import { BehaviorManager } from './BehaviorManager'
 
 type TransitionFn = (groupId: string, stateId: string) => void
+
+/** 连续驱动回调: 按 progress 在两个状态间插值 → liveValues */
+export type DriveFn = (
+  layerId: string, fromStateId: string, toStateId: string, progress: number,
+) => void
 
 // ── 连线索引: fromPatchId:fromPortId → 目标 patchId[] ──
 
@@ -48,8 +54,12 @@ export class PatchRuntime {
 
   private connIdx: ConnIndex
   private patchIdx: Map<string, Patch>
+  private portValues = new Map<string, number>()
   private timers = new Set<ReturnType<typeof setTimeout>>()
   readonly behaviors: BehaviorManager
+
+  /** 外部注入: Transition 节点驱动 liveValues 插值 */
+  onDrive: DriveFn | null = null
 
   constructor(
     patches: Patch[], connections: PatchConnection[],
@@ -64,7 +74,10 @@ export class PatchRuntime {
     this.onSetTo = onSetTo ?? onTransition
     this.connIdx = buildConnIndex(connections)
     this.patchIdx = buildPatchIndex(patches)
-    this.behaviors = new BehaviorManager((id, port) => this.fire(id, port))
+    this.behaviors = new BehaviorManager(
+      (id, port) => this.fire(id, port),
+      (id, port, val) => this.setValue(id, port, val),
+    )
     this.behaviors.initAll(patches)
   }
 
@@ -77,6 +90,18 @@ export class PatchRuntime {
     for (const tid of targets) {
       const target = this.patchIdx.get(tid)
       if (target) this.execute(target)
+    }
+  }
+
+  /** 写入连续值并传播到下游 Transition 节点 */
+  setValue(patchId: string, portId: string, value: number): void {
+    this.portValues.set(`${patchId}:${portId}`, value)
+    const targets = this.connIdx.get(`${patchId}:${portId}`)
+    if (!targets) return
+    for (const tid of targets) {
+      const target = this.patchIdx.get(tid)
+      if (target?.config.type === 'transition')
+        this.execDrive(target.config as PatchTransitionConfig, value)
     }
   }
 
@@ -93,6 +118,7 @@ export class PatchRuntime {
   rebuild(): void {
     this.connIdx = buildConnIndex(this.connections)
     this.patchIdx = buildPatchIndex(this.patches)
+    this.portValues.clear()
     this.behaviors.destroyAll()
     this.behaviors.initAll(this.patches)
   }
@@ -185,5 +211,15 @@ export class PatchRuntime {
         this.vars.set(cfg.variableId, cur + (cfg.step ?? 1))
     }
     this.fire(patch.id, 'out')
+  }
+
+  /** Transition 节点: 将输入值映射为 [0,1] 进度并驱动插值 */
+  private execDrive(cfg: PatchTransitionConfig, inputValue: number): void {
+    if (!cfg.layerId || !cfg.fromStateId || !cfg.toStateId) return
+    const [lo, hi] = cfg.inputRange ?? [0, 1]
+    const delta = hi - lo
+    if (Math.abs(delta) < 0.001) return
+    const t = Math.max(0, Math.min(1, (inputValue - lo) / delta))
+    this.onDrive?.(cfg.layerId, cfg.fromStateId, cfg.toStateId, t)
   }
 }

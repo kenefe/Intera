@@ -21,7 +21,7 @@
 |---|---|---|---|
 | 0 | `SCRATCHPAD.md` | **每次** — 上次任务做到哪了 | 🔴 |
 | 1 | `docs/RULES.md` | 编码规则有疑问时深查（摘要已在 .cursor/rules 自动加载） | 🟢 |
-| 2 | `docs/VISION.md` | **首次接触项目** — 产品愿景 + 核心概念 | 🟡 |
+| 2 | `docs/VISION.md` | **首次必读**；后续凡是改代码（Flow A/C/D/F）都先对齐相关段落 | 🟡 |
 | 3 | `docs/FLOWS.md` | **修 bug / 加功能 / 重构 / 提交前** — 只读对应 §Flow | 🟢 |
 | 4 | `docs/JOURNEY.md` | **跑旅程 / 打磨体验** — Flow E 浏览器探索 | 🟢 |
 | 5 | `docs/CODE-MAP.md` | **改代码时** — 模块地图 + AS3 参考 | 🟢 |
@@ -79,6 +79,8 @@
 | "跑旅程" / "打磨体验" | 读 `docs/JOURNEY.md` |
 | 准备提交 commit | 读 `docs/FLOWS.md` §Flow F |
 | "做个 review" | 读 `docs/FLOWS.md` §Flow G |
+
+> 规则: 只要涉及代码变更，先用 `docs/VISION.md` 对齐产品体验目标，再执行对应 Flow。
 
 ---
 

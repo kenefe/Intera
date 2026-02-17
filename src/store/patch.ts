@@ -5,7 +5,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { defineStore } from 'pinia'
-import { watch } from 'vue'
+import { watch, reactive } from 'vue'
 import type { PatchType, Vec2, Patch, PatchConnection, Variable, VariableValue, ConfigFor } from '../engine/scene/types'
 import { VariableManager } from '../engine/state/VariableManager'
 import { PatchRuntime } from '../engine/state/PatchRuntime'
@@ -18,15 +18,62 @@ import { useCanvasStore } from './canvas'
 export const usePatchStore = defineStore('patch', () => {
   const project = useProjectStore()
   const p = project.project
+  const previewStateByGroupId = reactive<Record<string, string | null>>({})
+
+  function getPreviewStateId(groupId: string): string | null {
+    const group = p.stateGroups.find(g => g.id === groupId)
+    if (!group) return null
+    const sid = previewStateByGroupId[groupId]
+    if (sid && group.displayStates.some(s => s.id === sid)) return sid
+    return group.activeDisplayStateId ?? group.displayStates[0]?.id ?? null
+  }
+
+  function setPreviewState(groupId: string, stateId: string): void {
+    previewStateByGroupId[groupId] = stateId
+  }
+
+  function transitionPreviewToState(groupId: string, stateId: string): void {
+    const fromId = getPreviewStateId(groupId)
+    setPreviewState(groupId, stateId)
+    project.transitionFromState(groupId, fromId, stateId)
+  }
+
+  function setPreviewToState(groupId: string, stateId: string): void {
+    setPreviewState(groupId, stateId)
+    project.clearPreviewLiveTransition()
+  }
+
+  function resetPreviewStates(): void {
+    for (const g of p.stateGroups) {
+      const defaultId = g.displayStates[0]?.id ?? null
+      previewStateByGroupId[g.id] = defaultId
+    }
+  }
 
   // ── 引擎实例 ──
 
   const variables = new VariableManager(p.variables)
   const runtime = new PatchRuntime(
     p.patches, p.connections, variables,
-    (gid, sid) => project.transitionToState(gid, sid),
-    (gid, sid) => project.setToState(gid, sid),
+    transitionPreviewToState,
+    setPreviewToState,
   )
+
+  // ── Transition 节点驱动: 连续值 → previewLiveValues 插值 ──
+  runtime.onDrive = (layerId, fromId, toId, t) => {
+    const from = project.states.getResolvedProps(fromId, layerId)
+    const to = project.states.getResolvedProps(toId, layerId)
+    if (!from || !to) return
+    const fa = from as unknown as Record<string, unknown>
+    const ta = to as unknown as Record<string, unknown>
+    const out: Record<string, number> = {}
+    for (const k of Object.keys(fa)) {
+      const a = fa[k], b = ta[k]
+      if (typeof a === 'number' && typeof b === 'number')
+        out[k] = a + (b - a) * t
+    }
+    project.previewLiveValues[layerId] = out
+  }
 
   // ── 数据恢复同步: load/undo/redo 后自动重建索引 ──
   watch(
@@ -150,6 +197,8 @@ export const usePatchStore = defineStore('patch', () => {
 
   return {
     variables, runtime,
+    previewStateByGroupId, getPreviewStateId, setPreviewState,
+    transitionPreviewToState, setPreviewToState, resetPreviewStates,
     addVariable, removeVariable, updateVariable,
     addPatchNode, removePatch, updatePatchPos,
     addConnection, removeConnection,

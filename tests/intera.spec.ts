@@ -463,6 +463,68 @@ test.describe('Feature: 预览面板', () => {
     await page.waitForTimeout(600)
     expect(errors).toHaveLength(0)
   })
+
+  test('预览播放不污染画布编辑态 (状态标签保持不变)', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+
+    await page.locator('.add-btn').click()
+    await page.waitForTimeout(120)
+
+    await page.locator('.state-tab').nth(1).click()
+    const activeBefore = await page.locator('.state-tab.active .state-name').first().innerText()
+
+    const preview = page.locator('.preview-panel')
+    const pbox = await preview.boundingBox()
+    if (pbox) {
+      await page.mouse.click(pbox.x + pbox.width / 2, pbox.y + pbox.height / 2)
+    }
+    await page.waitForTimeout(600)
+
+    await expect(page.locator('.state-tab.active .state-name').first()).toHaveText(activeBefore)
+  })
+
+  test('预览播放不写入编辑态 live 通道', async ({ page }) => {
+    await load(page)
+    await drawRect(page)
+    await page.locator('.add-btn').click()
+    await page.waitForTimeout(120)
+    await page.locator('.state-tab').nth(1).click()
+
+    await page.evaluate(() => {
+      type ProjectStoreEval = {
+        project: { stateGroups: Array<{ displayStates: Array<{ id: string }> }>; rootLayerIds: string[] }
+        setOverride: (sid: string, lid: string, v: { x: number }) => void
+      }
+      const app = (document.querySelector('#app') as HTMLElement & { __vue_app__?: unknown }).__vue_app__
+      const pinia = (app as { config?: { globalProperties?: { $pinia?: { _s?: Map<string, unknown> } } } })
+        ?.config?.globalProperties?.$pinia
+      const project = pinia?._s?.get('project') as ProjectStoreEval
+      const group = project.project.stateGroups[0]
+      const sid = group.displayStates[1].id
+      const lid = project.project.rootLayerIds[0]
+      project.setOverride(sid, lid, { x: 420 })
+    })
+
+    const preview = page.locator('.preview-panel')
+    const pbox = await preview.boundingBox()
+    if (pbox) {
+      await page.mouse.click(pbox.x + pbox.width / 2, pbox.y + pbox.height / 2)
+    }
+    await page.waitForTimeout(250)
+
+    const channels = await page.evaluate(() => {
+      type ProjectStoreEval = { liveStateId: string | null; previewLiveStateId: string | null }
+      const app = (document.querySelector('#app') as HTMLElement & { __vue_app__?: unknown }).__vue_app__
+      const pinia = (app as { config?: { globalProperties?: { $pinia?: { _s?: Map<string, unknown> } } } })
+        ?.config?.globalProperties?.$pinia
+      const project = pinia?._s?.get('project') as ProjectStoreEval
+      return { liveStateId: project.liveStateId, previewLiveStateId: project.previewLiveStateId }
+    })
+
+    expect(channels.liveStateId).toBeNull()
+    expect(channels.previewLiveStateId).not.toBeNull()
+  })
 })
 
 // ══════════════════════════════════════
@@ -879,12 +941,12 @@ test.describe('Feature: UI 打磨回归', () => {
     expect(Number(await swInput.inputValue())).toBe(2)
   })
 
-  test('Patch 画布支持滚动 (overflow auto)', async ({ page }) => {
+  test('Patch 画布自定义平移 (overflow hidden)', async ({ page }) => {
     await load(page)
     const canvas = page.locator('.patch-canvas')
     await expect(canvas).toBeVisible()
     const overflow = await canvas.evaluate(el => getComputedStyle(el).overflow)
-    expect(overflow).toBe('auto')
+    expect(overflow).toBe('hidden')
   })
 
   test('曲线面板 slider 旁有可编辑数值输入框', async ({ page }) => {
@@ -1541,5 +1603,71 @@ test.describe('Feature: Patch Editor 交互', () => {
     await load(page)
     const toolbar = page.locator('.patch-canvas > .patch-toolbar')
     await expect(toolbar).toHaveCount(1)
+  })
+})
+
+// ══════════════════════════════════════
+//  Feature: BehaviorDrag 值端口 + Transition 节点
+// ══════════════════════════════════════
+
+test.describe('Feature: BehaviorDrag 值端口 + Transition 节点', () => {
+
+  test('BehaviorDrag 节点包含 x/y/ΔX/ΔY 值端口', async ({ page }) => {
+    await load(page)
+    const btn = page.locator('.node-btn[data-type="behaviorDrag"]')
+    await btn.click()
+    // 等待节点渲染
+    const node = page.locator('.patch-node').last()
+    await expect(node).toBeVisible()
+    const labels = await node.locator('.port-label.out').allTextContents()
+    for (const name of ['X', 'Y', 'ΔX', 'ΔY'])
+      expect(labels).toContain(name)
+  })
+
+  test('Transition 节点可通过工具栏添加', async ({ page }) => {
+    await load(page)
+    const result = await page.evaluate(() => {
+      const btn = document.querySelector('.node-btn[data-type="transition"]') as HTMLElement
+      return btn !== null && btn.textContent?.trim() === 'Trans'
+    })
+    expect(result).toBe(true)
+  })
+
+  test('Transition 进度映射: inputRange → [0,1] 钳制', async ({ page }) => {
+    await load(page)
+    const result = await page.evaluate(() => {
+      const inputRange: [number, number] = [0, 500]
+      const values = [0, 250, 500, -100, 700]
+      return values.map(v => {
+        const [lo, hi] = inputRange
+        const delta = hi - lo
+        return Math.max(0, Math.min(1, (v - lo) / delta))
+      })
+    })
+    expect(result[0]).toBe(0)      // 起点
+    expect(result[1]).toBe(0.5)    // 中点
+    expect(result[2]).toBe(1)      // 终点
+    expect(result[3]).toBe(0)      // 越界下限 → 钳制 0
+    expect(result[4]).toBe(1)      // 越界上限 → 钳制 1
+  })
+
+  test('lerp 插值算法: t=0.5 时属性值取中', async ({ page }) => {
+    await load(page)
+    const result = await page.evaluate(() => {
+      const from = { x: 0, y: 0, width: 375, height: 812, borderRadius: 0 }
+      const to = { x: 128, y: 500, width: 120, height: 120, borderRadius: 26 }
+      const t = 0.5
+      const out: Record<string, number> = {}
+      for (const k of Object.keys(from)) {
+        const a = (from as Record<string, number>)[k]
+        const b = (to as Record<string, number>)[k]
+        if (typeof a === 'number' && typeof b === 'number')
+          out[k] = a + (b - a) * t
+      }
+      return out
+    })
+    expect(result.width).toBeCloseTo(247.5)
+    expect(result.height).toBeCloseTo(466)
+    expect(result.borderRadius).toBeCloseTo(13)
   })
 })

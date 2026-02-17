@@ -188,13 +188,18 @@ export const useProjectStore = defineStore('project', () => {
     project, scene, states,
     liveStateId: transition.liveStateId,
     liveValues: transition.liveValues,
+    previewLiveStateId: transition.previewLiveStateId,
+    previewLiveValues: transition.previewLiveValues,
     canUndo, canRedo, snapshot, undo, redo,
     save, saveFile, openFile, loadSaved,
     addLayer, removeLayer, moveLayer, updateLayerProps,
     addStateGroup, removeStateGroup,
     addDisplayState, removeDisplayState, switchState,
     transitionToState: transition.transitionToState,
+    transitionFromState: transition.transitionFromState,
     setToState: transition.setToState,
+    clearLiveTransition: transition.clearLiveTransition,
+    clearPreviewLiveTransition: transition.clearPreviewLiveTransition,
     setOverride, clearOverride,
   }
 })

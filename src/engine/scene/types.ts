@@ -23,6 +23,7 @@ export type {
   ConditionConfig, ToggleVarConfig, DelayConfig, CounterConfig,
   ToConfig, SetToConfig, SetVarConfig,
   BehaviorDragConfig, BehaviorScrollConfig,
+  PatchTransitionConfig,
   Patch, PatchConnection,
 } from './PatchTypes'
 export { narrowPatch } from './PatchTypes'

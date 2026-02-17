@@ -175,6 +175,7 @@ const ADD_TYPES: Array<{ type: PatchType; label: string; name: string }> = [
   { type: 'setVariable',    label: 'SetVar', name: 'SetVar' },
   { type: 'behaviorDrag',   label: 'Drag',   name: '拖拽行为' },
   { type: 'behaviorScroll', label: 'Scroll', name: '滚动行为' },
+  { type: 'transition',     label: 'Trans',  name: '状态插值' },
 ]
 
 const LAYER_TYPES = new Set<PatchType>(['touch', 'drag', 'behaviorDrag', 'behaviorScroll'])
