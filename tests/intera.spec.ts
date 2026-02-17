@@ -1490,4 +1490,28 @@ test.describe('Feature: UI 现代化', () => {
     expect(tokens.panel).toBeTruthy()
     expect(tokens.toolbar).toBeTruthy()
   })
+
+  test('Surface 色近中性灰 — 蓝通道差 ≤ 10%', async ({ page }) => {
+    await load(page)
+    const neutral = await page.evaluate(() => {
+      const s = getComputedStyle(document.documentElement)
+      const hex = (v: string) => v.trim()
+      return {
+        s0: hex(s.getPropertyValue('--surface-0')),
+        s1: hex(s.getPropertyValue('--surface-1')),
+      }
+    })
+    // #141415 → R=20, G=20, B=21 → B/R = 1.05 (5% 差异)
+    const parse = (h: string) => {
+      const m = h.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
+      if (!m) return null
+      return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) }
+    }
+    for (const [, hex] of Object.entries(neutral)) {
+      const c = parse(hex)
+      if (!c || c.r === 0) continue
+      const ratio = c.b / c.r
+      expect(ratio).toBeLessThanOrEqual(1.10) // B 通道最多比 R 高 10%
+    }
+  })
 })

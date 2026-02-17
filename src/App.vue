@@ -124,7 +124,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--sp-4);
-  background: rgba(30, 30, 40, 0.80);
+  background: rgba(38, 38, 40, 0.80);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--shadow-toolbar);

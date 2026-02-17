@@ -22,13 +22,13 @@
 
 | Token | 值 | 用途 |
 |---|---|---|
-| `--surface-0` | `#0c0c14` | 最深背景 (画布/app) |
-| `--surface-1` | `#16161e` | 面板背景 |
-| `--surface-2` | `#1e1e28` | 工具栏/卡片 |
-| `--surface-3` | `#272734` | 悬浮/弹层 |
+| `--surface-0` | `#141415` | 最深背景 (画布/app) |
+| `--surface-1` | `#1c1c1e` | 面板背景 |
+| `--surface-2` | `#262628` | 工具栏/卡片 |
+| `--surface-3` | `#303033` | 悬浮/弹层 |
 | `--text-primary` | `rgba(255,255,255,0.90)` | 主文字 |
-| `--text-secondary` | `rgba(255,255,255,0.56)` | 次文字 |
-| `--text-tertiary` | `rgba(255,255,255,0.34)` | 辅助文字 |
+| `--text-secondary` | `rgba(255,255,255,0.50)` | 次文字 |
+| `--text-tertiary` | `rgba(255,255,255,0.30)` | 辅助文字 |
 | `--text-disabled` | `rgba(255,255,255,0.18)` | 禁用文字 |
 | `--accent` | `#6366f1` | Indigo 主色调 |
 | `--accent-text` | `#a5b4fc` | 激活态文字 |
@@ -54,7 +54,7 @@
 
 ### 边框
 
-`--border-subtle` (4% 白) / `--border-default` (8% 白) / `--border-hover` (14% 白)
+`--border-subtle` (5% 白) / `--border-default` (10% 白) / `--border-hover` (16% 白)
 
 ### 阴影 (多层柔和体系)
 
