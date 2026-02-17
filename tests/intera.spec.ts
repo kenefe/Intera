@@ -1515,3 +1515,31 @@ test.describe('Feature: UI 现代化', () => {
     }
   })
 })
+
+// ══════════════════════════════════════
+//  Feature: Patch Editor 交互修复
+// ══════════════════════════════════════
+
+test.describe('Feature: Patch Editor 交互', () => {
+
+  test('Patch 画布有 .patch-world 容器 (平移系统)', async ({ page }) => {
+    await load(page)
+    const world = page.locator('.patch-canvas .patch-world')
+    await expect(world).toHaveCount(1)
+    const style = await world.getAttribute('style')
+    expect(style).toContain('translate')
+  })
+
+  test('Patch 画布 overflow 为 hidden (非 auto)', async ({ page }) => {
+    await load(page)
+    const canvas = page.locator('.patch-canvas')
+    const overflow = await canvas.evaluate(el => getComputedStyle(el).overflow)
+    expect(overflow).toBe('hidden')
+  })
+
+  test('Patch 工具栏在 .patch-world 外部 (不随平移)', async ({ page }) => {
+    await load(page)
+    const toolbar = page.locator('.patch-canvas > .patch-toolbar')
+    await expect(toolbar).toHaveCount(1)
+  })
+})

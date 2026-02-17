@@ -5,41 +5,44 @@
   @pointerdown="onCanvasDown"
   @pointermove="ix.onMove"
   @pointerup="ix.onUp"
+  @wheel.prevent="onWheel"
   @keydown="ix.onKey"
   @contextmenu.prevent
 )
-  //- ── SVG 连线层 ──
-  svg.connection-layer
-    path.connection(
-      v-for="conn in project.project.connections"
-      :key="conn.id"
-      :d="ix.connectionPath(conn)"
-      :class="{ selected: ix.selectedConnIds.has(conn.id), threatened: ix.cutThreatened.has(conn.id) }"
-      @click.stop="ix.onClickConnection(conn, $event)"
-    )
-    path.temp-line(v-if="tempPath" :d="tempPath")
-    rect.box-select(
-      v-if="ix.box.active"
-      :x="ix.box.x" :y="ix.box.y"
-      :width="ix.box.w" :height="ix.box.h"
-    )
-    line.cut-line(
-      v-if="ix.cut.active"
-      :x1="ix.cut.x1" :y1="ix.cut.y1"
-      :x2="ix.cut.x2" :y2="ix.cut.y2"
-    )
+  //- ── 可平移世界容器 ──
+  .patch-world(:style="worldStyle")
+    //- ── SVG 连线层 ──
+    svg.connection-layer
+      path.connection(
+        v-for="conn in project.project.connections"
+        :key="conn.id"
+        :d="ix.connectionPath(conn)"
+        :class="{ selected: ix.selectedConnIds.has(conn.id), threatened: ix.cutThreatened.has(conn.id) }"
+        @click.stop="ix.onClickConnection(conn, $event)"
+      )
+      path.temp-line(v-if="tempPath" :d="tempPath")
+      rect.box-select(
+        v-if="ix.box.active"
+        :x="ix.box.x" :y="ix.box.y"
+        :width="ix.box.w" :height="ix.box.h"
+      )
+      line.cut-line(
+        v-if="ix.cut.active"
+        :x1="ix.cut.x1" :y1="ix.cut.y1"
+        :x2="ix.cut.x2" :y2="ix.cut.y2"
+      )
 
-  //- ── 节点层 ──
-  .node-layer
-    PatchNode(
-      v-for="p in project.project.patches" :key="p.id"
-      :patch="p"
-      :selected="ix.selected.has(p.id)"
-      :connectedKeys="connectedKeys"
-      @delete="ix.onDeleteNode(p.id)"
-    )
+    //- ── 节点层 ──
+    .node-layer
+      PatchNode(
+        v-for="p in project.project.patches" :key="p.id"
+        :patch="p"
+        :selected="ix.selected.has(p.id)"
+        :connectedKeys="connectedKeys"
+        @delete="ix.onDeleteNode(p.id)"
+      )
 
-  //- ── 工具条 ──
+  //- ── 工具条 (固定位置, 不随平移) ──
   .patch-toolbar
     button.node-btn(v-for="t in ADD_TYPES" :key="t.type" :data-type="t.type" :title="t.name" @click="onAddNode(t.type, t.name)") {{ t.label }}
 </template>
@@ -62,30 +65,36 @@ const project = useProjectStore()
 const canvas = useCanvasStore()
 const patch = usePatchStore()
 const canvasRef = ref<HTMLElement | null>(null)
+
+// ── 节点布局常量 (与 PatchNode CSS 对齐) ──
 const NODE_W = 180
+const HEADER_H = 26    // .node-header 渲染高度
+const PORTS_PAD = 4    // .node-ports 上内边距
+const ROW_H = 20       // .port-row 渲染高度
+const DOT_CX = 14      // 端口圆心距节点边缘
+
+// ── 画布平移 ──
+const panX = ref(0)
+const panY = ref(0)
+const worldStyle = computed(() => ({
+  transform: `translate(${panX.value}px, ${panY.value}px)`,
+}))
 
 // ── 视图层 DOM 查询 (注入 composable) ──
 
 function canvasXY(e: PointerEvent): { x: number; y: number } {
   const r = canvasRef.value!.getBoundingClientRect()
-  return { x: e.clientX - r.left, y: e.clientY - r.top }
+  return { x: e.clientX - r.left - panX.value, y: e.clientY - r.top - panY.value }
 }
 
+/** 端口圆心 — 纯数据驱动 (reactive, 无 DOM 查询) */
 function portPos(node: Patch, portId: string, dir: 'in' | 'out'): { x: number; y: number } {
-  const dot = canvasRef.value?.querySelector<HTMLElement>(
-    `.port-dot[data-patch-id="${node.id}"][data-port-id="${portId}"]`,
-  )
-  if (dot) {
-    const cr = canvasRef.value!.getBoundingClientRect()
-    const dr = dot.getBoundingClientRect()
-    return { x: dr.left + dr.width / 2 - cr.left, y: dr.top + dr.height / 2 - cr.top }
-  }
   const ports = dir === 'in' ? node.inputs : node.outputs
   const idx = ports.findIndex(p => p.id === portId)
-  const offset = dir === 'in' ? 0 : node.inputs.length
+  const vIdx = dir === 'in' ? idx : node.inputs.length + idx
   return {
-    x: node.position.x + (dir === 'out' ? NODE_W : 0),
-    y: node.position.y + 26 + (offset + idx) * 20 + 10,
+    x: node.position.x + (dir === 'out' ? NODE_W - DOT_CX : DOT_CX),
+    y: node.position.y + HEADER_H + PORTS_PAD + vIdx * ROW_H + ROW_H / 2,
   }
 }
 
@@ -125,6 +134,15 @@ const ix = usePatchInteraction({ canvasXY, findPort, findNode, portPos, nodeRect
 
 // 顶层暴露 ref → 模板自动解包 .value (嵌套在普通对象里的 ref 不会自动解包)
 const tempPath = ix.tempPath
+
+// ── 触控板/滚轮 → 平移 ──
+
+function onWheel(e: WheelEvent): void {
+  const dx = e.deltaMode === 1 ? e.deltaX * 16 : e.deltaX
+  const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY
+  panX.value -= dx
+  panY.value -= dy
+}
 
 // ── Pointer Capture (确保拖线/框选跟手) ──
 
@@ -181,9 +199,11 @@ function onAddNode(type: PatchType, name: string): void {
   min-width: 0;
   height: 100%;
   background: var(--surface-0);
-  overflow: auto;
+  overflow: hidden;
   outline: none;
 }
+
+.patch-world { position: absolute; inset: 0; will-change: transform; }
 
 .connection-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
 
