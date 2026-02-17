@@ -14,17 +14,21 @@
 
 ## 文档路由
 
-| 优先级 | 文件 | 什么时候读 |
-|---|---|---|
-| 1 | `docs/RULES.md` | **每次都读** — 编码铁律 + 代码卫生 |
-| 2 | `docs/VISION.md` | **每次都读** — 产品愿景 + 核心概念 |
-| 3 | `docs/FLOWS.md` | **修 bug / 加功能 / 重构 / 提交前** — 维护流程 A-D/F-G |
-| 4 | `docs/JOURNEY.md` | **跑旅程 / 打磨体验** — Flow E 浏览器探索 |
-| 5 | `docs/CODE-MAP.md` | **改代码时** — 模块地图 + AS3 参考 |
-| 6 | `docs/TESTING.md` | **跑测试时** — BDD 覆盖 + Playwright 命令 |
-| 7 | `docs/ARCHITECTURE.md` | **改引擎 / 数据流时** — 三层架构 |
-| 8 | `docs/UI-DESIGN.md` | **UX 相关任务** — 界面规格 |
-| 9 | `docs/KNOWN-ISSUES.md` | **修 bug 时** — 已知问题追踪 |
+> 加载策略：🔴 每次读 | 🟡 首次读（后续按需） | 🟢 按需（只读对应章节）
+> 原则：上下文是稀缺资源，只加载当前任务需要的文档，减少注意力竞争。
+
+| 优先级 | 文件 | 何时读 | 策略 |
+|---|---|---|---|
+| 0 | `SCRATCHPAD.md` | **每次** — 上次任务做到哪了 | 🔴 |
+| 1 | `docs/RULES.md` | 编码规则有疑问时深查（摘要已在 .cursor/rules 自动加载） | 🟢 |
+| 2 | `docs/VISION.md` | **首次接触项目** — 产品愿景 + 核心概念 | 🟡 |
+| 3 | `docs/FLOWS.md` | **修 bug / 加功能 / 重构 / 提交前** — 只读对应 §Flow | 🟢 |
+| 4 | `docs/JOURNEY.md` | **跑旅程 / 打磨体验** — Flow E 浏览器探索 | 🟢 |
+| 5 | `docs/CODE-MAP.md` | **改代码时** — 模块地图 + AS3 参考 | 🟢 |
+| 6 | `docs/TESTING.md` | **跑测试时** — BDD 覆盖 + Playwright 命令 | 🟢 |
+| 7 | `docs/ARCHITECTURE.md` | **改引擎 / 数据流时** — 三层架构 | 🟢 |
+| 8 | `docs/UI-DESIGN.md` | **UX 相关任务** — 界面规格 | 🟢 |
+| 9 | `docs/KNOWN-ISSUES.md` | **修 bug 时** — 已知问题追踪 | 🟢 |
 
 ---
 
