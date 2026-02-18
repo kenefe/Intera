@@ -5,7 +5,6 @@
     :style="frameStyle"
     :data-state-id="displayState.id"
   )
-  .artboard-label {{ displayState.name }}
 </template>
 
 <script setup lang="ts">

@@ -8,23 +8,7 @@
         :class="{ active: g.id === activeGroup?.id }"
         @click="switchGroup(g.id)"
       ) {{ g.name }}
-    .state-tabs
-      .state-tab(
-        v-for="(s, idx) in displayStates" :key="s.id"
-        :class="{ active: s.id === activeId }"
-        @click="onSwitchState(s.id)"
-        @dblclick.stop="beginRename(s.id)"
-        @contextmenu.prevent="openCtx(s.id, idx, $event)"
-      )
-        input.rename-input(
-          v-if="editId === s.id" :value="s.name"
-          @input="onRenameInput(s.id, $event)"
-          @blur="doneRename" @keydown.enter="doneRename" @keydown.escape="doneRename"
-          @click.stop
-        )
-        span.state-name(v-else) {{ s.name }}
-        .del-btn(v-if="idx > 0 && displayStates.length > 1" @click.stop="onDeleteState(s.id)") ×
-      .add-tab(@click="onAddState" title="添加状态") +
+    span.state-badge(v-if="activeStateName") {{ activeStateName }}
     button.reset-btn(@click="onReset" title="重置预览状态") Reset
   .preview-device(ref="containerRef")
     .preview-frame(
@@ -35,12 +19,6 @@
       @pointerup="onUp"
     )
   .preview-hint(v-if="hintText") {{ hintText }}
-  ContextMenu(
-    v-if="ctx.show"
-    :x="ctx.x" :y="ctx.y" :items="ctxItems"
-    @close="ctx.show = false"
-    @select="onCtxAction"
-  )
 </template>
 
 <script setup lang="ts">
@@ -60,20 +38,18 @@ import type { AnimatableProps } from '@engine/scene/types'
 import { useProjectStore } from '@store/project'
 import { usePatchStore } from '@store/patch'
 import { useActiveGroup } from '@/composables/useActiveGroup'
+import { useCanvasStore } from '@store/canvas'
 import { DOMRenderer } from '@renderer/DOMRenderer'
 import { usePreviewGesture } from '@/composables/usePreviewGesture'
-import { useStateManager } from '@/composables/useStateManager'
-import ContextMenu from '../ContextMenu.vue'
 
 const store = useProjectStore()
 const patchStore = usePatchStore()
 const { activeGroup } = useActiveGroup()
+const canvas = useCanvasStore()
 const preview = usePreviewGesture()
-const {
-  groups, displayStates, activeId, editId, ctx, ctxItems,
-  switchGroup, onSwitchState, onAddState, onDeleteState,
-  beginRename, onRenameInput, doneRename, openCtx, onCtxAction,
-} = useStateManager()
+
+const groups = computed(() => store.project.stateGroups)
+function switchGroup(id: string): void { canvas.setActiveGroup(id) }
 
 const containerRef = ref<HTMLElement>()
 const frameRef = ref<HTMLElement>()
@@ -396,15 +372,4 @@ watch(() => store.project, syncLayers, { deep: true })
   transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .add-tab:hover { color: var(--accent-light); border-color: var(--accent-border); background: var(--accent-bg); }
-
-/* ── 组选择器 ── */
-.group-selector { display: flex; gap: 2px; align-items: center; margin-right: var(--sp-1); }
-.group-pill {
-  padding: 2px 6px; border-radius: var(--radius-sm);
-  font-size: var(--text-xs); font-weight: 500; color: var(--text-tertiary);
-  cursor: pointer; user-select: none;
-  transition: background var(--duration-fast), color var(--duration-fast);
-}
-.group-pill:hover { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
-.group-pill.active { background: var(--accent-bg); color: var(--accent-text); }
 </style>

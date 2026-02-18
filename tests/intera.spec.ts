@@ -367,55 +367,53 @@ test.describe('Feature: 显示状态', () => {
 
   test('初始只有一个默认状态', async ({ page }) => {
     await load(page)
-    const tabs = page.locator('.state-tab')
-    await expect(tabs).toHaveCount(1)
-    await expect(tabs.first()).toContainText('默认')
-    await expect(tabs.first()).toHaveClass(/active/)
+    const slots = page.locator('.artboard-slot')
+    await expect(slots).toHaveCount(1)
+    await expect(slots.first()).toContainText('默认')
+    await expect(slots.first().locator('.artboard.active')).toHaveCount(1)
   })
 
   test('点击 + 按钮添加新状态', async ({ page }) => {
     await load(page)
-    await page.locator('.add-tab').click()
-    await expect(page.locator('.state-tab')).toHaveCount(2)
+    await page.locator('.add-state-btn').click()
+    await expect(page.locator('.artboard-slot')).toHaveCount(2)
     await page.screenshot({ path: 'tests/screenshots/04-two-states.png' })
   })
 
   test('点击状态标签切换激活状态', async ({ page }) => {
     await load(page)
-    await page.locator('.add-tab').click()
-    const secondTab = page.locator('.state-tab').nth(1)
-    await secondTab.click()
-    await expect(secondTab).toHaveClass(/active/)
-    // 默认状态不再 active
-    await expect(page.locator('.state-tab').first()).not.toHaveClass(/active/)
+    await page.locator('.add-state-btn').click()
+    const second = page.locator('.artboard-slot').nth(1)
+    await second.click()
+    await expect(second.locator('.artboard.active')).toHaveCount(1)
+    await expect(page.locator('.artboard-slot').first().locator('.artboard.active')).toHaveCount(0)
   })
 
-  test('默认状态不可删除 — 无删除按钮', async ({ page }) => {
+  test('默认状态不可删除 — 右键菜单删除项禁用', async ({ page }) => {
     await load(page)
-    await page.locator('.add-tab').click()
-    // 默认状态 hover 后无删除按钮
-    const firstTab = page.locator('.state-tab').first()
-    await firstTab.hover()
-    await expect(firstTab.locator('.delete-btn')).toHaveCount(0)
-    // 非默认状态 hover 后有删除按钮
-    const secondTab = page.locator('.state-tab').nth(1)
-    await secondTab.hover()
-    await expect(secondTab.locator('.delete-btn')).toBeVisible()
+    await page.locator('.add-state-btn').click()
+    // 默认状态右键 → 删除应禁用
+    await page.locator('.artboard-slot').first().click({ button: 'right' })
+    const del = page.locator('.ctx-item').filter({ hasText: '删除' })
+    await expect(del).toHaveClass(/disabled/)
+    await page.keyboard.press('Escape')
   })
 
-  test('只有一个状态时无删除按钮', async ({ page }) => {
+  test('只有一个状态时删除禁用', async ({ page }) => {
     await load(page)
-    await expect(page.locator('.delete-btn')).toHaveCount(0)
+    await page.locator('.artboard-slot').first().click({ button: 'right' })
+    const del = page.locator('.ctx-item').filter({ hasText: '删除' })
+    await expect(del).toHaveClass(/disabled/)
+    await page.keyboard.press('Escape')
   })
 
   test('删除非默认状态后数量减少', async ({ page }) => {
     await load(page)
-    await page.locator('.add-tab').click()
-    await expect(page.locator('.state-tab')).toHaveCount(2)
-    const tab = page.locator('.state-tab').nth(1)
-    await tab.hover()
-    await tab.locator('.delete-btn').click()
-    await expect(page.locator('.state-tab')).toHaveCount(1)
+    await page.locator('.add-state-btn').click()
+    await expect(page.locator('.artboard-slot')).toHaveCount(2)
+    await page.locator('.artboard-slot').nth(1).click({ button: 'right' })
+    await page.locator('.ctx-item').filter({ hasText: '删除' }).click()
+    await expect(page.locator('.artboard-slot')).toHaveCount(1)
   })
 })
 
@@ -510,7 +508,7 @@ test.describe('Feature: 预览面板', () => {
     await load(page)
     await drawRect(page)
     // 添加第二个状态
-    await page.locator('.add-tab').click()
+    await page.locator('.add-state-btn').click()
     await page.waitForTimeout(200)
     // 点击预览面板触发自动循环
     const preview = page.locator('.preview-panel')
@@ -526,11 +524,11 @@ test.describe('Feature: 预览面板', () => {
     await load(page)
     await drawRect(page)
 
-    await page.locator('.add-tab').click()
+    await page.locator('.add-state-btn').click()
     await page.waitForTimeout(120)
 
-    await page.locator('.state-tab').nth(1).click()
-    const activeBefore = await page.locator('.state-tab.active .state-name').first().innerText()
+    await page.locator('.artboard-slot').nth(1).click()
+    const activeBefore = await page.locator('.artboard-slot:has(.artboard.active) .artboard-name').first().innerText()
 
     const preview = page.locator('.preview-panel')
     const pbox = await preview.boundingBox()
@@ -539,15 +537,15 @@ test.describe('Feature: 预览面板', () => {
     }
     await page.waitForTimeout(600)
 
-    await expect(page.locator('.state-tab.active .state-name').first()).toHaveText(activeBefore)
+    await expect(page.locator('.artboard-slot:has(.artboard.active) .artboard-name').first()).toHaveText(activeBefore)
   })
 
   test('预览播放不写入编辑态 live 通道', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await page.locator('.add-tab').click()
+    await page.locator('.add-state-btn').click()
     await page.waitForTimeout(120)
-    await page.locator('.state-tab').nth(1).click()
+    await page.locator('.artboard-slot').nth(1).click()
 
     await page.evaluate(() => {
       type ProjectStoreEval = {
@@ -808,9 +806,9 @@ test.describe('Feature: 状态间动画过渡', () => {
     // 画一个矩形
     await drawRect(page)
     // 添加第二个状态
-    await page.locator('.add-tab').click()
+    await page.locator('.add-state-btn').click()
     // 切换到第二个状态
-    await page.locator('.state-tab').nth(1).click()
+    await page.locator('.artboard-slot').nth(1).click()
     await page.waitForTimeout(200)
     // 修改属性 (模拟在新状态中改位置)
     const xInput = page.locator('.prop-field').first().locator('.input')
@@ -819,7 +817,7 @@ test.describe('Feature: 状态间动画过渡', () => {
       await xInput.press('Enter')
     }
     // 切回默认状态 (触发动画)
-    await page.locator('.state-tab').first().click()
+    await page.locator('.artboard-slot').first().click()
     await page.waitForTimeout(500)
     await page.screenshot({ path: 'tests/screenshots/09-state-transition.png' })
     expect(errors).toHaveLength(0)
@@ -850,13 +848,13 @@ test.describe('Feature: 综合集成', () => {
       await opacityInput.press('Enter')
     }
     // 添加状态
-    await page.locator('.add-tab').click()
-    await expect(page.locator('.state-tab')).toHaveCount(2)
+    await page.locator('.add-state-btn').click()
+    await expect(page.locator('.artboard-slot')).toHaveCount(2)
     // 切换到第二状态
-    await page.locator('.state-tab').nth(1).click()
+    await page.locator('.artboard-slot').nth(1).click()
     await page.waitForTimeout(200)
     // 切回默认 (触发动画过渡)
-    await page.locator('.state-tab').first().click()
+    await page.locator('.artboard-slot').first().click()
     await page.waitForTimeout(500)
     await page.screenshot({ path: 'tests/screenshots/10-integration.png' })
     expect(errors).toHaveLength(0)
@@ -973,7 +971,7 @@ test.describe('Feature: UI 打磨回归', () => {
 
   test('状态栏激活态有底部蓝色下划线', async ({ page }) => {
     await load(page)
-    const activeTab = page.locator('.state-tab.active')
+    const activeTab = page.locator('.artboard-slot:has(.artboard.active)')
     await expect(activeTab).toBeVisible()
     const style = await activeTab.evaluate(el => getComputedStyle(el).boxShadow)
     expect(style).toContain('rgb')
@@ -1010,7 +1008,7 @@ test.describe('Feature: UI 打磨回归', () => {
   test('曲线面板 slider 旁有可编辑数值输入框', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await page.locator('.add-tab').click()
+    await page.locator('.add-state-btn').click()
     await page.waitForTimeout(200)
     const paramInput = page.locator('.panel-right .param-input').first()
     await expect(paramInput).toBeVisible()
@@ -1020,7 +1018,7 @@ test.describe('Feature: UI 打磨回归', () => {
   test('曲线面板元素有 data-testid 属性', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await page.locator('.add-tab').click()
+    await page.locator('.add-state-btn').click()
     await page.waitForTimeout(200)
     await expect(page.locator('[data-testid="curve-type"]')).toBeVisible()
     await expect(page.locator('[data-testid="curve-response"]')).toBeVisible()
@@ -1047,9 +1045,9 @@ test.describe('Feature: Review #1 补缺', () => {
   test('新增状态命名为递增数字而非时间戳', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await page.locator('.add-tab').click()
+    await page.locator('.add-state-btn').click()
     await page.waitForTimeout(200)
-    const tabs = page.locator('.state-tab')
+    const tabs = page.locator('.artboard-slot')
     const count = await tabs.count()
     expect(count).toBe(2)
     const name = await tabs.nth(1).textContent()
@@ -1334,7 +1332,7 @@ test.describe('Feature: 组件状态组', () => {
     // 第二个 pill 应该 active
     await expect(pills.nth(1)).toHaveClass(/active/)
     // 状态标签列表应更新 (组件组有独立的状态)
-    const tabs = page.locator('.state-tab')
+    const tabs = page.locator('.artboard-slot')
     expect(await tabs.count()).toBeGreaterThanOrEqual(1)
   })
 
@@ -1345,10 +1343,10 @@ test.describe('Feature: 组件状态组', () => {
     await page.locator('.group-pill').nth(1).click()
     await page.waitForTimeout(200)
     // 添加第二状态
-    await page.locator('.add-tab').click()
+    await page.locator('.state-group-row.active .add-state-btn').click()
     await page.waitForTimeout(200)
     // 切换到第二状态
-    await page.locator('.state-tab').nth(1).click()
+    await page.locator('.state-group-row.active .artboard-slot').nth(1).click()
     await page.waitForTimeout(200)
     // 选中组件内的图层 (点击图层面板)
     if (await page.locator('.layer-item').count() > 0) {
@@ -1384,10 +1382,10 @@ test.describe('Feature: 组件状态组', () => {
     await page.locator('.group-pill').nth(1).click()
     await page.waitForTimeout(300)
     // 添加第二状态
-    await page.locator('.add-tab').click()
+    await page.locator('.state-group-row.active .add-state-btn').click()
     await page.waitForTimeout(300)
     // 切到第二状态
-    await page.locator('.state-tab').nth(1).click()
+    await page.locator('.state-group-row.active .artboard-slot').nth(1).click()
     await page.waitForTimeout(300)
     // 选中图层
     await page.locator('.layer-item').first().click()
@@ -1438,10 +1436,10 @@ test.describe('Feature: 组件状态组', () => {
     // 记录默认状态的 X
     const defaultX = await xInput.inputValue()
     // 添加第二状态
-    await page.locator('.add-tab').click()
+    await page.locator('.state-group-row.active .add-state-btn').click()
     await page.waitForTimeout(300)
     // 切到第二状态
-    await page.locator('.state-tab').nth(1).click()
+    await page.locator('.state-group-row.active .artboard-slot').nth(1).click()
     await page.waitForTimeout(300)
     // 重新选中图层
     await page.locator('.layer-item').first().click()
@@ -1452,7 +1450,7 @@ test.describe('Feature: 组件状态组', () => {
     await xInput.press('Enter')
     await page.waitForTimeout(300)
     // 切回默认状态
-    await page.locator('.state-tab').first().click()
+    await page.locator('.state-group-row.active .artboard-slot').first().click()
     await page.waitForTimeout(300)
     // 重新选中图层
     await page.locator('.layer-item').first().click()
