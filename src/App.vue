@@ -7,7 +7,7 @@
         v-for="t in tools"
         :key="t.key"
         :data-tool="t.key"
-        :class="{ active: editor.tool === t.key }"
+        :class="{ active: editor.tool === t.key, flash: editor.toolFlash === t.key }"
         :title="t.tip"
         @click="editor.setTool(t.key)"
       )
@@ -279,4 +279,5 @@ onUnmounted(() => {
 }
 .fade-enter-active, .fade-leave-active { transition: opacity .3s }
 .fade-enter-from, .fade-leave-to { opacity: 0 }
+.tool-btn.flash { background: var(--c-accent, #4a90d9); transition: background .2s }
 </style>

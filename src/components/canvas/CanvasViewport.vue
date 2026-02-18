@@ -11,6 +11,7 @@
     ArtboardGrid
   .marquee-box(v-if="interaction.marquee.value.visible" :style="marqueeStyle")
   SelectionOverlay
+  SnapGuides(:guides="interaction.guides.value")
   ContextMenu(
     v-if="ctx.show"
     :x="ctx.x" :y="ctx.y" :items="ctxItems"
@@ -36,6 +37,7 @@ import { useTextTool } from '@/composables/useTextTool'
 import { useKeyboard } from '@/composables/useKeyboard'
 import ArtboardGrid from './ArtboardGrid.vue'
 import SelectionOverlay from './SelectionOverlay.vue'
+import SnapGuides from './SnapGuides.vue'
 import ContextMenu from '../ContextMenu.vue'
 import type { MenuItem } from '../ContextMenu.vue'
 

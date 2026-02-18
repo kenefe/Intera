@@ -84,10 +84,17 @@ export const useCanvasStore = defineStore('canvas', () => {
     activeGroupId.value = id
   }
 
+  /** 将画布平移到让指定图层居中 */
+  function focusOnLayer(lx: number, ly: number, lw: number, lh: number, vpW: number, vpH: number): void {
+    const cx = lx + lw / 2, cy = ly + lh / 2
+    panX.value = vpW / 2 - cx * zoom.value
+    panY.value = vpH / 2 - cy * zoom.value
+  }
+
   return {
     zoom, panX, panY, selectedLayerIds, hasSelection, activeGroupId,
     setZoom, setPan, resetViewport, fitToViewport,
     select, addToSelection, removeFromSelection, toggleSelection, clearSelection,
-    setActiveGroup,
+    setActiveGroup, focusOnLayer,
   }
 })

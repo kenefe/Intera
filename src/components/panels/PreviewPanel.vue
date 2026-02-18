@@ -3,7 +3,7 @@
   .preview-header
     span.preview-title Preview
     span.state-badge(v-if="activeStateName") {{ activeStateName }}
-    button.reset-btn(@click="onReset") Reset
+    button.reset-btn(@click="onReset" title="重置预览状态") Reset
   .preview-device(ref="containerRef")
     .preview-frame(
       ref="frameRef"

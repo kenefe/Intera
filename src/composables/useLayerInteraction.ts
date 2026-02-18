@@ -8,6 +8,7 @@ import { useCanvasStore } from '@store/canvas'
 import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
 import { useActiveGroup } from './useActiveGroup'
+import { useSnapGuides } from './useSnapGuides'
 
 type Rect = { left: number; top: number; right: number; bottom: number }
 type MarqueeModel = { visible: boolean; x: number; y: number; width: number; height: number }
@@ -51,6 +52,7 @@ function findGroupIdByState(
 
 export function useLayerInteraction(viewportRef: Ref<HTMLElement | undefined>) {
   const canvas = useCanvasStore()
+  const snapG = useSnapGuides()
   const editor = useEditorStore()
   const project = useProjectStore()
   const { activeGroup, isDefaultState } = useActiveGroup()
@@ -78,6 +80,7 @@ export function useLayerInteraction(viewportRef: Ref<HTMLElement | undefined>) {
     dragIds = []
     layerStarts.clear()
     pendingSingle = null
+    snapG.clear()
   }
 
   function resetMarquee(): void {
@@ -174,6 +177,8 @@ export function useLayerInteraction(viewportRef: Ref<HTMLElement | undefined>) {
       const resolved = project.states.getResolvedProps(stateId, layerId)
       if (resolved) layerStarts.set(layerId, { x: resolved.x, y: resolved.y })
     }
+    const skipSet = new Set(dragIds)
+    snapG.setTargets(project.project.layers, skipSet, project.project.canvasSize.width, project.project.canvasSize.height)
   }
 
   function down(e: PointerEvent): void {
@@ -206,9 +211,14 @@ export function useLayerInteraction(viewportRef: Ref<HTMLElement | undefined>) {
     pendingSingle = null
     const dx = (e.clientX - dragStartX) / canvas.zoom
     const dy = (e.clientY - dragStartY) / canvas.zoom
+    const ref0 = layerStarts.get(dragIds[0])
+    const layer0 = ref0 ? project.project.layers[dragIds[0]] : null
+    const sd = ref0 && layer0
+      ? snapG.snap(ref0.x + dx, ref0.y + dy, layer0.props.width, layer0.props.height)
+      : { dx: 0, dy: 0 }
     for (const layerId of dragIds) {
       const start = layerStarts.get(layerId)
-      if (start) writeXY(layerId, Math.round(start.x + dx), Math.round(start.y + dy))
+      if (start) writeXY(layerId, Math.round(start.x + dx + sd.dx), Math.round(start.y + dy + sd.dy))
     }
   }
 
@@ -226,5 +236,5 @@ export function useLayerInteraction(viewportRef: Ref<HTMLElement | undefined>) {
     clearDragSession()
   }
 
-  return { down, move, up, marquee }
+  return { down, move, up, marquee, guides: snapG.guides }
 }

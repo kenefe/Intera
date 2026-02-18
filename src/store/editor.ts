@@ -18,14 +18,21 @@ export type ToolType = 'select' | 'frame' | 'rectangle' | 'ellipse' | 'text'
 export const useEditorStore = defineStore('editor', () => {
   const tool = ref<ToolType>('select')
   const toast = ref('')
+  const toolFlash = ref('')
   let toastTimer = 0
+  let flashTimer = 0
 
-  function setTool(t: ToolType): void { tool.value = t }
+  function setTool(t: ToolType): void {
+    tool.value = t
+    toolFlash.value = t
+    clearTimeout(flashTimer)
+    flashTimer = window.setTimeout(() => { toolFlash.value = '' }, 200)
+  }
   function showToast(msg: string): void {
     toast.value = msg
     clearTimeout(toastTimer)
     toastTimer = window.setTimeout(() => { toast.value = '' }, 800)
   }
 
-  return { tool, setTool, toast, showToast }
+  return { tool, setTool, toast, showToast, toolFlash }
 })
