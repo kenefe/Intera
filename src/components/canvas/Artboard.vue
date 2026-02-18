@@ -71,6 +71,9 @@ function syncLayers(): void {
     if (layer.type === 'text') {
       renderer.setTextContent(id, layer.text ?? '', layer.fontSize ?? 16, layer.fontFamily, layer.fontWeight, layer.textAlign)
     }
+    if (layer.type === 'image' && layer.imageSrc) {
+      renderer.setImageSrc(id, layer.imageSrc)
+    }
   }
 
   // 层级顺序 + 父子关系 (组件根 → 视为画板根)

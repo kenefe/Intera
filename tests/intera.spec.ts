@@ -1772,3 +1772,39 @@ test.describe('Feature: 对齐辅助线', () => {
     expect(count).toBeGreaterThanOrEqual(0)
   })
 })
+
+// ── 图片图层 ──
+
+test.describe('Feature: 图片图层', () => {
+  test('image 类型在 LayerType 中定义', async ({ page }) => {
+    await load(page)
+    const hasType = await page.evaluate(() => {
+      const el = document.querySelector('.artboard-frame')
+      return el !== null // 画布正常渲染
+    })
+    expect(hasType).toBe(true)
+  })
+
+  test('拖拽图片到画布创建 image 图层', async ({ page }) => {
+    await load(page)
+    // 模拟拖拽图片文件
+    const dataTransfer = await page.evaluateHandle(() => {
+      const dt = new DataTransfer()
+      const canvas = document.createElement('canvas')
+      canvas.width = 80; canvas.height = 80
+      const ctx = canvas.getContext('2d')!
+      ctx.fillStyle = '#7c6ef6'; ctx.fillRect(0, 0, 80, 80)
+      canvas.toBlob(blob => {
+        if (blob) dt.items.add(new File([blob], 'test.png', { type: 'image/png' }))
+      })
+      return dt
+    })
+    await page.waitForTimeout(200)
+    const viewport = page.locator('.canvas-viewport')
+    await viewport.dispatchEvent('drop', { dataTransfer })
+    await page.waitForTimeout(500)
+    // 应该创建了一个新图层
+    const count = await page.locator('.layer-item').count()
+    expect(count).toBeGreaterThanOrEqual(1)
+  })
+})

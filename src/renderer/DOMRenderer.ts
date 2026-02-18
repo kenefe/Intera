@@ -20,6 +20,10 @@ function applyProps(el: HTMLElement, p: AnimatableProps, type?: LayerType): void
   if (type === 'text') {
     s.color = p.fill
     s.backgroundColor = 'transparent'
+  } else if (type === 'image') {
+    s.backgroundColor = 'transparent'
+    s.backgroundSize = 'cover'
+    s.backgroundPosition = 'center'
   } else {
     s.backgroundColor = p.fill
   }
@@ -119,6 +123,12 @@ export class DOMRenderer implements Renderer {
     if (!child) return
     const parent = parentId ? this.els.get(parentId) : this.world
     parent?.appendChild(child)
+  }
+
+  setImageSrc(id: string, src: string): void {
+    const el = this.els.get(id)
+    if (!el) return
+    el.style.backgroundImage = src ? `url(${src})` : 'none'
   }
 
   /** 文本图层专用: 设置文本内容和字体属性 */

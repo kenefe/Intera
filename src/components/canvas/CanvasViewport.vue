@@ -6,6 +6,8 @@
   @pointermove="onPointerMove"
   @pointerup="onPointerUp"
   @contextmenu.prevent="onContextMenu"
+  @drop.prevent="onDrop"
+  @dragover.prevent
 )
   .canvas-world(:style="worldStyle")
     ArtboardGrid
@@ -203,13 +205,52 @@ function fitViewport(): void {
   canvas.fitToViewport(w, h, vp.clientWidth, vp.clientHeight)
 }
 
+// ── 图片导入 (拖拽 + 粘贴) ──
+
+function fileToDataURL(file: File): Promise<string> {
+  return new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(file) })
+}
+
+async function importImage(file: File, cx?: number, cy?: number): Promise<void> {
+  const src = await fileToDataURL(file)
+  const img = new Image()
+  img.src = src
+  await img.decode()
+  let w = img.naturalWidth, h = img.naturalHeight
+  const max = 400
+  if (w > max || h > max) { const s = max / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s) }
+  const layer = project.addLayer('image', null, undefined, file.name.replace(/\.\w+$/, ''))
+  layer.imageSrc = src
+  project.updateLayerProps(layer.id, { width: w, height: h, x: (cx ?? 100), y: (cy ?? 100) })
+  canvas.select([layer.id])
+}
+
+function onDrop(e: DragEvent): void {
+  e.preventDefault()
+  const file = [...(e.dataTransfer?.files ?? [])].find(f => f.type.startsWith('image/'))
+  if (!file) return
+  const rect = viewportRef.value!.getBoundingClientRect()
+  const cx = (e.clientX - rect.left - canvas.panX) / canvas.zoom
+  const cy = (e.clientY - rect.top - canvas.panY) / canvas.zoom
+  importImage(file, cx, cy)
+}
+
+function onPaste(e: ClipboardEvent): void {
+  const file = [...(e.clipboardData?.files ?? [])].find(f => f.type.startsWith('image/'))
+  if (file) { e.preventDefault(); importImage(file) }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
-  // 等待父组件 loadSaved 完成后再适配
+  window.addEventListener('paste', onPaste)
   requestAnimationFrame(fitViewport)
 })
-onUnmounted(() => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp) })
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('keyup', onKeyUp)
+  window.removeEventListener('paste', onPaste)
+})
 </script>
 
 <style scoped>
