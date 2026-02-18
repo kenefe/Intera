@@ -168,6 +168,7 @@ function onDup(id: string): void {
   background: var(--accent-bg-hover);
   color: var(--accent-text);
   font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--c-accent, #4a90d9);
 }
 
 .state-tab.animating {
