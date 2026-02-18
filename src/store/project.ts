@@ -94,14 +94,16 @@ export const useProjectStore = defineStore('project', () => {
     transition.cleanup()
   }
 
-  function undo(): void {
+  function undo(): boolean {
     const prev = history.undo(JSON.stringify(project))
-    if (prev) { restoreFromJSON(prev); historyVersion.value++ }
+    if (prev) { restoreFromJSON(prev); historyVersion.value++; return true }
+    return false
   }
 
-  function redo(): void {
+  function redo(): boolean {
     const next = history.redo(JSON.stringify(project))
-    if (next) { restoreFromJSON(next); historyVersion.value++ }
+    if (next) { restoreFromJSON(next); historyVersion.value++; return true }
+    return false
   }
 
   // ── 持久化 ──

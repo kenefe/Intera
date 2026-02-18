@@ -48,6 +48,8 @@
       .patch-row(:style="{ height: patchResize.height.value + 'px' }")
         PatchCanvas
         PatchVarPanel
+  Transition(name="fade")
+    .toast-bar(v-if="editor.toast") {{ editor.toast }}
 </template>
 
 <script setup lang="ts">
@@ -270,4 +272,11 @@ onUnmounted(() => {
   overflow: hidden;
   position: relative;
 }
+.toast-bar {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  padding: 6px 16px; border-radius: 6px; font-size: 12px;
+  background: var(--c-accent, #4a90d9); color: #fff; pointer-events: none; z-index: 9999;
+}
+.fade-enter-active, .fade-leave-active { transition: opacity .3s }
+.fade-enter-from, .fade-leave-to { opacity: 0 }
 </style>

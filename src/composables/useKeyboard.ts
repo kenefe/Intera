@@ -76,10 +76,10 @@ export function useKeyboard(): void {
     // ── 全局修饰键 (输入框内也生效) ──
 
     if (meta && e.key === 'z' && !e.shiftKey) {
-      e.preventDefault(); project.undo(); return
+      e.preventDefault(); if (project.undo()) editor.showToast('已撤销'); return
     }
     if (meta && e.key === 'z' && e.shiftKey) {
-      e.preventDefault(); project.redo(); return
+      e.preventDefault(); if (project.redo()) editor.showToast('已重做'); return
     }
     if (meta && e.key === 's') {
       e.preventDefault(); project.save(); return
