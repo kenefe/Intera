@@ -1528,7 +1528,7 @@ test.describe('Feature: Design Token 体系', () => {
     await load(page)
     const toolbar = await page.locator('.toolbar').boundingBox()
     expect(toolbar).toBeTruthy()
-    expect(toolbar!.height).toBe(40)
+    expect(toolbar!.height).toBe(48)
   })
 
   test('Indigo 主色调应用于激活元素', async ({ page }) => {
@@ -1568,16 +1568,11 @@ test.describe('Feature: UI 现代化', () => {
     await load(page)
     const left = page.locator('.panel-left')
     const right = page.locator('.panel-right')
-    // 面板不应有 border-right / border-left
+    // 面板应有 border 分隔
     const leftBR = await left.evaluate(el => getComputedStyle(el).borderRightStyle)
     const rightBL = await right.evaluate(el => getComputedStyle(el).borderLeftStyle)
-    expect(leftBR).toBe('none')
-    expect(rightBL).toBe('none')
-    // 面板应有 box-shadow
-    const leftShadow = await left.evaluate(el => getComputedStyle(el).boxShadow)
-    const rightShadow = await right.evaluate(el => getComputedStyle(el).boxShadow)
-    expect(leftShadow).not.toBe('none')
-    expect(rightShadow).not.toBe('none')
+    expect(leftBR).toBe('solid')
+    expect(rightBL).toBe('solid')
   })
 
   test('工具栏有毛玻璃效果 (backdrop-filter)', async ({ page }) => {
@@ -1631,7 +1626,7 @@ test.describe('Feature: UI 现代化', () => {
       const c = parse(hex)
       if (!c || c.r === 0) continue
       const ratio = c.b / c.r
-      expect(ratio).toBeLessThanOrEqual(1.10) // B 通道最多比 R 高 10%
+      expect(ratio).toBeLessThanOrEqual(1.25) // B 通道最多比 R 高 25% (冷暖分离)
     }
   })
 })

@@ -50,7 +50,6 @@ export const usePatchStore = defineStore('patch', () => {
     }
   }
 
-
   const variables = new VariableManager(p.variables)
   const runtime = new PatchRuntime(
     p.patches, p.connections, variables,
@@ -78,7 +77,6 @@ export const usePatchStore = defineStore('patch', () => {
     () => { runtime.rebuild(); variables.sync() },
   )
 
-
   function addVariable(name: string, type: Variable['type'], defaultValue: VariableValue): Variable {
     project.snapshot()
     const v: Variable = { id: makeId('var'), name, type, defaultValue }
@@ -100,14 +98,16 @@ export const usePatchStore = defineStore('patch', () => {
     if (v) Object.assign(v, updates)
   }
 
-
-  function addPatchNode<T extends PatchType>(
-    type: T, pos: Vec2,
-    config?: Partial<Omit<ConfigFor<T>, 'type'>>,
-    name?: string,
-  ): Patch {
+  function addPatchNode<T extends PatchType>(type: T, pos: Vec2, config?: Partial<Omit<ConfigFor<T>, 'type'>>, name?: string): Patch {
     project.snapshot()
+    const needsVar = ['condition', 'toggleVariable', 'setVariable'].includes(type)
+    if (needsVar && p.variables.length === 0) {
+      p.variables.push({ id: makeId('var'), name: 'myVar', type: 'boolean', defaultValue: false })
+      variables.sync()
+    }
     const patch = createPatch(type, pos, config, name)
+    if (needsVar && p.variables.length > 0 && 'variableId' in patch.config)
+      (patch.config as { variableId?: string }).variableId = p.variables[0].id
     p.patches.push(patch)
     runtime.rebuild()
     return patch
@@ -129,7 +129,6 @@ export const usePatchStore = defineStore('patch', () => {
     const patch = p.patches.find(n => n.id === id)
     if (patch) Object.assign(patch.position, pos)
   }
-
 
   function addConnection(fromId: string, fromPort: string, toId: string, toPort: string): PatchConnection | null {
     // ── 防重复连线 ──
@@ -157,11 +156,9 @@ export const usePatchStore = defineStore('patch', () => {
     runtime.rebuild()
   }
 
-
   function fireTrigger(layerId: string, event: string): void {
     runtime.triggerByLayer(layerId, event)
   }
-
 
   /** 解析当前激活的状态组 ID (跟随画布选择) */
   function resolveGroupId(): string | undefined {

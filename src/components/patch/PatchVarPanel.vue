@@ -111,8 +111,8 @@ function onDelete(id: string): void {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 .patch-var-panel {
-  width: 160px;
-  min-width: 160px;
+  width: 200px;
+  min-width: 200px;
   background: var(--surface-1);
   box-shadow: var(--shadow-panel);
   position: relative;
