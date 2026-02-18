@@ -120,16 +120,17 @@ onUnmounted(() => {
 /* ── 工具栏 ── */
 
 .toolbar {
-  height: 40px;
-  min-height: 40px;
+  height: 48px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--sp-4);
-  background: rgba(38, 38, 40, 0.80);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-toolbar);
+  background: rgba(24, 24, 29, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03);
   z-index: 2;
   position: relative;
 }
@@ -137,8 +138,8 @@ onUnmounted(() => {
 .toolbar-tools { display: flex; gap: 2px; }
 
 .tool-btn {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,7 +160,7 @@ onUnmounted(() => {
 .tool-btn.active {
   background: var(--accent-bg-hover);
   color: var(--accent-text);
-  box-shadow: inset 0 -2px 0 var(--c-accent, #4a90d9);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 /* ── 工具图标 ── */
@@ -210,7 +211,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   background: var(--surface-1);
-  box-shadow: var(--shadow-panel);
+  border-right: 1px solid var(--border-subtle);
   z-index: 1;
   position: relative;
 }
@@ -226,7 +227,7 @@ onUnmounted(() => {
   width: 280px;
   min-width: 280px;
   background: var(--surface-1);
-  box-shadow: var(--shadow-panel);
+  border-left: 1px solid var(--border-subtle);
   z-index: 1;
   position: relative;
   overflow-y: auto;
@@ -274,11 +275,12 @@ onUnmounted(() => {
   position: relative;
 }
 .toast-bar {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  padding: 6px 16px; border-radius: 6px; font-size: 12px;
-  background: var(--c-accent, #4a90d9); color: #fff; pointer-events: none; z-index: 9999;
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  padding: 7px 18px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  background: var(--accent); color: #fff; pointer-events: none; z-index: 9999;
+  box-shadow: 0 4px 16px rgba(124, 110, 246, 0.3);
 }
 .fade-enter-active, .fade-leave-active { transition: opacity .3s }
 .fade-enter-from, .fade-leave-to { opacity: 0 }
-.tool-btn.flash { background: var(--c-accent, #4a90d9); transition: background .2s }
+.tool-btn.flash { background: var(--accent); transition: background .2s }
 </style>
