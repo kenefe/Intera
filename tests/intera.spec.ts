@@ -180,13 +180,13 @@ test.describe('Feature: 绘图工具', () => {
     await load(page)
     // 矩形
     await page.keyboard.press('r')
-    await drawOnCanvas(page, -100, -80, -20, -20)
+    await drawOnCanvas(page, -50, -50, -10, -10)
     // 椭圆
     await page.keyboard.press('o')
-    await drawOnCanvas(page, 20, -80, 100, -20)
+    await drawOnCanvas(page, 10, -50, 50, -10)
     // Frame
     await page.keyboard.press('f')
-    await drawOnCanvas(page, -100, 20, -20, 80)
+    await drawOnCanvas(page, -50, 10, -10, 50)
     await expect(layerItems(page)).toHaveCount(3)
     await page.screenshot({ path: 'tests/screenshots/03-multi-shapes.png' })
   })
@@ -375,14 +375,14 @@ test.describe('Feature: 显示状态', () => {
 
   test('点击 + 按钮添加新状态', async ({ page }) => {
     await load(page)
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await expect(page.locator('.state-tab')).toHaveCount(2)
     await page.screenshot({ path: 'tests/screenshots/04-two-states.png' })
   })
 
   test('点击状态标签切换激活状态', async ({ page }) => {
     await load(page)
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     const secondTab = page.locator('.state-tab').nth(1)
     await secondTab.click()
     await expect(secondTab).toHaveClass(/active/)
@@ -392,7 +392,7 @@ test.describe('Feature: 显示状态', () => {
 
   test('默认状态不可删除 — 无删除按钮', async ({ page }) => {
     await load(page)
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     // 默认状态 hover 后无删除按钮
     const firstTab = page.locator('.state-tab').first()
     await firstTab.hover()
@@ -410,7 +410,7 @@ test.describe('Feature: 显示状态', () => {
 
   test('删除非默认状态后数量减少', async ({ page }) => {
     await load(page)
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await expect(page.locator('.state-tab')).toHaveCount(2)
     const tab = page.locator('.state-tab').nth(1)
     await tab.hover()
@@ -510,7 +510,7 @@ test.describe('Feature: 预览面板', () => {
     await load(page)
     await drawRect(page)
     // 添加第二个状态
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(200)
     // 点击预览面板触发自动循环
     const preview = page.locator('.preview-panel')
@@ -526,7 +526,7 @@ test.describe('Feature: 预览面板', () => {
     await load(page)
     await drawRect(page)
 
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(120)
 
     await page.locator('.state-tab').nth(1).click()
@@ -545,7 +545,7 @@ test.describe('Feature: 预览面板', () => {
   test('预览播放不写入编辑态 live 通道', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(120)
     await page.locator('.state-tab').nth(1).click()
 
@@ -808,7 +808,7 @@ test.describe('Feature: 状态间动画过渡', () => {
     // 画一个矩形
     await drawRect(page)
     // 添加第二个状态
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     // 切换到第二个状态
     await page.locator('.state-tab').nth(1).click()
     await page.waitForTimeout(200)
@@ -837,9 +837,9 @@ test.describe('Feature: 综合集成', () => {
     await load(page)
     // 绘制两个图形
     await page.keyboard.press('r')
-    await drawOnCanvas(page, -80, -60, -10, -10)
+    await drawOnCanvas(page, -50, -40, -10, -10)
     await page.keyboard.press('o')
-    await drawOnCanvas(page, 10, -60, 80, -10)
+    await drawOnCanvas(page, 10, -40, 50, -10)
     await expect(layerItems(page)).toHaveCount(2)
     // 选中第一个图层
     await layerItems(page).first().click()
@@ -850,7 +850,7 @@ test.describe('Feature: 综合集成', () => {
       await opacityInput.press('Enter')
     }
     // 添加状态
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await expect(page.locator('.state-tab')).toHaveCount(2)
     // 切换到第二状态
     await page.locator('.state-tab').nth(1).click()
@@ -1010,7 +1010,7 @@ test.describe('Feature: UI 打磨回归', () => {
   test('曲线面板 slider 旁有可编辑数值输入框', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(200)
     const paramInput = page.locator('.panel-right .param-input').first()
     await expect(paramInput).toBeVisible()
@@ -1020,7 +1020,7 @@ test.describe('Feature: UI 打磨回归', () => {
   test('曲线面板元素有 data-testid 属性', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(200)
     await expect(page.locator('[data-testid="curve-type"]')).toBeVisible()
     await expect(page.locator('[data-testid="curve-response"]')).toBeVisible()
@@ -1047,7 +1047,7 @@ test.describe('Feature: Review #1 补缺', () => {
   test('新增状态命名为递增数字而非时间戳', async ({ page }) => {
     await load(page)
     await drawRect(page)
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(200)
     const tabs = page.locator('.state-tab')
     const count = await tabs.count()
@@ -1345,7 +1345,7 @@ test.describe('Feature: 组件状态组', () => {
     await page.locator('.group-pill').nth(1).click()
     await page.waitForTimeout(200)
     // 添加第二状态
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(200)
     // 切换到第二状态
     await page.locator('.state-tab').nth(1).click()
@@ -1384,7 +1384,7 @@ test.describe('Feature: 组件状态组', () => {
     await page.locator('.group-pill').nth(1).click()
     await page.waitForTimeout(300)
     // 添加第二状态
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(300)
     // 切到第二状态
     await page.locator('.state-tab').nth(1).click()
@@ -1438,7 +1438,7 @@ test.describe('Feature: 组件状态组', () => {
     // 记录默认状态的 X
     const defaultX = await xInput.inputValue()
     // 添加第二状态
-    await page.locator('.add-btn').click()
+    await page.locator('.add-tab').click()
     await page.waitForTimeout(300)
     // 切到第二状态
     await page.locator('.state-tab').nth(1).click()

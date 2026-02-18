@@ -39,7 +39,6 @@
             LayerPanel
         .canvas-area
           CanvasViewport
-          StateBar
         .panel-right
           PropertiesPanel
           CurvePanel
@@ -58,7 +57,6 @@ import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
 import type { ToolType } from '@store/editor'
 import CanvasViewport from './components/canvas/CanvasViewport.vue'
-import StateBar from './components/canvas/StateBar.vue'
 import PreviewPanel from './components/panels/PreviewPanel.vue'
 import LayerPanel from './components/panels/LayerPanel.vue'
 import PropertiesPanel from './components/panels/PropertiesPanel.vue'

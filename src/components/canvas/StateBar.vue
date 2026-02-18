@@ -1,6 +1,5 @@
 <template lang="pug">
 .state-bar
-  //- ── 多组选择器 (仅多于一组时显示) ──
   .group-selector(v-if="groups.length > 1")
     .group-pill(
       v-for="g in groups" :key="g.id"
@@ -8,30 +7,38 @@
       @click="canvas.setActiveGroup(g.id)"
     ) {{ g.name }}
     .group-divider
-  //- ── 状态标签页 ──
-  .state-tabs
-    .state-tab(
+  .state-strip
+    .state-card(
       v-for="(state, idx) in displayStates"
       :key="state.id"
       :class="{ active: state.id === activeId, animating: state.id === store.liveStateId }"
       @click="onSwitch(state.id)"
       @contextmenu.prevent="openCtx(state.id, idx, $event)"
     )
-      input.state-rename-input(
-        v-if="editId === state.id"
-        :value="state.name"
-        @input="onRenameInput(state.id, $event)"
-        @blur="doneRename"
-        @keydown.enter="doneRename"
-        @keydown.escape="doneRename"
-        @click.stop
-      )
-      span.state-name(v-else @dblclick.stop="beginRename(state.id)") {{ state.name }}
+      svg.state-thumb(:viewBox="thumbViewBox")
+        rect(
+          v-for="b in thumbBlocks(state)" :key="b.id"
+          :x="b.x" :y="b.y" :width="b.w" :height="b.h"
+          :rx="b.r" :fill="b.fill" :opacity="b.opacity"
+        )
+      .state-label
+        input.state-rename-input(
+          v-if="editId === state.id"
+          :value="state.name"
+          @input="onRenameInput(state.id, $event)"
+          @blur="doneRename"
+          @keydown.enter="doneRename"
+          @keydown.escape="doneRename"
+          @click.stop
+        )
+        span.state-name(v-else @dblclick.stop="beginRename(state.id)") {{ state.name }}
       .delete-btn(
         v-if="idx > 0 && displayStates.length > 1"
         @click.stop="onDelete(state.id)"
       ) &times;
-    .add-btn(@click="onAdd" title="添加状态") +
+    .add-card(@click="onAdd" title="添加状态")
+      .add-icon +
+      .add-text 新状态
   ContextMenu(
     v-if="ctx.show"
     :x="ctx.x" :y="ctx.y" :items="ctxItems"
@@ -41,12 +48,8 @@
 </template>
 
 <script setup lang="ts">
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  StateBar —— 状态切换栏
-//  职责: 状态切换 + 增删 + 重命名 + 右键菜单
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 import { computed, ref, reactive, nextTick } from 'vue'
+import type { DisplayState, AnimatableProps } from '@engine/scene/types'
 import { useProjectStore } from '@store/project'
 import { useCanvasStore } from '@store/canvas'
 import ContextMenu from '../ContextMenu.vue'
@@ -55,8 +58,6 @@ import type { MenuItem } from '../ContextMenu.vue'
 const store = useProjectStore()
 const canvas = useCanvasStore()
 
-// ── 当前状态组 (跟随 activeGroupId) ──
-
 const groups = computed(() => store.project.stateGroups)
 const group = computed(() =>
   groups.value.find(g => g.id === canvas.activeGroupId) ?? groups.value[0],
@@ -64,25 +65,44 @@ const group = computed(() =>
 const displayStates = computed(() => group.value?.displayStates ?? [])
 const activeId = computed(() => group.value?.activeDisplayStateId)
 
+// ── 缩略图 ──
+
+const cSize = computed(() => store.project.canvasSize)
+const thumbViewBox = computed(() => `0 0 ${cSize.value.width} ${cSize.value.height}`)
+
+interface Block { id: string; x: number; y: number; w: number; h: number; r: number; fill: string; opacity: number }
+
+function thumbBlocks(state: DisplayState): Block[] {
+  const layers = store.project.layers
+  return Object.values(layers).map(l => {
+    const p = l.props
+    const o = state.overrides[l.id] ?? {}
+    const merged: AnimatableProps = { ...p, ...o }
+    return {
+      id: l.id, x: merged.x, y: merged.y,
+      w: merged.width, h: merged.height,
+      r: Math.min(merged.borderRadius, merged.width / 2, merged.height / 2),
+      fill: merged.fill || '#666',
+      opacity: merged.opacity,
+    }
+  })
+}
+
 function onSwitch(stateId: string): void {
   if (!group.value || stateId === activeId.value) return
   store.transitionToState(group.value.id, stateId)
 }
-
 function onAdd(): void {
   if (!group.value) return
   store.addDisplayState(group.value.id, `状态 ${displayStates.value.length + 1}`)
 }
-
 function onDelete(stateId: string): void {
   if (!group.value || displayStates.value.length <= 1) return
   store.removeDisplayState(group.value.id, stateId)
 }
 
-// ━━━ 双击重命名 ━━━
-
+// ── 重命名 ──
 const editId = ref<string | null>(null)
-
 function beginRename(id: string): void {
   editId.value = id
   nextTick(() => {
@@ -90,189 +110,150 @@ function beginRename(id: string): void {
     el?.focus(); el?.select()
   })
 }
-
 function onRenameInput(id: string, e: Event): void {
-  const state = displayStates.value.find(s => s.id === id)
-  if (state) state.name = (e.target as HTMLInputElement).value
+  const s = displayStates.value.find(s => s.id === id)
+  if (s) s.name = (e.target as HTMLInputElement).value
 }
-
 function doneRename(): void { editId.value = null }
 
-// ━━━ 右键菜单 ━━━
-
+// ── 右键菜单 ──
 const ctx = reactive({ show: false, x: 0, y: 0, stateId: '', idx: 0 })
-
 function openCtx(id: string, idx: number, e: MouseEvent): void {
   Object.assign(ctx, { show: true, x: e.clientX, y: e.clientY, stateId: id, idx })
 }
-
 const ctxItems = computed<MenuItem[]>(() => [
   { id: 'rename', label: '重命名', shortcut: '双击' },
   { id: 'dup', label: '复制状态' },
   { divider: true },
   { id: 'del', label: '删除', disabled: ctx.idx === 0 || displayStates.value.length <= 1 },
 ])
-
 function onCtxAction(action: string): void {
   ctx.show = false
   if (action === 'rename') beginRename(ctx.stateId)
   else if (action === 'dup') onDup(ctx.stateId)
   else if (action === 'del') onDelete(ctx.stateId)
 }
-
 function onDup(id: string): void {
   if (!group.value) return
   const src = displayStates.value.find(s => s.id === id)
   if (!src) return
   const ns = store.addDisplayState(group.value.id, src.name + ' 副本')
   if (ns) {
-    for (const [lid, props] of Object.entries(src.overrides)) {
+    for (const [lid, props] of Object.entries(src.overrides))
       store.setOverride(ns.id, lid, { ...props })
-    }
   }
 }
 </script>
 
 <style scoped>
 .state-bar {
-  height: 36px;
-  min-height: 36px;
+  height: 80px;
+  min-height: 80px;
   display: flex;
   align-items: center;
   padding: 0 var(--sp-4);
-  background: var(--surface-2);
+  background: var(--surface-1);
+  border-top: 1px solid var(--border-subtle);
+  gap: var(--sp-2);
 }
-
-.state-tabs { display: flex; gap: 2px; align-items: center; }
-
-.state-tab {
+.state-strip {
   display: flex;
+  gap: 8px;
   align-items: center;
-  gap: var(--sp-1);
-  padding: var(--sp-1) 10px;
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
+  overflow-x: auto;
+  flex: 1;
+  padding: 6px 0;
+}
+.state-card {
+  width: 72px;
+  min-width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   cursor: pointer;
+  border-radius: var(--radius-md);
+  padding: 4px;
+  transition: background var(--duration-fast) var(--ease-out);
+  position: relative;
+}
+.state-card:hover { background: rgba(255,255,255,0.04); }
+.state-card.active {
+  background: var(--accent-bg);
+  box-shadow: 0 0 0 1.5px var(--accent-border);
+}
+.state-card.animating { box-shadow: 0 0 0 1.5px var(--accent); }
+.state-thumb {
+  width: 60px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+}
+.state-card.active .state-thumb { border-color: var(--accent-border); }
+.state-label {
+  font-size: 10px;
   color: var(--text-tertiary);
-  transition: background var(--duration-fast) var(--ease-out),
-              color var(--duration-fast) var(--ease-out);
-  user-select: none;
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
 }
-
-.state-tab:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-secondary);
-}
-
-.state-tab.active {
-  background: var(--accent-bg-hover);
-  color: var(--accent-text);
-  font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--accent);
-}
-
-.state-tab.animating {
-  box-shadow: 0 0 0 1px var(--accent-border);
-}
-
+.state-card.active .state-label { color: var(--accent-text); font-weight: 600; }
 .state-name {
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
 }
-
 .state-rename-input {
-  background: rgba(255, 255, 255, 0.06);
+  width: 100%;
+  background: rgba(255,255,255,0.06);
   border: 1px solid var(--accent-border);
-  border-radius: var(--radius-sm);
+  border-radius: 3px;
   color: inherit;
   font: inherit;
-  padding: 1px var(--sp-2);
+  padding: 0 2px;
   outline: none;
-  max-width: 100px;
+  text-align: center;
 }
-
 .delete-btn {
-  width: 14px;
-  height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 2px;
-  font-size: var(--text-xs);
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 3px;
+  font-size: 10px;
   opacity: 0;
   transition: opacity var(--duration-fast);
 }
-
-.state-tab:hover .delete-btn { opacity: 0.5; }
-
-.delete-btn:hover {
-  opacity: 1 !important;
-  background: var(--danger-bg);
-  color: var(--danger);
-}
-
-.add-btn {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.state-card:hover .delete-btn { opacity: 0.5; }
+.delete-btn:hover { opacity: 1 !important; background: var(--danger-bg); color: var(--danger); }
+.add-card {
+  width: 72px; min-width: 72px;
+  height: 60px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px;
   border-radius: var(--radius-md);
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  background: rgba(255, 255, 255, 0.03);
   border: 1px dashed var(--border-default);
   cursor: pointer;
-  transition: color var(--duration-fast) var(--ease-out),
-              background var(--duration-fast) var(--ease-out),
-              border-color var(--duration-fast) var(--ease-out);
+  transition: border-color var(--duration-fast), background var(--duration-fast);
 }
-
-.add-btn:hover {
-  color: var(--accent-light);
-  background: var(--accent-bg);
-  border-color: var(--accent-border);
-}
+.add-card:hover { border-color: var(--accent-border); background: var(--accent-bg); }
+.add-icon { font-size: 16px; color: var(--text-tertiary); }
+.add-card:hover .add-icon { color: var(--accent-light); }
+.add-text { font-size: 9px; color: var(--text-disabled); }
+.add-card:hover .add-text { color: var(--accent-text); }
 
 /* ── 组选择器 ── */
-
-.group-selector {
-  display: flex;
-  gap: 2px;
-  align-items: center;
-  margin-right: var(--sp-1);
-}
-
+.group-selector { display: flex; gap: 2px; align-items: center; margin-right: var(--sp-1); }
 .group-pill {
-  padding: 3px var(--sp-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: background var(--duration-fast) var(--ease-out),
-              color var(--duration-fast) var(--ease-out);
-  user-select: none;
-  letter-spacing: 0.3px;
+  padding: 3px var(--sp-3); border-radius: var(--radius-sm);
+  font-size: var(--text-xs); font-weight: 500; color: var(--text-tertiary);
+  cursor: pointer; user-select: none;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
-
-.group-pill:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-secondary);
-}
-
-.group-pill.active {
-  background: var(--accent-bg);
-  color: var(--accent-text);
-}
-
-.group-divider {
-  width: 1px;
-  height: 16px;
-  background: var(--border-default);
-  margin: 0 var(--sp-2);
-}
+.group-pill:hover { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.group-pill.active { background: var(--accent-bg); color: var(--accent-text); }
+.group-divider { width: 1px; height: 16px; background: var(--border-default); margin: 0 var(--sp-2); }
 </style>

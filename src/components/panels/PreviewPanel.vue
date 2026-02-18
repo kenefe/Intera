@@ -1,8 +1,30 @@
 <template lang="pug">
 .preview-panel
   .preview-header
-    span.preview-title Preview
-    span.state-badge(v-if="activeStateName") {{ activeStateName }}
+    span.preview-title PREVIEW
+    .group-selector(v-if="groups.length > 1")
+      .group-pill(
+        v-for="g in groups" :key="g.id"
+        :class="{ active: g.id === activeGroup?.id }"
+        @click="switchGroup(g.id)"
+      ) {{ g.name }}
+    .state-tabs
+      .state-tab(
+        v-for="(s, idx) in displayStates" :key="s.id"
+        :class="{ active: s.id === activeId }"
+        @click="onSwitchState(s.id)"
+        @dblclick.stop="beginRename(s.id)"
+        @contextmenu.prevent="openCtx(s.id, idx, $event)"
+      )
+        input.rename-input(
+          v-if="editId === s.id" :value="s.name"
+          @input="onRenameInput(s.id, $event)"
+          @blur="doneRename" @keydown.enter="doneRename" @keydown.escape="doneRename"
+          @click.stop
+        )
+        span.state-name(v-else) {{ s.name }}
+        .del-btn(v-if="idx > 0 && displayStates.length > 1" @click.stop="onDeleteState(s.id)") ×
+      .add-tab(@click="onAddState" title="添加状态") +
     button.reset-btn(@click="onReset" title="重置预览状态") Reset
   .preview-device(ref="containerRef")
     .preview-frame(
@@ -13,6 +35,12 @@
       @pointerup="onUp"
     )
   .preview-hint(v-if="hintText") {{ hintText }}
+  ContextMenu(
+    v-if="ctx.show"
+    :x="ctx.x" :y="ctx.y" :items="ctxItems"
+    @close="ctx.show = false"
+    @select="onCtxAction"
+  )
 </template>
 
 <script setup lang="ts">
@@ -34,11 +62,18 @@ import { usePatchStore } from '@store/patch'
 import { useActiveGroup } from '@/composables/useActiveGroup'
 import { DOMRenderer } from '@renderer/DOMRenderer'
 import { usePreviewGesture } from '@/composables/usePreviewGesture'
+import { useStateManager } from '@/composables/useStateManager'
+import ContextMenu from '../ContextMenu.vue'
 
 const store = useProjectStore()
 const patchStore = usePatchStore()
 const { activeGroup } = useActiveGroup()
 const preview = usePreviewGesture()
+const {
+  groups, displayStates, activeId, editId, ctx, ctxItems,
+  switchGroup, onSwitchState, onAddState, onDeleteState,
+  beginRename, onRenameInput, doneRename, openCtx, onCtxAction,
+} = useStateManager()
 
 const containerRef = ref<HTMLElement>()
 const frameRef = ref<HTMLElement>()
@@ -330,4 +365,46 @@ watch(() => store.project, syncLayers, { deep: true })
   text-align: center;
   border-top: 1px solid var(--border-subtle);
 }
+
+/* ── 状态 tabs ── */
+.state-tabs { display: flex; gap: 2px; align-items: center; flex: 1; overflow-x: auto; }
+.state-tab {
+  display: flex; align-items: center; gap: 2px;
+  padding: 2px 8px; border-radius: var(--radius-sm);
+  font-size: var(--text-xs); cursor: pointer;
+  color: var(--text-tertiary); white-space: nowrap; user-select: none;
+  transition: background var(--duration-fast), color var(--duration-fast);
+  position: relative;
+}
+.state-tab:hover { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.state-tab.active { background: var(--accent-bg-hover); color: var(--accent-text); font-weight: 600; }
+.rename-input {
+  width: 60px; background: rgba(255,255,255,0.06); border: 1px solid var(--accent-border);
+  border-radius: 3px; color: inherit; font: inherit; padding: 0 2px; outline: none;
+}
+.del-btn {
+  width: 12px; height: 12px; display: flex; align-items: center; justify-content: center;
+  border-radius: 2px; font-size: 9px; opacity: 0;
+  transition: opacity var(--duration-fast);
+}
+.state-tab:hover .del-btn { opacity: 0.5; }
+.del-btn:hover { opacity: 1 !important; background: var(--danger-bg); color: var(--danger); }
+.add-tab {
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); font-size: 13px; color: var(--text-tertiary);
+  border: 1px dashed var(--border-default); cursor: pointer; flex-shrink: 0;
+  transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
+}
+.add-tab:hover { color: var(--accent-light); border-color: var(--accent-border); background: var(--accent-bg); }
+
+/* ── 组选择器 ── */
+.group-selector { display: flex; gap: 2px; align-items: center; margin-right: var(--sp-1); }
+.group-pill {
+  padding: 2px 6px; border-radius: var(--radius-sm);
+  font-size: var(--text-xs); font-weight: 500; color: var(--text-tertiary);
+  cursor: pointer; user-select: none;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+.group-pill:hover { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.group-pill.active { background: var(--accent-bg); color: var(--accent-text); }
 </style>
