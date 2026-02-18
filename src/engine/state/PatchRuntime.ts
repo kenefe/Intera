@@ -5,14 +5,13 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import type {
-  Patch, PatchConnection,
-  ConditionConfig, ToggleVarConfig, SetVarConfig,
-  ToConfig, SetToConfig, DelayConfig, CounterConfig,
+  Patch, PatchConnection, PatchConfig,
   PatchTransitionConfig,
 } from '../scene/types'
 import type { VariableManager } from './VariableManager'
 import { BehaviorManager } from './BehaviorManager'
 
+type CfgOf<T extends PatchConfig['type']> = Extract<PatchConfig, { type: T }>
 type TransitionFn = (groupId: string, stateId: string) => void
 
 /** 连续驱动回调: 按 progress 在两个状态间插值 → liveValues */
@@ -101,7 +100,7 @@ export class PatchRuntime {
     for (const tid of targets) {
       const target = this.patchIdx.get(tid)
       if (target?.config.type === 'transition')
-        this.execDrive(target.config as PatchTransitionConfig, value)
+        this.execDrive(target.config as CfgOf<'transition'>, value)
     }
   }
 
@@ -161,40 +160,40 @@ export class PatchRuntime {
   // ── 静态 dispatch 方法 ──
 
   private execCondition(patch: Patch): void {
-    const cfg = patch.config as ConditionConfig
+    const cfg = patch.config as CfgOf<'condition'>
     const val = this.vars.get(cfg.variableId ?? '')
     this.fire(patch.id, val === cfg.compareValue ? 'true' : 'false')
   }
 
   private execToggle(patch: Patch): void {
-    const cfg = patch.config as ToggleVarConfig
+    const cfg = patch.config as CfgOf<'toggleVariable'>
     if (cfg.variableId) this.vars.toggle(cfg.variableId)
     this.fire(patch.id, 'out')
   }
 
   private execSetVar(patch: Patch): void {
-    const cfg = patch.config as SetVarConfig
+    const cfg = patch.config as CfgOf<'setVariable'>
     if (cfg.variableId && cfg.value !== undefined)
       this.vars.set(cfg.variableId, cfg.value)
     this.fire(patch.id, 'out')
   }
 
   private execTo(patch: Patch): void {
-    const cfg = patch.config as ToConfig
+    const cfg = patch.config as CfgOf<'to'>
     if (cfg.groupId && cfg.stateId)
       this.onTransition(cfg.groupId, cfg.stateId)
     this.fire(patch.id, 'done')
   }
 
   private execSetTo(patch: Patch): void {
-    const cfg = patch.config as SetToConfig
+    const cfg = patch.config as CfgOf<'setTo'>
     if (cfg.groupId && cfg.stateId)
       this.onSetTo(cfg.groupId, cfg.stateId)
     this.fire(patch.id, 'done')
   }
 
   private execDelay(patch: Patch): void {
-    const cfg = patch.config as DelayConfig
+    const cfg = patch.config as CfgOf<'delay'>
     const ms = cfg.duration ?? 1000
     const t = setTimeout(() => {
       this.timers.delete(t)
@@ -204,7 +203,7 @@ export class PatchRuntime {
   }
 
   private execCounter(patch: Patch): void {
-    const cfg = patch.config as CounterConfig
+    const cfg = patch.config as CfgOf<'counter'>
     if (cfg.variableId) {
       const cur = this.vars.get(cfg.variableId)
       if (typeof cur === 'number')
