@@ -98,6 +98,8 @@ export class PatchRuntime {
     for (const p of this.patches) {
       if (p.type === 'touch' && p.config.type === 'touch' && p.config.layerId === layerId)
         this.fire(p.id, event)
+      if (p.type === 'longPress' && p.config.type === 'longPress' && p.config.layerId === layerId && event === 'longPress')
+        this.fire(p.id, 'trigger')
     }
   }
 

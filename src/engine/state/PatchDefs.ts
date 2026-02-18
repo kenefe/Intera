@@ -23,6 +23,9 @@ const DEFS: Record<PatchType, PortDef> = {
     { id: 'up',   name: 'Up',   dataType: 'pulse' },
     { id: 'tap',  name: 'Tap',  dataType: 'pulse' },
   ]},
+  longPress: { inputs: [], outputs: [
+    { id: 'trigger', name: 'Trigger', dataType: 'pulse' },
+  ]},
   drag:   { inputs: [], outputs: [
     { id: 'start', name: 'Start', dataType: 'pulse' },
     { id: 'move',  name: 'Move',  dataType: 'pulse' },
@@ -72,7 +75,7 @@ const DEFS: Record<PatchType, PortDef> = {
 
 export type PatchCategory = 'trigger' | 'logic' | 'action' | 'behavior'
 
-const TRIGGER_TYPES: PatchType[] = ['touch', 'drag', 'scroll', 'timer', 'variableChange']
+const TRIGGER_TYPES: PatchType[] = ['touch', 'longPress', 'drag', 'scroll', 'timer', 'variableChange']
 const ACTION_TYPES: PatchType[]  = ['to', 'setTo', 'setVariable', 'transition']
 const BEHAVIOR_TYPES: PatchType[] = ['behaviorDrag', 'behaviorScroll']
 
@@ -88,6 +91,7 @@ export function patchCategory(type: PatchType): PatchCategory {
 function defaultConfig(type: PatchType): PatchConfig {
   const map: Record<PatchType, () => PatchConfig> = {
     touch:          () => ({ type: 'touch', layerId: '' }),
+    longPress:      () => ({ type: 'longPress', layerId: '' }),
     drag:           () => ({ type: 'drag', layerId: '' }),
     scroll:         () => ({ type: 'scroll', layerId: '' }),
     timer:          () => ({ type: 'timer' }),

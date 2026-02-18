@@ -57,6 +57,7 @@ export function usePreviewGesture() {
 
   const gesture = new GestureEngine(
     { moveDistanceThreshold: 5, clickTimeThreshold: 300 },
+    { onLongClick: () => { if (activeId) patchStore.fireTrigger(activeId, 'longPress') } },
   )
 
   /** PreviewPanel 缩放变化时调用 */

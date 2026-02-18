@@ -1808,3 +1808,19 @@ test.describe('Feature: 图片图层', () => {
     expect(count).toBeGreaterThanOrEqual(1)
   })
 })
+
+// ── 长按触发 ──
+
+test.describe('Feature: 长按触发', () => {
+  test('Patch 工具栏包含 Long 按钮', async ({ page }) => {
+    await load(page)
+    await expect(page.locator('.patch-toolbar button', { hasText: 'Long' })).toBeVisible()
+  })
+
+  test('添加 LongPress 节点到 Patch 画布', async ({ page }) => {
+    await load(page)
+    await page.locator('.patch-toolbar button', { hasText: 'Long' }).click()
+    await expect(page.locator('.patch-node')).toHaveCount(1)
+    await expect(page.locator('.patch-node .header-text')).toContainText('长按')
+  })
+})

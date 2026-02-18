@@ -8,7 +8,7 @@ import type { Vec2, VariableValue } from './SceneTypes'
 // ── 节点类型 ──
 
 export type PatchType =
-  | 'touch' | 'drag' | 'scroll'
+  | 'touch' | 'longPress' | 'drag' | 'scroll'
   | 'timer' | 'variableChange'
   | 'condition' | 'toggleVariable' | 'delay' | 'counter'
   | 'to' | 'setTo' | 'setVariable'
@@ -24,6 +24,7 @@ export interface PatchPort {
 // ── 各节点 config (discriminated union by type) ──
 
 export interface TouchConfig { type: 'touch'; layerId?: string }
+export interface LongPressConfig { type: 'longPress'; layerId?: string }
 export interface DragConfig { type: 'drag'; layerId?: string }
 export interface ScrollConfig { type: 'scroll'; layerId?: string }
 export interface TimerConfig { type: 'timer'; interval?: number }
@@ -66,7 +67,7 @@ export interface BehaviorScrollConfig {
 }
 
 export type PatchConfig =
-  | TouchConfig | DragConfig | ScrollConfig
+  | TouchConfig | LongPressConfig | DragConfig | ScrollConfig
   | TimerConfig | VarChangeConfig
   | ConditionConfig | ToggleVarConfig | DelayConfig | CounterConfig
   | ToConfig | SetToConfig | SetVarConfig
@@ -75,6 +76,7 @@ export type PatchConfig =
 
 export type ConfigFor<T extends PatchType> =
   T extends 'touch' ? TouchConfig :
+  T extends 'longPress' ? LongPressConfig :
   T extends 'drag' ? DragConfig :
   T extends 'scroll' ? ScrollConfig :
   T extends 'timer' ? TimerConfig :

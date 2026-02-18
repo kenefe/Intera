@@ -167,6 +167,7 @@ onMounted(() => canvasRef.value?.focus())
 
 const ADD_TYPES: Array<{ type: PatchType; label: string; name: string }> = [
   { type: 'touch',          label: 'Touch',  name: 'Touch' },
+  { type: 'longPress',      label: 'Long',   name: '长按' },
   { type: 'condition',      label: 'If',     name: '条件' },
   { type: 'toggleVariable', label: 'Toggle', name: 'Toggle' },
   { type: 'delay',          label: 'Delay',  name: '延迟' },
@@ -178,7 +179,7 @@ const ADD_TYPES: Array<{ type: PatchType; label: string; name: string }> = [
   { type: 'transition',     label: 'Trans',  name: '状态插值' },
 ]
 
-const LAYER_TYPES = new Set<PatchType>(['touch', 'drag', 'behaviorDrag', 'behaviorScroll'])
+const LAYER_TYPES = new Set<PatchType>(['touch', 'longPress', 'drag', 'behaviorDrag', 'behaviorScroll'])
 
 let addIdx = 0
 function onAddNode(type: PatchType, name: string): void {
