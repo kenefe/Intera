@@ -9,10 +9,7 @@
 
 ### P1 — 类型安全
 
-- [ ] **PatchRuntime config 类型断言泛滥**
-  - 文件: `src/engine/state/PatchRuntime.ts`
-  - 现象: `cfg.variableId as string` 等 `as` 断言，绕过类型检查
-  - 建议: 为每种 PatchType 定义专用 config 接口 (联合类型 + 类型守卫)
+- [x] **PatchRuntime config 类型断言泛滥** — 已修 (2026-02-18, F102: CfgOf<T> discriminated union)
 
 ### P2 — 代码规范
 
@@ -39,7 +36,7 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 层 | 用途 | 状态 |
 |---|---|---|
 | **能力回归** (`persona.spec.ts`) | 确认功能没坏 (自动跑) | 6/6 ✅ |
-| **Feature BDD** (`intera.spec.ts`) | 功能原子级验证 (自动跑) | 49/49 ✅ |
+| **Feature BDD** (`intera.spec.ts`) | 功能原子级验证 (自动跑) | 108/108 ✅ |
 | **旅程探索** (Flow E) | AI 逐步操作验证体验 | 6/6 ✅ (第二轮 6/6 ✅) |
 
 ### 画像列表 (能力图谱自动枚举)

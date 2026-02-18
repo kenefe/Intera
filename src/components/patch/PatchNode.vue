@@ -184,25 +184,14 @@
 </template>
 
 <script setup lang="ts">
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  PatchNode —— Patch 节点 UI
-//  职责: 端口展示 + 内联配置编辑
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-import { computed } from 'vue'
-import type { Patch, PatchConfig } from '@engine/scene/types'
+import type { Patch } from '@engine/scene/types'
 import { patchCategory } from '@engine/state/PatchDefs'
-import { useProjectStore } from '@store/project'
-import { usePatchStore } from '@store/patch'
+import { usePatchNodeConfig } from '@composables/usePatchNodeConfig'
+
 const props = defineProps<{ patch: Patch; selected: boolean; connectedKeys: Set<string> }>()
 defineEmits<{ delete: [] }>()
-const project = useProjectStore()
-const patchStore = usePatchStore()
 
 const category = patchCategory(props.patch.type)
-
-// ── 可配置节点类型 ──
-
 const CONFIG_TYPES = [
   'touch', 'drag', 'to', 'setTo', 'delay',
   'condition', 'toggleVariable', 'setVariable',
@@ -210,179 +199,14 @@ const CONFIG_TYPES = [
 ]
 const showConfig = CONFIG_TYPES.includes(props.patch.type)
 
-// ── 模板用 config 访问器 (避免 union 直接访问) ──
-
-const cfgLayerId = computed(() => {
-  const c = props.patch.config
-  return 'layerId' in c ? (c.layerId as string | undefined) : undefined
-})
-const cfgGroupId = computed(() => {
-  const c = props.patch.config
-  return 'groupId' in c ? (c.groupId as string | undefined) : undefined
-})
-const cfgStateId = computed(() => {
-  const c = props.patch.config
-  return 'stateId' in c ? (c.stateId as string | undefined) : undefined
-})
-const cfgDuration = computed(() => {
-  const c = props.patch.config
-  return c.type === 'delay' ? c.duration : undefined
-})
-const cfgVariableId = computed(() => {
-  const c = props.patch.config
-  return 'variableId' in c ? (c.variableId as string | undefined) : undefined
-})
-const cfgCompareValue = computed(() => {
-  const c = props.patch.config
-  return c.type === 'condition' ? c.compareValue : undefined
-})
-const cfgValue = computed(() => {
-  const c = props.patch.config
-  return c.type === 'setVariable' ? c.value : undefined
-})
-const cfgAxis = computed(() => {
-  const c = props.patch.config
-  return 'axis' in c ? (c.axis as string | undefined) : undefined
-})
-
-// ── Transition 专用 ──
-const cfgFromStateId = computed(() => {
-  const c = props.patch.config
-  return c.type === 'transition' ? c.fromStateId : undefined
-})
-const cfgToStateId = computed(() => {
-  const c = props.patch.config
-  return c.type === 'transition' ? c.toStateId : undefined
-})
-const cfgInputRange = computed(() => {
-  const c = props.patch.config
-  return c.type === 'transition' ? c.inputRange : undefined
-})
-
-// ── 数据源 ──
-
-const layers = computed(() =>
-  Object.values(project.project.layers).map(l => ({ id: l.id, name: l.name })),
-)
-
-// ── 目标组列表 (主画面 + 组件) ──
-const groups = computed(() =>
-  project.project.stateGroups.map(g => ({ id: g.id, name: g.name })),
-)
-
-// ── 状态列表: 用 config.groupId 解析目标组 ──
-const states = computed(() => {
-  const gid = cfgGroupId.value
-  const group = gid
-    ? project.project.stateGroups.find(g => g.id === gid)
-    : null
-  return group ? group.displayStates.map(s => ({ id: s.id, name: s.name })) : []
-})
-
-const vars = computed(() =>
-  project.project.variables.map(v => ({ id: v.id, name: v.name })),
-)
-
-// ── 配置写入 (直接修改 reactive 数据) ──
-
-function cfg(): PatchConfig | null {
-  return project.project.patches.find(p => p.id === props.patch.id)?.config ?? null
-}
-
-function onLayerPick(e: Event): void {
-  const c = cfg()
-  if (c && ('layerId' in c)) {
-    c.layerId = (e.target as HTMLSelectElement).value
-    // 行为节点配置变更 → 重建 BehaviorInstance
-    patchStore.runtime.rebuild()
-  }
-}
-
-function onGroupPick(e: Event): void {
-  const c = cfg(); if (!c) return
-  const gid = (e.target as HTMLSelectElement).value
-  if ('groupId' in c) c.groupId = gid || undefined
-  if ('stateId' in c) c.stateId = undefined
-  // Transition: 切换目标组 → 清空两端状态
-  if (c.type === 'transition') { c.fromStateId = undefined; c.toStateId = undefined }
-}
-
-function onStatePick(e: Event): void {
-  const c = cfg(); if (!c) return
-  if ('stateId' in c) c.stateId = (e.target as HTMLSelectElement).value
-}
-
-function onDelayChange(e: Event): void {
-  const c = cfg()
-  if (c && c.type === 'delay') c.duration = Number((e.target as HTMLInputElement).value) || 1000
-}
-
-function onVarPick(e: Event): void {
-  const c = cfg()
-  if (c && 'variableId' in c) c.variableId = (e.target as HTMLSelectElement).value
-}
-
-function onCompareChange(e: Event): void {
-  const v = (e.target as HTMLInputElement).value
-  const c = cfg()
-  if (!c || c.type !== 'condition') return
-  if (v === 'true') c.compareValue = true
-  else if (v === 'false') c.compareValue = false
-  else if (!isNaN(Number(v)) && v !== '') c.compareValue = Number(v)
-  else c.compareValue = v
-}
-
-function onValueChange(e: Event): void {
-  const v = (e.target as HTMLInputElement).value
-  const c = cfg()
-  if (!c || c.type !== 'setVariable') return
-  if (v === 'true') c.value = true
-  else if (v === 'false') c.value = false
-  else if (!isNaN(Number(v)) && v !== '') c.value = Number(v)
-  else c.value = v
-}
-
-// ── Behavior 轴选择 ──
-
-function onAxisPick(e: Event): void {
-  const c = cfg()
-  if (c && 'axis' in c) c.axis = (e.target as HTMLSelectElement).value as 'x' | 'y' | 'both'
-}
-
-// ── Transition 专用事件 ──
-
-function onFromStatePick(e: Event): void {
-  const c = cfg()
-  if (c?.type === 'transition') c.fromStateId = (e.target as HTMLSelectElement).value || undefined
-}
-function onToStatePick(e: Event): void {
-  const c = cfg()
-  if (c?.type === 'transition') c.toStateId = (e.target as HTMLSelectElement).value || undefined
-}
-function onRangeLoChange(e: Event): void {
-  const c = cfg()
-  if (c?.type === 'transition') {
-    const lo = Number((e.target as HTMLInputElement).value) || 0
-    c.inputRange = [lo, c.inputRange?.[1] ?? 1]
-  }
-}
-function onRangeHiChange(e: Event): void {
-  const c = cfg()
-  if (c?.type === 'transition') {
-    const hi = Number((e.target as HTMLInputElement).value) || 1
-    c.inputRange = [c.inputRange?.[0] ?? 0, hi]
-  }
-}
-
-// ── 就地创建变量 (消除空下拉摩擦) ──
-
-function onAddVar(): void {
-  const n = vars.value.length
-  const name = n === 0 ? 'isToggled' : `isToggled_${n + 1}`
-  const v = patchStore.addVariable(name, 'boolean', false)
-  const c = cfg()
-  if (c && 'variableId' in c) c.variableId = v.id
-}
+const {
+  cfgLayerId, cfgGroupId, cfgStateId, cfgDuration, cfgVariableId,
+  cfgCompareValue, cfgValue, cfgAxis, cfgFromStateId, cfgToStateId, cfgInputRange,
+  layers, groups, states, vars,
+  onLayerPick, onGroupPick, onStatePick, onDelayChange, onVarPick,
+  onCompareChange, onValueChange, onAxisPick, onFromStatePick, onToStatePick,
+  onRangeLoChange, onRangeHiChange, onAddVar,
+} = usePatchNodeConfig(() => props.patch)
 </script>
 
 <style scoped>

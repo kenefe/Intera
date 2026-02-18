@@ -45,7 +45,6 @@ function createEmptyProject(): Project {
 }
 
 // ── 覆盖清理 (删除图层时级联清理所有状态中的引用) ──
-
 function cleanOverrides(project: Project, layerIds: string[]): void {
   const set = new Set(layerIds)
   for (const ds of project.stateGroups.flatMap(g => g.displayStates)) {
@@ -62,8 +61,6 @@ export const useProjectStore = defineStore('project', () => {
   const scene = new SceneGraph(project.layers, project.rootLayerIds)
   const states = new DisplayStateManager(project.stateGroups, project.layers)
   const transition = useTransition(project, states)
-
-  // ── 撤销 / 重做 ──
 
   const history = new UndoManager<string>(50)
   const historyVersion = ref(0)
@@ -106,7 +103,6 @@ export const useProjectStore = defineStore('project', () => {
     return false
   }
 
-  // ── 持久化 ──
 
   function save(): void { saveToLocal(project) }
   async function saveFile(): Promise<void> { await saveToFile(project) }
@@ -127,7 +123,6 @@ export const useProjectStore = defineStore('project', () => {
     return true
   }
 
-  // ── 图层操作 ──
 
   function addLayer(
     type: LayerType, parentId: string | null = null, index?: number, name?: string,
@@ -147,7 +142,6 @@ export const useProjectStore = defineStore('project', () => {
     scene.move(id, parentId, index)
   }
 
-  // ── 状态组 + 显示状态 ──
 
   function addStateGroup(name: string, rootLayerId: string | null = null): StateGroup {
     snapshot()
@@ -171,7 +165,6 @@ export const useProjectStore = defineStore('project', () => {
     if (group) group.activeDisplayStateId = stateId
   }
 
-  // ── 属性操作 (不自动快照 — 连续操作由调用方负责) ──
 
   function updateLayerProps(id: string, props: Partial<AnimatableProps>): void {
     const layer = project.layers[id]

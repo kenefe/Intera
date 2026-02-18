@@ -50,7 +50,6 @@ export const usePatchStore = defineStore('patch', () => {
     }
   }
 
-  // ── 引擎实例 ──
 
   const variables = new VariableManager(p.variables)
   const runtime = new PatchRuntime(
@@ -59,7 +58,6 @@ export const usePatchStore = defineStore('patch', () => {
     setPreviewToState,
   )
 
-  // ── Transition 节点驱动: 连续值 → previewLiveValues 插值 ──
   runtime.onDrive = (layerId, fromId, toId, t) => {
     const from = project.states.getResolvedProps(fromId, layerId)
     const to = project.states.getResolvedProps(toId, layerId)
@@ -75,13 +73,11 @@ export const usePatchStore = defineStore('patch', () => {
     project.previewLiveValues[layerId] = out
   }
 
-  // ── 数据恢复同步: load/undo/redo 后自动重建索引 ──
   watch(
     () => p.patches.length + p.connections.length * 1000,
     () => { runtime.rebuild(); variables.sync() },
   )
 
-  // ── 变量 CRUD ──
 
   function addVariable(name: string, type: Variable['type'], defaultValue: VariableValue): Variable {
     project.snapshot()
@@ -104,7 +100,6 @@ export const usePatchStore = defineStore('patch', () => {
     if (v) Object.assign(v, updates)
   }
 
-  // ── Patch CRUD ──
 
   function addPatchNode<T extends PatchType>(
     type: T, pos: Vec2,
@@ -135,7 +130,6 @@ export const usePatchStore = defineStore('patch', () => {
     if (patch) Object.assign(patch.position, pos)
   }
 
-  // ── 连线 CRUD ──
 
   function addConnection(fromId: string, fromPort: string, toId: string, toPort: string): PatchConnection | null {
     // ── 防重复连线 ──
@@ -163,13 +157,11 @@ export const usePatchStore = defineStore('patch', () => {
     runtime.rebuild()
   }
 
-  // ── 触发 ──
 
   function fireTrigger(layerId: string, event: string): void {
     runtime.triggerByLayer(layerId, event)
   }
 
-  // ── Sugar 预设 ──
 
   /** 解析当前激活的状态组 ID (跟随画布选择) */
   function resolveGroupId(): string | undefined {
