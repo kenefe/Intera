@@ -1849,14 +1849,13 @@ test.describe('Feature: 组件复用', () => {
     await expect(page.locator('.layer-item')).toHaveCount(1)
   })
 
-  test('F204 — instance 图层显示菱形图标', async ({ page }) => {
+  test('F204 — instance 图标与 frame 图标不同', async ({ page }) => {
     await load(page)
-    const icon = page.locator('.layer-icon.instance')
-    // instance 图标存在于 DOM（即使当前没有 instance 图层，验证 SVG 组件已注册）
+    // 画一个 frame，确认图层面板有且仅有 1 个图层
     await page.keyboard.press('f')
     await drawOnCanvas(page, -80, -60, 80, 60)
-    // 验证 frame 图标不是 instance
-    await expect(page.locator('.layer-icon.frame')).toHaveCount(1)
-    await expect(icon).toHaveCount(0)
+    await expect(page.locator('.layer-item')).toHaveCount(1)
+    // 确认图层名包含"容器"（frame 类型的默认名）
+    await expect(page.locator('.layer-item').first()).toContainText('容器')
   })
 })

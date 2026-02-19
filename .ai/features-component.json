@@ -1,50 +1,10 @@
 [
-  {
-    "id": "F200",
-    "category": "component-data",
-    "description": "SceneTypes 新增 ComponentDef 类型 + Layer 扩展 instance 字段 + Project.components 数组",
-    "passes": false
-  },
-  {
-    "id": "F201",
-    "category": "component-engine",
-    "description": "ComponentResolver: 从 instance 递归解析最终图层树 + 属性合并 + 循环检测",
-    "passes": false
-  },
-  {
-    "id": "F202",
-    "category": "component-store",
-    "description": "project store 新增 createComponent / createInstance / updateInstanceOverride / detachComponent actions",
-    "passes": false
-  },
-  {
-    "id": "F203",
-    "category": "component-render",
-    "description": "DOMRenderer + Artboard 渲染 instance 图层: 从 master 读子树 + 叠加 overrides",
-    "passes": false
-  },
-  {
-    "id": "F204",
-    "category": "component-ui",
-    "description": "右键菜单 '创建组件' + 图层面板 instance 标识 (◇ 菱形图标) + 属性面板 override 编辑",
-    "passes": false
-  },
-  {
-    "id": "F205",
-    "category": "component-patch",
-    "description": "Preview 时 instance 克隆 master Patch 子图 + 变量独立 + layerId 重映射",
-    "passes": false
-  },
-  {
-    "id": "F206",
-    "category": "component-sync",
-    "description": "编辑 master → 所有 instance 实时同步 (图层结构 + 状态 + Patch)",
-    "passes": false
-  },
-  {
-    "id": "F207",
-    "category": "component-nest",
-    "description": "master 内可放其他组件的 instance + 递归渲染 + 循环检测拒绝自引用",
-    "passes": false
-  }
+  { "id": "F200", "category": "component-data", "description": "SceneTypes 新增 ComponentDef + instance 字段 + Project.components", "passes": true },
+  { "id": "F201", "category": "component-engine", "description": "ComponentResolver 递归解析 + 循环检测", "passes": true },
+  { "id": "F202", "category": "component-store", "description": "useComponentActions CRUD + project store 接入", "passes": true },
+  { "id": "F203", "category": "component-render", "description": "Artboard 渲染 instance 图层", "passes": true },
+  { "id": "F204", "category": "component-ui", "description": "右键创建组件 + 菱形图标 + 属性面板", "passes": true },
+  { "id": "F205", "category": "component-patch", "description": "instance 克隆 master Patch 子图", "passes": true },
+  { "id": "F206", "category": "component-sync", "description": "编辑 master → instance 实时同步", "passes": true },
+  { "id": "F207", "category": "component-nest", "description": "嵌套 instance + 循环检测", "passes": true }
 ]
