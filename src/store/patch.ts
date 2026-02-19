@@ -14,6 +14,7 @@ import { makeId } from '../engine/idFactory'
 import * as Sugar from '../engine/state/SugarPresets'
 import { useProjectStore } from './project'
 import { useCanvasStore } from './canvas'
+import { clonePatchesForInstances } from '../engine/state/clonePatches'
 
 export const usePatchStore = defineStore('patch', () => {
   const project = useProjectStore()
@@ -58,23 +59,24 @@ export const usePatchStore = defineStore('patch', () => {
   )
 
   runtime.onDrive = (layerId, fromId, toId, t) => {
-    const from = project.states.getResolvedProps(fromId, layerId)
-    const to = project.states.getResolvedProps(toId, layerId)
+    const from = project.states.getResolvedProps(fromId, layerId) as Record<string, unknown> | undefined
+    const to = project.states.getResolvedProps(toId, layerId) as Record<string, unknown> | undefined
     if (!from || !to) return
-    const fa = from as unknown as Record<string, unknown>
-    const ta = to as unknown as Record<string, unknown>
     const out: Record<string, number> = {}
-    for (const k of Object.keys(fa)) {
-      const a = fa[k], b = ta[k]
-      if (typeof a === 'number' && typeof b === 'number')
-        out[k] = a + (b - a) * t
+    for (const k of Object.keys(from)) {
+      const a = from[k], b = to[k]
+      if (typeof a === 'number' && typeof b === 'number') out[k] = a + (b - a) * t
     }
     project.previewLiveValues[layerId] = out
   }
 
   watch(
     () => p.patches.length + p.connections.length * 1000,
-    () => { runtime.rebuild(); variables.sync() },
+    () => {
+      const cloned = clonePatchesForInstances(p.layers, p.components, p.patches, p.connections)
+      runtime.rebuild(cloned.patches, cloned.connections)
+      variables.sync()
+    },
   )
 
   function addVariable(name: string, type: Variable['type'], defaultValue: VariableValue): Variable {

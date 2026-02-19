@@ -103,12 +103,14 @@ export class PatchRuntime {
     }
   }
 
-  rebuild(): void {
-    this.connIdx = buildConnIndex(this.connections)
-    this.patchIdx = buildPatchIndex(this.patches)
+  rebuild(extraPatches?: Patch[], extraConns?: PatchConnection[]): void {
+    const allPatches = extraPatches ? [...this.patches, ...extraPatches] : this.patches
+    const allConns = extraConns ? [...this.connections, ...extraConns] : this.connections
+    this.connIdx = buildConnIndex(allConns)
+    this.patchIdx = buildPatchIndex(allPatches)
     this.portValues.clear()
     this.behaviors.destroyAll()
-    this.behaviors.initAll(this.patches)
+    this.behaviors.initAll(allPatches)
   }
 
   reset(): void {

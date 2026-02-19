@@ -11,7 +11,7 @@ export interface Size { width: number; height: number }
 // ── 图层类型 ──
 
 export type LayerType =
-  | 'frame' | 'rectangle' | 'ellipse' | 'text' | 'image' | 'group'
+  | 'frame' | 'rectangle' | 'ellipse' | 'text' | 'image' | 'group' | 'instance'
 
 // ── 可动画属性 ──
 
@@ -59,6 +59,9 @@ export interface Layer {
   fontWeight?: string
   textAlign?: string
   imageSrc?: string
+  // ── instance 专用 ──
+  componentId?: string
+  instanceOverrides?: Record<string, Partial<AnimatableProps & { text?: string; imageSrc?: string }>>
 }
 
 // ── 曲线配置 ──
@@ -111,4 +114,15 @@ export interface Variable {
   type: VariableType
   defaultValue: VariableValue
   options?: string[]
+}
+
+// ── 组件定义 ──
+
+export interface ComponentDef {
+  id: string
+  name: string
+  rootLayerId: string
+  stateGroupId: string
+  patchIds: string[]
+  exposedProps: Record<string, (keyof AnimatableProps | 'text' | 'imageSrc')[]>
 }

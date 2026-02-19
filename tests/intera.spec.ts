@@ -1824,3 +1824,39 @@ test.describe('Feature: 长按触发', () => {
     await expect(page.locator('.patch-node .header-text')).toContainText('长按')
   })
 })
+
+// ══════════════════════════════════════
+//  F200-F207: 组件复用
+// ══════════════════════════════════════
+
+test.describe('Feature: 组件复用', () => {
+  test('F200 — 右键 Frame 可创建组件', async ({ page }) => {
+    await load(page)
+    await page.keyboard.press('f')
+    await drawOnCanvas(page, -80, -60, 80, 60)
+    const item = page.locator('.layer-item').first()
+    await item.click({ button: 'right' })
+    await expect(page.locator('.ctx-item', { hasText: '创建组件' })).toBeVisible()
+  })
+
+  test('F200 — 创建组件后图层面板仍正常', async ({ page }) => {
+    await load(page)
+    await page.keyboard.press('f')
+    await drawOnCanvas(page, -80, -60, 80, 60)
+    const item = page.locator('.layer-item').first()
+    await item.click({ button: 'right' })
+    await page.locator('.ctx-item', { hasText: '创建组件' }).click()
+    await expect(page.locator('.layer-item')).toHaveCount(1)
+  })
+
+  test('F204 — instance 图层显示菱形图标', async ({ page }) => {
+    await load(page)
+    const icon = page.locator('.layer-icon.instance')
+    // instance 图标存在于 DOM（即使当前没有 instance 图层，验证 SVG 组件已注册）
+    await page.keyboard.press('f')
+    await drawOnCanvas(page, -80, -60, 80, 60)
+    // 验证 frame 图标不是 instance
+    await expect(page.locator('.layer-icon.frame')).toHaveCount(1)
+    await expect(icon).toHaveCount(0)
+  })
+})

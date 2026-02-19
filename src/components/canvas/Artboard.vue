@@ -12,6 +12,8 @@ import { ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import type { DisplayState, AnimatableProps } from '@engine/scene/types'
 import { useProjectStore } from '@store/project'
 import { DOMRenderer } from '@renderer/DOMRenderer'
+import { resolveInstance } from '@engine/scene/ComponentResolver'
+import type { ResolvedLayer } from '@engine/scene/ComponentResolver'
 
 const props = defineProps<{
   displayState: DisplayState
@@ -40,6 +42,45 @@ const rendered = new Set<string>()
 /** renderer 是否已挂载到 DOM */
 let mounted = false
 
+/** instance 内部渲染的虚拟图层 ID 集合 */
+const instanceChildren = new Set<string>()
+
+function renderResolvedTree(r: ResolvedLayer, parentKey: string | null, masterLayer: import('@engine/scene/types').Layer | undefined): void {
+  const key = `inst:${r.masterLayerId}`
+  const mLayer = store.project.layers[r.masterLayerId]
+  const type = mLayer?.type ?? 'rectangle'
+  if (rendered.has(key)) {
+    renderer.updateLayer(key, r.props)
+  } else {
+    renderer.createLayer(key, type, r.props)
+    rendered.add(key)
+    instanceChildren.add(key)
+  }
+  if (type === 'text' && r.text != null) {
+    renderer.setTextContent(key, r.text, mLayer?.fontSize ?? 16, mLayer?.fontFamily, mLayer?.fontWeight, mLayer?.textAlign)
+  }
+  if (type === 'image' && r.imageSrc) {
+    renderer.setImageSrc(key, r.imageSrc)
+  }
+  renderer.setLayerParent(key, parentKey)
+  for (const child of r.children) renderResolvedTree(child, key, mLayer)
+}
+
+function renderInstance(instanceId: string, layer: import('@engine/scene/types').Layer): void {
+  // 渲染 instance 容器
+  if (!rendered.has(instanceId)) {
+    renderer.createLayer(instanceId, 'frame', layer.props)
+    rendered.add(instanceId)
+  } else {
+    renderer.updateLayer(instanceId, layer.props)
+  }
+  // 解析 master 子树
+  const resolved = resolveInstance(layer, store.project.layers, store.project.components)
+  for (const r of resolved) {
+    for (const child of r.children) renderResolvedTree(child, instanceId, undefined)
+  }
+}
+
 function syncLayers(): void {
   if (!mounted) return
   const { layers, rootLayerIds } = store.project
@@ -60,6 +101,10 @@ function syncLayers(): void {
   for (const id of scope) {
     const layer = layers[id]
     if (!layer) continue
+    if (layer.type === 'instance') {
+      renderInstance(id, layer)
+      continue
+    }
     const resolved = store.states.getResolvedProps(stateId, id)
     if (!resolved) continue
     if (rendered.has(id)) {

@@ -10,9 +10,10 @@ export type {
   LayoutDirection, SizeMode, Alignment, JustifyContent, LayoutProps,
   Layer, CurveType, CurveConfig, TransitionConfig, DisplayState,
   StateGroup, VariableType, VariableValue, Variable,
+  ComponentDef,
 } from './SceneTypes'
 
-import type { Vec2, Size, Layer, StateGroup, Variable, VariableValue } from './SceneTypes'
+import type { Vec2, Size, Layer, StateGroup, Variable, VariableValue, ComponentDef } from './SceneTypes'
 import type { Patch, PatchConnection } from './PatchTypes'
 
 // ── Patch 类型 ──
@@ -40,4 +41,5 @@ export interface Project {
   variables: Variable[]
   patches: Patch[]
   connections: PatchConnection[]
+  components: ComponentDef[]
 }

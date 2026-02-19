@@ -9,13 +9,14 @@ import { reactive, ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import type {
   Project, Layer, LayerType,
-  AnimatableProps, DisplayState, StateGroup,
+  AnimatableProps, DisplayState, StateGroup, ComponentDef,
 } from '../engine/scene/types'
 import { SceneGraph } from '../engine/scene/SceneGraph'
 import { DisplayStateManager } from '../engine/scene/DisplayState'
 import { UndoManager } from '../engine/UndoManager'
 import { saveToLocal, loadFromLocal, saveToFile, loadFromFile } from '../engine/ProjectStorage'
 import { useTransition } from '../composables/useTransition'
+import { useComponentActions } from '../composables/useComponentActions'
 
 // ── 空项目工厂 ──
 
@@ -41,6 +42,7 @@ function createEmptyProject(): Project {
     variables: [],
     patches: [],
     connections: [],
+    components: [],
   }
 }
 
@@ -61,6 +63,7 @@ export const useProjectStore = defineStore('project', () => {
   const scene = new SceneGraph(project.layers, project.rootLayerIds)
   const states = new DisplayStateManager(project.stateGroups, project.layers)
   const transition = useTransition(project, states)
+  const comp = useComponentActions(project)
 
   const history = new UndoManager<string>(50)
   const historyVersion = ref(0)
@@ -78,15 +81,10 @@ export const useProjectStore = defineStore('project', () => {
     const snap: Project = JSON.parse(json)
     for (const key of Object.keys(project.layers)) delete project.layers[key]
     Object.assign(project.layers, snap.layers)
-    project.rootLayerIds.splice(0, Infinity, ...snap.rootLayerIds)
-    project.stateGroups.splice(0, Infinity, ...snap.stateGroups)
-    project.variables.splice(0, Infinity, ...snap.variables)
-    project.patches.splice(0, Infinity, ...snap.patches)
-    project.connections.splice(0, Infinity, ...snap.connections)
-    project.name = snap.name
-    project.id = snap.id
-    project.canvasSize.width = snap.canvasSize.width
-    project.canvasSize.height = snap.canvasSize.height
+    const arrays = ['rootLayerIds', 'stateGroups', 'variables', 'patches', 'connections', 'components'] as const
+    for (const k of arrays) (project[k] as unknown[]).splice(0, Infinity, ...(snap[k] ?? []))
+    Object.assign(project, { name: snap.name, id: snap.id })
+    Object.assign(project.canvasSize, snap.canvasSize)
     scene.syncIdCounter()
     transition.cleanup()
   }
@@ -196,5 +194,6 @@ export const useProjectStore = defineStore('project', () => {
     clearLiveTransition: transition.clearLiveTransition,
     clearPreviewLiveTransition: transition.clearPreviewLiveTransition,
     setOverride, clearOverride,
+    ...comp,
   }
 })

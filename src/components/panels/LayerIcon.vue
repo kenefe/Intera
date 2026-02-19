@@ -43,6 +43,13 @@ svg.layer-icon(
       stroke="currentColor" stroke-width="1" stroke-linejoin="round"
     )
 
+  //- 组件实例: 菱形
+  template(v-else-if="type === 'instance'")
+    path(
+      d="M8 2L14 8L8 14L2 8Z"
+      stroke="currentColor" stroke-width="1.3"
+    )
+
   //- 分组: 叠层矩形
   template(v-else-if="type === 'group'")
     rect(x="3" y="2" width="10" height="5.5" rx="1" stroke="currentColor" stroke-width="1.1")
@@ -72,6 +79,7 @@ defineProps<{ type: string; active?: boolean }>()
 .text      { color: #fbbf24; }
 .image     { color: #4ade80; }
 .group     { color: #94a3b8; }
+.instance  { color: #f472b6; }
 
 /* ── 选中态: 统一高亮 ── */
 .active { color: #b4b4ff; }

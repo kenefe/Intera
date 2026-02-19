@@ -26,10 +26,12 @@
 | | `scene/PatchTypes.ts` | Patch 节点 discriminated union 类型 |
 | | `scene/SceneGraph.ts` | 图层树 CRUD |
 | | `scene/DisplayState.ts` | 显示状态 + override 管理 |
+| | `scene/ComponentResolver.ts` | instance 递归解析 + 循环检测 |
 | | `scene/SmartAnimate.ts` | 状态差异 → folme.to() 调用 |
 | **交互** | `state/VariableManager.ts` | 逻辑变量 get/set/toggle |
 | | `state/PatchRuntime.ts` | Patch 图执行引擎 (Map 索引 + 定时器管理) |
 | | `state/PatchDefs.ts` | Patch 节点端口定义 + 工厂 |
+| | `state/clonePatches.ts` | instance Patch 子图克隆 + layerId 重映射 |
 | | `state/BehaviorManager.ts` | Behavior 节点生命周期 (create/destroy) |
 | | `state/SugarPresets.ts` | 一键预设 |
 | **基础** | `idFactory.ts` | 统一 ID 生成工厂 |
@@ -83,7 +85,16 @@
 | `project.ts` | 项目数据中枢 (图层/状态/动画/撤销/持久化) |
 | `editor.ts` | 工具选择 + Patch 面板开关 |
 | `canvas.ts` | 视口 (zoom/pan) + 选区 |
-| `patch.ts` | Patch 编辑器状态 (变量 add/remove/update + Patch CRUD + 运行时) |
+| `patch.ts` | Patch 编辑器状态 (变量 + Patch CRUD + 运行时 + instance patch 克隆) |
+
+---
+
+## Composables (`src/composables/`)
+
+| 文件 | 职责 |
+|---|---|
+| `useTransition.ts` | 动画过渡 |
+| `useComponentActions.ts` | 组件 CRUD (createComponent/createInstance/updateOverride/detach) |
 
 ---
 

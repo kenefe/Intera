@@ -173,9 +173,15 @@ function makeComponent(id?: string): void {
   if (!id) return
   const layer = project.project.layers[id]
   if (!layer || layer.type !== 'frame') return
-  const g = project.addStateGroup(layer.name, id)
-  const s = project.addDisplayState(g.id, '默认')
-  if (s) project.switchState(g.id, s.id)
+  // 确保有 StateGroup（没有则创建）
+  let sg = project.project.stateGroups.find(g => g.rootLayerId === id)
+  if (!sg) {
+    sg = project.addStateGroup(layer.name, id)
+    const s = project.addDisplayState(sg.id, '默认')
+    if (s) project.switchState(sg.id, s.id)
+  }
+  // 创建 ComponentDef
+  project.createComponent(id, layer.name)
 }
 
 function deleteSelection(ids: string[]): void {

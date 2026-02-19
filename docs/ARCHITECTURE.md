@@ -191,6 +191,7 @@ src/
 │   │   ├── PatchTypes.ts   # Patch 节点 discriminated union 类型
 │   │   ├── SceneGraph.ts   # 图层树操作
 │   │   ├── DisplayState.ts # 显示状态管理
+│   │   ├── ComponentResolver.ts # instance 递归解析 + 循环检测
 │   │   └── SmartAnimate.ts # 状态间差异过渡
 │   │
 │   ├── idFactory.ts        # 统一 ID 生成工厂
@@ -199,6 +200,7 @@ src/
 │       ├── VariableManager.ts  # 逻辑变量
 │       ├── PatchRuntime.ts     # Patch 执行引擎 (Map 索引 + 定时器管理)
 │       ├── PatchDefs.ts        # 节点端口定义 + 工厂
+│       ├── clonePatches.ts     # instance Patch 子图克隆
 │       ├── BehaviorManager.ts  # Behavior 节点生命周期管理
 │       └── SugarPresets.ts     # 交互预设模板
 │
