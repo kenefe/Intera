@@ -696,11 +696,22 @@ Patch 画布右侧 160px 宽的可折叠面板，用于管理逻辑变量。
 ### Flow 4: 组件状态 (进阶)
 
 ```
-1. 选中一个 Frame → 右键 → "设为状态组件"
-2. 画布上新增一行（该组件的状态行）
-3. 给组件添加自己的显示状态
+1. 选中一个 Frame → 右键 → "创建组件"
+2. 创建 ComponentDef (master) + 关联 StateGroup
+3. 画布上新增一行（该组件的状态行）
 4. 组件有自己的 Patch 连线（内部交互）
 5. 主画面的状态切换不影响组件内部状态
+```
+
+### Flow 4b: 组件实例 (Instance)
+
+```
+1. 从组件列表拖入 instance 到画布
+2. instance 图层类型为 'instance'，图层面板显示 ◇ 菱形图标（粉色）
+3. instance 从 master 实时读取子树，改 master → 所有 instance 同步
+4. instance 可覆盖部分属性 (instanceOverrides)
+5. master 内可放其他组件的 instance（嵌套），禁止自引用循环
+6. Preview 时每个 instance 独立运行 master 的 Patch 逻辑（克隆子图）
 ```
 
 ---

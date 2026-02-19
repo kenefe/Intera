@@ -1,7 +1,7 @@
 {
   "phase": "component-reuse",
-  "lastCommit": "30bf852",
+  "lastCommit": "6593248",
   "done": ["F101","F102","F103","F104","F105","F106","F107","F108","F109","F110","F111","F112","F113","Phase2-StateBar","F200","F201","F202","F203","F204","F205","F206","F207"],
   "tests": 114,
-  "note": "F200-F207 组件复用完成: ComponentDef/instance/resolver/patch cloning/UI, 3 BDD 通过"
+  "note": "F200-F207 组件复用完成，按 Flow C 补齐文档同步"
 }
