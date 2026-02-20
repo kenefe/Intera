@@ -227,7 +227,7 @@ const {
 
 .patch-node:hover {
   border-color: var(--border-hover);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .patch-node.selected {
@@ -260,16 +260,19 @@ const {
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
-  transition: background var(--duration-fast), color var(--duration-fast);
+  opacity: 0;
+  transition: background var(--duration-fast), color var(--duration-fast), opacity var(--duration-fast);
 }
+
+.patch-node:hover .btn-delete { opacity: 1; }
 
 .btn-delete:hover { background: rgba(239, 68, 68, 0.4); color: #fff; }
 
-/* ── 分类配色 (更柔和的色调) ── */
-.cat-trigger  .node-header { background: #1a4d35; }
-.cat-logic    .node-header { background: #4d3d1a; }
-.cat-action   .node-header { background: #2d2d6b; }
-.cat-behavior .node-header { background: #4d1a3d; }
+/* ── 分类配色 (鲜明但不刺眼) ── */
+.cat-trigger  .node-header { background: #1b5e3b; }
+.cat-logic    .node-header { background: #7c5a1e; }
+.cat-action   .node-header { background: #3b3b8f; }
+.cat-behavior .node-header { background: #7a2d5a; }
 
 .node-ports { padding: var(--sp-1) 0; }
 
@@ -315,8 +318,9 @@ const {
 .port-out { border-color: rgba(99, 102, 241, 0.35); }
 
 .port-label {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .port-label.out { text-align: right; flex: 1; }
