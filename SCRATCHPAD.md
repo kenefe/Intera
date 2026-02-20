@@ -26,8 +26,8 @@
 - [x] CODE-MAP.md + ARCHITECTURE.md 已更新
 
 ### 待完成
-- [ ] docs/UI-DESIGN.md 更新（instance 图层类型 + 右键菜单 + 属性面板）
-- [ ] docs/KNOWN-ISSUES.md 检查
+- [x] docs/UI-DESIGN.md 更新（instance 图层类型 + 右键菜单 + 属性面板）
+- [x] docs/KNOWN-ISSUES.md 检查
 - [ ] SCRATCHPAD 清空（全部完成后）
 
 ## 架构决策备忘

@@ -1,5 +1,5 @@
 <template lang="pug">
-canvas.curve-preview(ref="cvs" :width="W" :height="H")
+canvas.curve-preview(ref="cvs" :width="W" :height="H" :aria-label="'曲线预览: ' + curve.type")
 </template>
 
 <script setup lang="ts">

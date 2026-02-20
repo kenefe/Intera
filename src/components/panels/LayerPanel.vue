@@ -6,6 +6,7 @@
       v-for="node in flatNodes" :key="node.id"
       :class="layerCls(node)"
       :style="{ paddingLeft: node.depth * 16 + 4 + 'px' }"
+      :aria-label="'图层: ' + nameOf(node.id)"
       draggable="true"
       @click="onSelect(node.id, $event)"
       @dragstart.stop="dd.start(node.id, $event)"
