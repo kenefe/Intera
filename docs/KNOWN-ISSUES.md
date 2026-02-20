@@ -119,6 +119,11 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 
 | 日期 | 问题 | 修法 |
 |---|---|---|
+| 2026-02-20 | **UI-DESIGN.md 缺 instance 图层类型描述** | 补充图层类型图标表、右键菜单表、instance 属性面板说明 |
+| 2026-02-19 | **F301 曲线面板无实时预览图** | CurvePreview.vue Canvas 2D 绘制，89行，嵌入 CurveEdit |
+| 2026-02-19 | **F302 Sugar 预设无快捷入口** | LayerPanel 右键菜单增加 ⚡按钮反馈 / ⚡卡片展开 |
+| 2026-02-19 | **F303 属性级 delay 无叠加** | TransitionConfig.propertyDelays + SmartAnimate/FolmeManager 叠加逻辑 |
+| 2026-02-19 | **F200-F207 无组件复用** | master/instance 模式，ComponentResolver + clonePatches + LayerIcon 菱形 |
 | 2026-02-14 | **默认状态可被删除** (P1) | StateBar 用 `idx > 0` 隐藏默认状态删除按钮; DisplayState 引擎层对 `displayStates[0]` 拒绝删除 |
 | 2026-02-14 | **`setTo` patch 与 `to` 行为相同** (P0) | `PatchRuntime` 增加 `onSetTo` 回调，`project.ts` 新增 `setToState()` 即时跳转，无弹簧动画 |
 | 2026-02-14 | **椭圆渲染为矩形** (P0) | `DOMRenderer` 区分 LayerType，椭圆设置 `border-radius: 50%` |
