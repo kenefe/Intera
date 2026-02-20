@@ -72,7 +72,7 @@ export class FolmeManager {
       map.set(prop, new AniRequest({
         target,
         ease: cloneEase(sp?.ease ?? config?.ease),
-        delay: config?.delay,
+        delay: sp?.delay ?? config?.delay,
         isImmediate: config?.isImmediate,
         range: sp?.range,
         rangeType: sp?.rangeType,

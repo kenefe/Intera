@@ -47,6 +47,7 @@
 import { computed, ref, reactive, nextTick } from 'vue'
 import { useCanvasStore } from '@store/canvas'
 import { useProjectStore } from '@store/project'
+import { usePatchStore } from '@store/patch'
 import { useLayerDrag } from '@composables/useLayerDrag'
 import ContextMenu from '../ContextMenu.vue'
 import type { MenuItem } from '../ContextMenu.vue'
@@ -54,6 +55,7 @@ import LayerIcon from './LayerIcon.vue'
 
 const canvas = useCanvasStore()
 const project = useProjectStore()
+const patchStore = usePatchStore()
 const dd = useLayerDrag()
 
 // ━━━ 折叠 / 展开 ━━━
@@ -148,6 +150,9 @@ const ctxItems = computed<MenuItem[]>(() => [
   { id: 'rename', label: '重命名', shortcut: '双击' },
   { id: 'dup', label: '复制图层', shortcut: '⌘D' },
   { divider: true },
+  { id: 'sugar-btn', label: '⚡ 按钮反馈' },
+  { id: 'sugar-toggle', label: '⚡ 卡片展开' },
+  { divider: true },
   { id: 'comp', label: '创建组件', disabled: ctxLayer.value?.type !== 'frame' },
   { divider: true },
   { id: 'up', label: '上移一层', shortcut: '⌘[' },
@@ -163,6 +168,8 @@ function onCtxAction(action: string): void {
     rename: () => beginRename(id),
     dup: () => dupLayer(id),
     comp: () => makeComponent(id),
+    'sugar-btn': () => patchStore.applyButtonFeedback(id),
+    'sugar-toggle': () => patchStore.applyToggleExpand(id),
     up: () => moveUp(id),
     down: () => moveDown(id),
     del: () => onDelete(id),

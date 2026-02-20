@@ -67,6 +67,7 @@
 | | `KeyPropertyPanel.vue` | 关键属性标记 |
 | | `CurvePanel.vue` | 曲线编辑 (三级覆盖) |
 | | `CurveEdit.vue` | 曲线可视化编辑 (slider + 精确数值输入) |
+| | `CurvePreview.vue` | 曲线实时预览图 (Canvas 2D，弹簧/摩擦/贝塞尔/线性) |
 | `patch/` | `PatchCanvas.vue` | Patch 编辑器画布 |
 | | `PatchNode.vue` | 单个 Patch 节点 (端口+内联配置) |
 | | `patch-config.css` | 配置区共享样式 |

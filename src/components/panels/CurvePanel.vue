@@ -22,6 +22,10 @@
               input.toggle(type="checkbox" :checked="!!getPropCurve(prop)" @change="toggleProp(prop)")
               span.group-label {{ prop }}
             CurveEdit(v-if="getPropCurve(prop)" :curve="getPropCurve(prop)" @update="p => setProp(prop, p)")
+            .delay-row
+              span.delay-label +延迟
+              input.delay-input(type="number" :value="getPropDelay(prop)" @change="e => onPropDelay(prop, e)" min="0" step="50")
+              span.delay-unit ms
 
         //- 延迟
         .curve-group
@@ -139,6 +143,22 @@ function onDelay(e: Event): void {
   if (val <= 0) delete tc.delays[layerId.value]
   else tc.delays[layerId.value] = val
 }
+
+// ── 属性级延迟 (叠加到元素延迟上) ──
+
+function getPropDelay(prop: keyof AnimatableProps): number {
+  return activeState.value?.transition.propertyDelays?.[layerId.value]?.[prop] ?? 0
+}
+
+function onPropDelay(prop: keyof AnimatableProps, e: Event): void {
+  if (!activeState.value || !layerId.value) return
+  const tc = activeState.value.transition
+  const val = parseInt((e.target as HTMLInputElement).value) || 0
+  if (!tc.propertyDelays) tc.propertyDelays = {}
+  if (!tc.propertyDelays[layerId.value]) tc.propertyDelays[layerId.value] = {}
+  if (val <= 0) delete tc.propertyDelays[layerId.value][prop]
+  else tc.propertyDelays[layerId.value][prop] = val
+}
 </script>
 
 <style scoped>
@@ -175,6 +195,7 @@ function onDelay(e: Event): void {
 }
 
 .delay-row { display: flex; align-items: center; gap: var(--sp-2); }
+.delay-label { font-size: var(--text-xs); color: var(--text-disabled); min-width: 36px; }
 
 .delay-input {
   width: 80px;

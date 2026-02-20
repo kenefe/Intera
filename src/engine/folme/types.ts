@@ -106,6 +106,9 @@ export interface SpecialConfig {
   /** 该属性的曲线 */
   ease?: IForce | IEasing | (IForce | IEasing)[]
 
+  /** 该属性的延迟 (秒) */
+  delay?: number
+
   /** 该属性的边界范围 */
   range?: [number, number]
 

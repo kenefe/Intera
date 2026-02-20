@@ -84,6 +84,7 @@ export interface TransitionConfig {
   elementCurves?: Record<string, CurveConfig>
   propertyCurves?: Record<string, Record<string, CurveConfig>>
   delays?: Record<string, number>
+  propertyDelays?: Record<string, Record<string, number>>
 }
 
 export interface DisplayState {

@@ -47,7 +47,7 @@ Touch 原子事件 (down/startMove/move/up)
 - 每个状态只存**关键元素的关键属性差异**
 - 没有覆盖的属性 = 使用默认值
 
-### 曲线配置 (三级覆盖)
+### 曲线配置 (三级覆盖, override 模型)
 
 ```
 全局曲线          → spring(0.95, 0.35)
@@ -56,6 +56,16 @@ Touch 原子事件 (down/startMove/move/up)
 ```
 
 对应 Folme 的 `config.ease` (全局) 和 `config.special` (属性级)。
+
+### 延迟配置 (叠加模型)
+
+```
+元素级延迟        → 元素A: 200ms
+  属性级延迟      → 元素A.opacity: +100ms  → 实际 300ms
+```
+
+曲线是 **override**（属性级覆盖元素级覆盖全局），delay 是 **叠加**（元素 delay + 属性 delay）。
+对应 `TransitionConfig.delays` (元素级) 和 `TransitionConfig.propertyDelays` (属性级)。
 
 ---
 

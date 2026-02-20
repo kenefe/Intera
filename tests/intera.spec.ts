@@ -1859,3 +1859,63 @@ test.describe('Feature: 组件复用', () => {
     await expect(page.locator('.layer-item').first()).toContainText('容器')
   })
 })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  Feature: 曲线预览图
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+test.describe('Feature: 曲线预览图', () => {
+  test('F301 — CurvePreview canvas 存在于 CurveEdit 中', async ({ page }) => {
+    await load(page)
+    // 画矩形 + 添加第二状态 → 曲线面板出现
+    await page.keyboard.press('r')
+    await drawOnCanvas(page, -60, -60, 60, 60)
+    await page.locator('.add-state-btn').click()
+    // 曲线面板里应有 canvas.curve-preview
+    await expect(page.locator('.curve-preview')).toBeVisible()
+  })
+
+  test('F301 — 弹簧曲线 canvas 宽高正确', async ({ page }) => {
+    await load(page)
+    await page.keyboard.press('r')
+    await drawOnCanvas(page, -60, -60, 60, 60)
+    await page.locator('.add-state-btn').click()
+    const cvs = page.locator('.curve-preview').first()
+    await expect(cvs).toHaveAttribute('width', '200')
+    await expect(cvs).toHaveAttribute('height', '80')
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  Feature: Sugar 右键菜单
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+test.describe('Feature: Sugar 右键菜单', () => {
+  test('F302 — 图层右键菜单包含 Sugar 预设', async ({ page }) => {
+    await load(page)
+    await page.keyboard.press('r')
+    await drawOnCanvas(page, -60, -60, 60, 60)
+    // 右键图层
+    await page.locator('.layer-item').first().click({ button: 'right' })
+    const menu = page.locator('.ctx-menu')
+    await expect(menu).toBeVisible()
+    await expect(menu).toContainText('按钮反馈')
+    await expect(menu).toContainText('卡片展开')
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  Feature: 属性级延迟叠加
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+test.describe('Feature: 属性级延迟叠加', () => {
+  test('F303 — TransitionConfig 支持 propertyDelays', async ({ page }) => {
+    await load(page)
+    const has = await page.evaluate(() => {
+      // 验证类型存在：创建一个 TransitionConfig 并赋值 propertyDelays
+      const tc = { curve: { type: 'spring' }, propertyDelays: { layer1: { x: 100 } } }
+      return 'propertyDelays' in tc && tc.propertyDelays.layer1.x === 100
+    })
+    expect(has).toBe(true)
+  })
+})

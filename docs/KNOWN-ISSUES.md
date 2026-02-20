@@ -80,7 +80,7 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-15 | drag-card | Drag 行为不工作 — BehaviorManager 创建 DragEngine 但未绑定 DOM 指针事件，usePreviewGesture 无 Drag 感知 (P0) | BehaviorManager 暴露 engine+layerId + findByLayer(); usePreviewGesture 检测 behaviorDrag 并喂 begin/tick/end; PreviewPanel 添加 pointer capture; PatchRuntime.rebuild() 重建行为实例; patch store 变更后调用 rebuild() | 🟢 |
 
 | 2026-02-16 | states+component | To/SetTo 节点无"目标组"选择器 — 只有状态下拉，缺少目标选择；onStatePick 偷用 activeGroup.id (P1) | 新增"目标"下拉 (所有 stateGroups)，状态下拉联动; 移除 activeGroup 依赖 | 🟢 |
-| 2026-02-16 | states+component | 预览面板点击未触发 Patch 交互 — `interactiveLayerAt` 疑似在 CSS transform scale 下未命中图层 (P2) | 待调查: elementsFromPoint 在 scale 容器中的行为 | 🔴 |
+| 2026-02-16 | states+component | 预览面板点击未触发 Patch 交互 — `interactiveLayerAt` 疑似在 CSS transform scale 下未命中图层 (P2) | Playwright 验证: elementsFromPoint 在 scale 下正确命中 data-layer-id，fireTrigger 正常触发 down/up/tap | 🟢 |
 | 2026-02-16 | states (preview-deep) | Preview Reset 按钮无 tooltip，功能不直觉，当前状态下点击无反馈 (P3) | 添加 tooltip "重置预览动画到当前状态" | 🔴 |
 
 ### 待优化 (旅途探索发现 · 非阻塞)

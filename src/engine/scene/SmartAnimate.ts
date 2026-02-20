@@ -60,18 +60,23 @@ function buildConfig(layerId: string, tc: TransitionConfig): ToConfig {
     ease: curveToEase(tc.elementCurves?.[layerId] ?? tc.curve),
   }
 
-  // 属性级覆盖
+  // 元素级延迟 (ms → s)
+  const elemDelay = tc.delays?.[layerId]
+  if (elemDelay !== undefined) config.delay = elemDelay / 1000
+
+  // 属性级覆盖（曲线 override，delay 叠加）
   const pc = tc.propertyCurves?.[layerId]
-  if (pc) {
-    config.special = {}
-    for (const [prop, curve] of Object.entries(pc)) {
-      config.special[prop] = { ease: curveToEase(curve) }
+  const pd = tc.propertyDelays?.[layerId]
+  if (pc || pd) {
+    config.special = config.special ?? {}
+    const allProps = new Set([...Object.keys(pc ?? {}), ...Object.keys(pd ?? {})])
+    for (const prop of allProps) {
+      const entry: SpecialConfig = config.special[prop] ?? {}
+      if (pc?.[prop]) entry.ease = curveToEase(pc[prop])
+      if (pd?.[prop]) entry.delay = (config.delay ?? 0) + pd[prop] / 1000
+      config.special[prop] = entry
     }
   }
-
-  // 元素级延迟 (ms → s)
-  const delay = tc.delays?.[layerId]
-  if (delay !== undefined) config.delay = delay / 1000
 
   return config
 }
