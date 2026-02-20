@@ -70,7 +70,7 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 | 2026-02-14 | 综合集成 | 绘制模式下 SelectionOverlay 手柄拦截指针事件，导致连续绘制丢失图层 (P1) | `.draw-mode` CSS 类禁用手柄 `pointer-events` | 🟢 |
 | 2026-02-14 | 状态·节点 | Patch 变量选择器下拉为空，无创建变量入口，用户完全卡住 (P0) | PatchNode 变量选择器旁添加 "+" 按钮，就地创建布尔变量并自动绑定 | 🟢 |
 | 2026-02-14 | 基础绘制 R3 | 画板外点击绘制时坐标映射到 canvas-world 而非画板本地，导致 X/Y 偏移 (P1) | ~~`resolveFrame()` 三级查找~~ 根因误判 → 2026-02-16 真正修复: 移除 querySelector 回退，仅允许 artboard-frame DOM 内绘制 | 🟢 |
-| 2026-02-14 | 基础绘制 R3 | 文本图层 W 属性不可编辑 — 输入宽度值不生效，文本宽度由内容自适应 (P2) | 待确认: 是否为设计意图 | 🔴 |
+| 2026-02-14 | 基础绘制 R3 | 文本图层 W 属性不可编辑 — 输入宽度值不生效，文本宽度由内容自适应 (P2) | 确认: input 存在且可编辑，文本默认 auto-width 是设计意图 | 🟢 |
 | 2026-02-15 | 状态系统 R3 | number input 点击易误触 spinner 箭头，Ctrl+A 在 input 聚焦时选中画布图层而非 input 内容 (P2) | useKeyboard 拦截 Ctrl+A，input 聚焦时调用 el.select() | 🟢 |
 | 2026-02-15 | states+curves R2 | 状态栏激活状态视觉反馈不清晰，用户误以为在状态3操作实际激活的是状态2 (P2) | 加深背景+底部蓝色下划线+font-weight 600 | 🟢 |
 | 2026-02-15 | states+curves R2 | 曲线面板需要大量滚动才能看到，curves 画像核心功能藏在底部 (P3) | CollapsibleGroup 折叠+位置尺寸合并+变换默认收起 | 🟡 |
@@ -81,7 +81,7 @@ _全部已通过自动化 + 手动混合验证 (2026-02-14)。详见 BDD 测试 
 
 | 2026-02-16 | states+component | To/SetTo 节点无"目标组"选择器 — 只有状态下拉，缺少目标选择；onStatePick 偷用 activeGroup.id (P1) | 新增"目标"下拉 (所有 stateGroups)，状态下拉联动; 移除 activeGroup 依赖 | 🟢 |
 | 2026-02-16 | states+component | 预览面板点击未触发 Patch 交互 — `interactiveLayerAt` 疑似在 CSS transform scale 下未命中图层 (P2) | Playwright 验证: elementsFromPoint 在 scale 下正确命中 data-layer-id，fireTrigger 正常触发 down/up/tap | 🟢 |
-| 2026-02-16 | states (preview-deep) | Preview Reset 按钮无 tooltip，功能不直觉，当前状态下点击无反馈 (P3) | 添加 tooltip "重置预览动画到当前状态" | 🔴 |
+| 2026-02-16 | states (preview-deep) | Preview Reset 按钮无 tooltip，功能不直觉，当前状态下点击无反馈 (P3) | 已有 title="重置预览状态" | 🟢 |
 
 ### 待优化 (旅途探索发现 · 非阻塞)
 

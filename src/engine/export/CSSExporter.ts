@@ -27,8 +27,18 @@ function layerCSS(id: string, p: AnimatableProps): string {
 
 // ── HTML 元素 ──
 
-function layerHTML(id: string, name: string): string {
-  return `  <div class="l-${id}" data-lid="${id}">${name}</div>`
+function layerHTML(id: string, layer: { name: string; type: string; text?: string; childrenIds: string[] }, allLayers: Record<string, any>, project: Project, stateId: string): string {
+  const content = layer.type === 'text' ? (layer.text ?? layer.name) : ''
+  const kids = layer.childrenIds
+    .map(cid => {
+      const child = allLayers[cid]
+      if (!child) return ''
+      return layerHTML(cid, child, allLayers, project, stateId)
+    })
+    .filter(Boolean)
+    .join('\n')
+  const inner = content || kids
+  return `  <div class="l-${id}" data-lid="${id}">${inner ? '\n' + inner + '\n  ' : ''}</div>`
 }
 
 // ── 内嵌 JS: 弹簧微引擎 ──
@@ -69,20 +79,26 @@ function buildInteractionJS(project: Project): string {
       const conn = project.connections.find(c => c.fromPatchId === p.id && c.fromPortId === port)
       if (!conn) continue
       const target = project.patches.find(n => n.id === conn.toPatchId)
-      if (!target || target.type !== 'to') continue
+      if (!target) continue
       const tCfg = target.config
-      if (tCfg.type !== 'to' || !tCfg.stateId) continue
-      const stateId = tCfg.stateId
-      const props = resolveProps(project, stateId, lid)
+      if ((tCfg.type !== 'to' && tCfg.type !== 'setTo') || !tCfg.stateId) continue
       const ev = port === 'down' ? 'pointerdown' : port === 'up' ? 'pointerup' : 'click'
-      const from = numericObj(resolveProps(project, project.stateGroups[0]?.displayStates[0]?.id ?? '', lid))
-      const to = numericObj(props)
-      const tc = project.stateGroups.flatMap(g => g.displayStates).find(s => s.id === stateId)?.transition
-      const cfg = `{damping:${tc?.curve.damping ?? 0.95},response:${tc?.curve.response ?? 0.35}}`
-      lines.push(
-        `document.querySelector('[data-lid="${lid}"]').addEventListener('${ev}',function(){` +
-        `springTo(this,${JSON.stringify(from)},${JSON.stringify(to)},${cfg})});`,
-      )
+      const defaultSid = project.stateGroups[0]?.displayStates[0]?.id ?? ''
+      const from = numericObj(resolveProps(project, defaultSid, lid))
+      const to = numericObj(resolveProps(project, tCfg.stateId, lid))
+      if (tCfg.type === 'setTo') {
+        lines.push(
+          `document.querySelector('[data-lid="${lid}"]').addEventListener('${ev}',function(){` +
+          `var t=${JSON.stringify(to)};this.style.transform='translate('+t.x+'px,'+t.y+'px) rotate('+t.rotation+'deg) scale('+t.scaleX+','+t.scaleY+')';this.style.opacity=t.opacity});`,
+        )
+      } else {
+        const tc = project.stateGroups.flatMap(g => g.displayStates).find(s => s.id === tCfg.stateId)?.transition
+        const c = `{damping:${tc?.curve.damping ?? 0.95},response:${tc?.curve.response ?? 0.35}}`
+        lines.push(
+          `document.querySelector('[data-lid="${lid}"]').addEventListener('${ev}',function(){` +
+          `springTo(this,${JSON.stringify(from)},${JSON.stringify(to)},${c})});`,
+        )
+      }
     }
   }
   return lines.join('\n')
@@ -100,7 +116,6 @@ function numericObj(p: AnimatableProps): Record<string, number> {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export function exportCSS(project: Project): string {
-  // 导出目标: 主画面 (stateGroups[0]) — 未来可扩展为接受 groupId 参数
   const defaultState = project.stateGroups[0]?.displayStates[0]
   const stateId = defaultState?.id ?? ''
   const { width: cw, height: ch } = project.canvasSize
@@ -108,12 +123,22 @@ export function exportCSS(project: Project): string {
   const cssRules: string[] = []
   const htmlParts: string[] = []
 
+  // 递归收集所有图层 CSS
+  function collectCSS(ids: string[]): void {
+    for (const id of ids) {
+      const layer = project.layers[id]
+      if (!layer) continue
+      const props = resolveProps(project, stateId, id)
+      cssRules.push(layerCSS(id, props))
+      if (layer.childrenIds.length) collectCSS(layer.childrenIds)
+    }
+  }
+  collectCSS(project.rootLayerIds)
+
   for (const id of project.rootLayerIds) {
     const layer = project.layers[id]
     if (!layer) continue
-    const props = resolveProps(project, stateId, id)
-    cssRules.push(layerCSS(id, props))
-    htmlParts.push(layerHTML(id, layer.name))
+    htmlParts.push(layerHTML(id, layer, project.layers, project, stateId))
   }
 
   const interactionJS = buildInteractionJS(project)
