@@ -25,4 +25,4 @@
 
 ## 待验证项
 
-- [ ] 预存 TS 错误 usePreviewGesture.ts:75 — activeDisplayStateId 可能为 null（非本次改动引入）
+_(全部清空，零待验证)_

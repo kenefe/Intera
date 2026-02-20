@@ -50,9 +50,12 @@ export function useDrawTool(viewportRef: Ref<HTMLElement | undefined>) {
   // ── 绘制事务内锁定的画板引用 ──
   let drawFrame: HTMLElement | null = null
 
-  /** 查找画板 frame: 仅匹配点击目标所在的画板 */
+  /** 查找画板 frame: 先精确匹配，再用 elementsFromPoint 兜底 */
   function resolveFrame(e: PointerEvent): HTMLElement | null {
-    return (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
+    const exact = (e.target as HTMLElement).closest<HTMLElement>('.artboard-frame')
+    if (exact) return exact
+    const els = document.elementsFromPoint(e.clientX, e.clientY)
+    return (els.find(el => el.classList.contains('artboard-frame')) as HTMLElement) ?? null
   }
 
   /** 屏幕坐标 → 画板本地坐标 (像素对齐) */

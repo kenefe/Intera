@@ -9,14 +9,12 @@ export function useSnapGuides() {
   const guides = ref<GuideLine[]>([])
   let targets: { l: number; cx: number; r: number; t: number; cy: number; b: number }[] = []
 
-  function setTargets(layers: Record<string, { props: AnimatableProps }>, skipIds: Set<string>, canvasW: number, canvasH: number) {
+  function setTargets(resolved: Map<string, AnimatableProps>, skipIds: Set<string>, canvasW: number, canvasH: number) {
     targets = []
-    for (const [id, layer] of Object.entries(layers)) {
+    for (const [id, p] of resolved) {
       if (skipIds.has(id)) continue
-      const p = layer.props
       targets.push({ l: p.x, cx: p.x + p.width / 2, r: p.x + p.width, t: p.y, cy: p.y + p.height / 2, b: p.y + p.height })
     }
-    // canvas edges
     targets.push({ l: 0, cx: canvasW / 2, r: canvasW, t: 0, cy: canvasH / 2, b: canvasH })
   }
 

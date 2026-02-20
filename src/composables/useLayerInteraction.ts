@@ -8,6 +8,7 @@ import { useEditorStore } from '@store/editor'
 import { useProjectStore } from '@store/project'
 import { useActiveGroup } from './useActiveGroup'
 import { useSnapGuides } from './useSnapGuides'
+import type { AnimatableProps } from '@engine/scene/types'
 import { useMarquee } from './useMarquee'
 
 export function findLayerIdFromTarget(target: EventTarget | null): string | null {
@@ -76,7 +77,12 @@ export function useLayerInteraction(viewportRef: Ref<HTMLElement | undefined>) {
       const r = project.states.getResolvedProps(stateId, id)
       if (r) layerStarts.set(id, { x: r.x, y: r.y })
     }
-    snapG.setTargets(project.project.layers, new Set(dragIds), project.project.canvasSize.width, project.project.canvasSize.height)
+    const resolved = new Map<string, AnimatableProps>()
+    for (const [id] of Object.entries(project.project.layers)) {
+      const r = project.states.getResolvedProps(stateId, id)
+      if (r) resolved.set(id, r)
+    }
+    snapG.setTargets(resolved, new Set(dragIds), project.project.canvasSize.width, project.project.canvasSize.height)
   }
 
   function down(e: PointerEvent): void {

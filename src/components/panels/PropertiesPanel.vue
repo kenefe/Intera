@@ -62,7 +62,7 @@
           button.btn-reset(v-if="has('scaleY')" @click.stop="reset('scaleY')" title="重置为基础值") ↺
 
     //- ── 外观 ──
-    CollapsibleGroup(title="外观")
+    CollapsibleGroup(title="外观" :collapsed="true")
       PropAppearanceGroup(
         v-if="resolved"
         :resolved="resolved"
