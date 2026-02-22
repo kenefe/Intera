@@ -25,6 +25,7 @@ export type {
   ToConfig, SetToConfig, SetVarConfig,
   BehaviorDragConfig, BehaviorScrollConfig,
   PatchTransitionConfig,
+  SwitchConfig,
   Patch, PatchConnection,
 } from './PatchTypes'
 export { narrowPatch } from './PatchTypes'

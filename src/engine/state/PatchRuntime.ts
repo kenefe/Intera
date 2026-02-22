@@ -9,7 +9,8 @@ import type { VariableManager } from './VariableManager'
 import { BehaviorManager } from './BehaviorManager'
 import {
   execCondition, execToggle, execSetVar, execTo, execSetTo,
-  execDelay, execCounter, execDrive, type ExecContext,
+  execDelay, execCounter, execDrive, execSwitch, resetSwitchStates,
+  type ExecContext,
 } from './patchExec'
 
 type CfgOf<T extends PatchConfig['type']> = Extract<PatchConfig, { type: T }>
@@ -100,6 +101,8 @@ export class PatchRuntime {
         this.fire(p.id, event)
       if (p.type === 'longPress' && p.config.type === 'longPress' && p.config.layerId === layerId && event === 'longPress')
         this.fire(p.id, 'trigger')
+      if (p.type === 'switch' && p.config.type === 'switch' && p.config.layerId === layerId && event === 'tap')
+        this.execute(p)
     }
   }
 
@@ -115,6 +118,7 @@ export class PatchRuntime {
 
   reset(): void {
     this.ctx.vars.reset()
+    resetSwitchStates()
     for (const t of this.timers) clearTimeout(t)
     this.timers.clear()
   }
@@ -130,5 +134,6 @@ export class PatchRuntime {
     else if (t === 'setTo') execSetTo(this.ctx, patch)
     else if (t === 'delay') execDelay(this.ctx, patch)
     else if (t === 'counter') execCounter(this.ctx, patch)
+    else if (t === 'switch') execSwitch(this.ctx, patch)
   }
 }

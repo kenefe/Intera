@@ -151,6 +151,7 @@ function onWireDrop(fromPatchId: string, fromPortId: string, pos: { x: number; y
 
 // 拖线菜单里只显示有 In 端口的节点类型（可以接收连线）
 const WIRE_MENU_TYPES: AddItem[] = [
+  { type: 'switch',         label: 'Switch', name: '切换' },
   { type: 'condition',      label: 'If',     name: '条件' },
   { type: 'toggleVariable', label: 'Toggle', name: 'Toggle' },
   { type: 'delay',          label: 'Delay',  name: '延迟' },
@@ -166,8 +167,13 @@ function onWireMenuPick(t: AddItem): void {
     if (groups.length > 0) {
       const g = groups[0]
       cfg.groupId = g.id
-      const other = g.displayStates.find(s => s.id !== g.activeDisplayStateId)
-      if (other) cfg.stateId = other.id
+      if (t.type === 'switch') {
+        if (g.displayStates[0]) cfg.stateA = g.displayStates[0].id
+        if (g.displayStates[1]) cfg.stateB = g.displayStates[1].id
+      } else {
+        const other = g.displayStates.find(s => s.id !== g.activeDisplayStateId)
+        if (other) cfg.stateId = other.id
+      }
     }
   }
   const p = patch.addPatchNode(t.type, { x: wireMenu.x, y: wireMenu.y }, cfg, t.name)
@@ -235,6 +241,7 @@ const ADD_GROUPS: AddGroup[] = [
     { type: 'setVariable',    label: 'SetVar', name: 'SetVar' },
   ]},
   { group: '动作', items: [
+    { type: 'switch', label: 'Switch', name: '切换' },
     { type: 'to',    label: 'To',    name: 'To' },
     { type: 'setTo', label: 'SetTo', name: 'SetTo' },
   ]},
@@ -246,7 +253,7 @@ const ADD_GROUPS: AddGroup[] = [
 ]
 
 const LAYER_TYPES = new Set<PatchType>(['touch', 'longPress', 'drag', 'behaviorDrag', 'behaviorScroll'])
-const ACTION_TYPES = new Set<PatchType>(['to', 'setTo'])
+const ACTION_TYPES = new Set<PatchType>(['to', 'setTo', 'switch'])
 
 let addIdx = 0
 function onAddNode(type: PatchType, name: string): void {
@@ -261,9 +268,14 @@ function onAddNode(type: PatchType, name: string): void {
     if (groups.length > 0) {
       const g = groups[0]
       actionCfg.groupId = g.id
-      const curId = g.activeDisplayStateId
-      const other = g.displayStates.find(s => s.id !== curId)
-      if (other) actionCfg.stateId = other.id
+      if (type === 'switch') {
+        if (g.displayStates[0]) actionCfg.stateA = g.displayStates[0].id
+        if (g.displayStates[1]) actionCfg.stateB = g.displayStates[1].id
+      } else {
+        const curId = g.activeDisplayStateId
+        const other = g.displayStates.find(s => s.id !== curId)
+        if (other) actionCfg.stateId = other.id
+      }
     }
   }
   const cfg = layerId ? { layerId, ...actionCfg } : actionCfg
