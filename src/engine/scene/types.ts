@@ -29,8 +29,11 @@ export type {
   Patch, PatchConnection,
 } from './PatchTypes'
 export { narrowPatch } from './PatchTypes'
+export type { Intent, IntentTrigger, IntentAction } from './IntentTypes'
 
 // ── 项目数据模型 ──
+
+import type { Intent } from './IntentTypes'
 
 export interface Project {
   id: string
@@ -43,4 +46,5 @@ export interface Project {
   patches: Patch[]
   connections: PatchConnection[]
   components: ComponentDef[]
+  intents: Intent[]
 }

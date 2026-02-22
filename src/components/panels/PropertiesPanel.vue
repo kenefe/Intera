@@ -75,6 +75,9 @@
         @editEnd="onEditEnd"
       )
 
+    //- ── 交互意图 (Level 0) ──
+    IntentPanel
+
   .empty-state(v-else) 未选中图层
 </template>
 
@@ -94,6 +97,7 @@ import PropTextGroup from './PropTextGroup.vue'
 import PropLayoutGroup from './PropLayoutGroup.vue'
 import PropAppearanceGroup from './PropAppearanceGroup.vue'
 import CollapsibleGroup from './CollapsibleGroup.vue'
+import IntentPanel from './IntentPanel.vue'
 import { num, px, dpx, str } from '@/utils/propHelpers'
 
 const canvas = useCanvasStore()
