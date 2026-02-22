@@ -44,7 +44,17 @@
 
   //- ── 工具条 (固定位置, 不随平移) ──
   .patch-toolbar
-    button.node-btn(v-for="t in ADD_TYPES" :key="t.type" :data-type="t.type" :title="t.name" @click="onAddNode(t.type, t.name)") {{ t.label }}
+    template(v-for="(g, gi) in ADD_GROUPS" :key="g.group")
+      .toolbar-sep(v-if="gi > 0")
+      .toolbar-group
+        .toolbar-group-label {{ g.group }}
+        .toolbar-group-btns
+          button.node-btn(v-for="t in g.items" :key="t.type" :data-type="t.type" :title="t.name" @click="onAddNode(t.type, t.name)") {{ t.label }}
+
+  //- ── 拖线创建菜单 ──
+  .wire-menu(v-if="wireMenu.show" :style="{ left: wireMenu.x + panX + 'px', top: wireMenu.y + panY + 'px' }" @pointerdown.stop)
+    button.wire-menu-item(v-for="t in WIRE_MENU_TYPES" :key="t.type" @click="onWireMenuPick(t)") {{ t.label }}
+    button.wire-menu-item.cancel(@click="wireMenu.show = false") ✕
 </template>
 
 <script setup lang="ts">
@@ -53,7 +63,7 @@
 //  DOM 查询在此, 交互逻辑 → usePatchInteraction
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import type { PatchType, Patch } from '@engine/scene/types'
 import { useProjectStore } from '@store/project'
 import { useCanvasStore } from '@store/canvas'
@@ -130,7 +140,43 @@ function isToolbar(e: PointerEvent): boolean {
   return !!(e.target as HTMLElement).closest('.patch-toolbar')
 }
 
-const ix = usePatchInteraction({ canvasXY, findPort, findNode, portPos, nodeRect, isToolbar })
+// ── 拖线创建菜单 ──
+const wireMenu = reactive({ show: false, x: 0, y: 0, fromPatchId: '', fromPortId: '' })
+
+function onWireDrop(fromPatchId: string, fromPortId: string, pos: { x: number; y: number }): void {
+  wireMenu.show = true
+  wireMenu.x = pos.x; wireMenu.y = pos.y
+  wireMenu.fromPatchId = fromPatchId; wireMenu.fromPortId = fromPortId
+}
+
+// 拖线菜单里只显示有 In 端口的节点类型（可以接收连线）
+const WIRE_MENU_TYPES: AddItem[] = [
+  { type: 'condition',      label: 'If',     name: '条件' },
+  { type: 'toggleVariable', label: 'Toggle', name: 'Toggle' },
+  { type: 'delay',          label: 'Delay',  name: '延迟' },
+  { type: 'to',             label: 'To',     name: 'To' },
+  { type: 'setTo',          label: 'SetTo',  name: 'SetTo' },
+  { type: 'setVariable',    label: 'SetVar', name: 'SetVar' },
+]
+
+function onWireMenuPick(t: AddItem): void {
+  const cfg: Record<string, string> = {}
+  if (ACTION_TYPES.has(t.type)) {
+    const groups = project.project.stateGroups
+    if (groups.length > 0) {
+      const g = groups[0]
+      cfg.groupId = g.id
+      const other = g.displayStates.find(s => s.id !== g.activeDisplayStateId)
+      if (other) cfg.stateId = other.id
+    }
+  }
+  const p = patch.addPatchNode(t.type, { x: wireMenu.x, y: wireMenu.y }, cfg, t.name)
+  patch.addConnection(wireMenu.fromPatchId, wireMenu.fromPortId, p.id, 'in')
+  ix.selected.clear(); ix.selected.add(p.id)
+  wireMenu.show = false
+}
+
+const ix = usePatchInteraction({ canvasXY, findPort, findNode, portPos, nodeRect, isToolbar, onWireDrop })
 
 // 顶层暴露 ref → 模板自动解包 .value (嵌套在普通对象里的 ref 不会自动解包)
 const tempPath = ix.tempPath
@@ -163,32 +209,65 @@ const connectedKeys = computed(() => {
 })
 onMounted(() => canvasRef.value?.focus())
 
+// ── 画布↔Patch 双向联动 ──
+watch(() => [...ix.selected], (ids) => {
+  if (ids.length !== 1) { canvas.highlightLayerId = null; return }
+  const p = project.project.patches.find(n => n.id === ids[0])
+  const lid = p?.config.type === 'touch' || p?.config.type === 'longPress'
+    ? (p.config as { layerId?: string }).layerId ?? null : null
+  canvas.highlightLayerId = lid
+})
+
 // ── 节点添加 ──
 
-const ADD_TYPES: Array<{ type: PatchType; label: string; name: string }> = [
-  { type: 'touch',          label: 'Touch',  name: 'Touch' },
-  { type: 'longPress',      label: 'Long',   name: '长按' },
-  { type: 'condition',      label: 'If',     name: '条件' },
-  { type: 'toggleVariable', label: 'Toggle', name: 'Toggle' },
-  { type: 'delay',          label: 'Delay',  name: '延迟' },
-  { type: 'to',             label: 'To',     name: 'To' },
-  { type: 'setTo',          label: 'SetTo',  name: 'SetTo' },
-  { type: 'setVariable',    label: 'SetVar', name: 'SetVar' },
-  { type: 'behaviorDrag',   label: 'Drag',   name: '拖拽行为' },
-  { type: 'behaviorScroll', label: 'Scroll', name: '滚动行为' },
-  { type: 'transition',     label: 'Trans',  name: '状态插值' },
+type AddItem = { type: PatchType; label: string; name: string }
+type AddGroup = { group: string; items: AddItem[] }
+
+const ADD_GROUPS: AddGroup[] = [
+  { group: '触发', items: [
+    { type: 'touch',     label: 'Touch', name: 'Touch' },
+    { type: 'longPress', label: 'Long',  name: '长按' },
+  ]},
+  { group: '逻辑', items: [
+    { type: 'condition',      label: 'If',     name: '条件' },
+    { type: 'toggleVariable', label: 'Toggle', name: 'Toggle' },
+    { type: 'delay',          label: 'Delay',  name: '延迟' },
+    { type: 'setVariable',    label: 'SetVar', name: 'SetVar' },
+  ]},
+  { group: '动作', items: [
+    { type: 'to',    label: 'To',    name: 'To' },
+    { type: 'setTo', label: 'SetTo', name: 'SetTo' },
+  ]},
+  { group: '行为', items: [
+    { type: 'behaviorDrag',   label: 'Drag',   name: '拖拽行为' },
+    { type: 'behaviorScroll', label: 'Scroll', name: '滚动行为' },
+    { type: 'transition',     label: 'Trans',  name: '驱动插值' },
+  ]},
 ]
 
 const LAYER_TYPES = new Set<PatchType>(['touch', 'longPress', 'drag', 'behaviorDrag', 'behaviorScroll'])
+const ACTION_TYPES = new Set<PatchType>(['to', 'setTo'])
 
 let addIdx = 0
 function onAddNode(type: PatchType, name: string): void {
   const x = 40 + (addIdx % 4) * 220
   const y = 60 + Math.floor(addIdx / 4) * 140
   addIdx++
-  // 自动关联当前选中图层 (Touch / Drag / 行为类节点)
   const layerId = LAYER_TYPES.has(type) ? canvas.selectedLayerIds[0] : undefined
-  const p = patch.addPatchNode(type, { x, y }, layerId ? { layerId } : {}, name)
+  // To/SetTo 自动填充当前组和非当前状态
+  let actionCfg: Record<string, string> = {}
+  if (ACTION_TYPES.has(type)) {
+    const groups = project.project.stateGroups
+    if (groups.length > 0) {
+      const g = groups[0]
+      actionCfg.groupId = g.id
+      const curId = g.activeDisplayStateId
+      const other = g.displayStates.find(s => s.id !== curId)
+      if (other) actionCfg.stateId = other.id
+    }
+  }
+  const cfg = layerId ? { layerId, ...actionCfg } : actionCfg
+  const p = patch.addPatchNode(type, { x, y }, cfg, name)
   ix.selected.clear()
   ix.selected.add(p.id)
 }
@@ -232,14 +311,20 @@ function onAddNode(type: PatchType, name: string): void {
   top: var(--sp-3);
   left: var(--sp-3);
   display: flex;
-  gap: var(--sp-1);
-  padding: var(--sp-1);
+  align-items: flex-start;
+  gap: 0;
+  padding: var(--sp-2);
   background: rgba(0, 0, 0, 0.40);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--border-subtle);
 }
+
+.toolbar-group { display: flex; flex-direction: column; gap: 2px; padding: 0 var(--sp-2); }
+.toolbar-group-label { font-size: 9px; color: var(--text-disabled); text-transform: uppercase; letter-spacing: 1px; padding-bottom: 2px; }
+.toolbar-group-btns { display: flex; gap: var(--sp-1); }
+.toolbar-sep { width: 1px; background: var(--border-subtle); align-self: stretch; margin: 0 var(--sp-1); }
 
 .node-btn {
   padding: var(--sp-1) var(--sp-3);
@@ -259,5 +344,46 @@ function onAddNode(type: PatchType, name: string): void {
   background: var(--accent-bg);
   color: var(--accent-text);
   border-color: var(--accent-border);
+}
+
+/* ── 拖线创建菜单 ── */
+.wire-menu {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-1);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  z-index: 100;
+}
+
+.wire-menu-item {
+  padding: var(--sp-1) var(--sp-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.wire-menu-item:hover {
+  background: var(--accent-bg);
+  color: var(--accent-text);
+}
+
+.wire-menu-item.cancel {
+  color: var(--text-disabled);
+  text-align: center;
+  margin-top: 2px;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 </style>

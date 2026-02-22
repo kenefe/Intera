@@ -1,5 +1,7 @@
 <template lang="pug">
 .selection-overlay(ref="root" :class="{ 'draw-mode': drawMode }")
+  //- Patch 联动高亮
+  .highlight-box(v-if="highlightBox" :style="boxStyle(highlightBox)")
   .select-box(
     v-for="(b, idx) in allBoxes" :key="b.id"
     :style="boxStyle(b)"
@@ -133,6 +135,21 @@ watch(
   () => nextTick(recalcBoxes),
   { immediate: true, deep: true },
 )
+
+// ── Patch 联动高亮 ──
+const highlightBox = computed<LayerBox | null>(() => {
+  const lid = canvas.highlightLayerId
+  const sid = activeStateId.value
+  if (!lid || !sid || !root.value) return null
+  const r = project.states.getResolvedProps(sid, lid)
+  const abEl = document.querySelector<HTMLElement>(`[data-state-id="${sid}"]`)
+  const layerEl = abEl?.querySelector<HTMLElement>(`[data-layer-id="${lid}"]`)
+  if (!r || !layerEl) return null
+  const vpR = root.value.getBoundingClientRect()
+  const lr = layerEl.getBoundingClientRect()
+  const z = canvas.zoom
+  return { id: lid, cx: (lr.left + lr.right) / 2 - vpR.left, cy: (lr.top + lr.bottom) / 2 - vpR.top, w: r.width * z, h: r.height * z, r: r.rotation }
+})
 
 // ═══════════════════════════════════
 //  样式
@@ -284,6 +301,16 @@ onUnmounted(() => {
 }
 
 /* ── 选中框 ── */
+
+.highlight-box {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid #f59e0b;
+  border-radius: 2px;
+  transform-origin: center center;
+  box-sizing: border-box;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
 
 .select-box {
   position: absolute;

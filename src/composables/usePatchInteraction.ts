@@ -21,6 +21,7 @@ export interface PatchViewDeps {
   portPos: (node: Patch, portId: string, dir: 'in' | 'out') => XY
   nodeRect: (id: string) => { x: number; y: number; w: number; h: number }
   isToolbar: (e: PointerEvent) => boolean
+  onWireDrop?: (fromPatchId: string, fromPortId: string, pos: XY) => void
 }
 
 export function usePatchInteraction(deps: PatchViewDeps) {
@@ -165,8 +166,11 @@ export function usePatchInteraction(deps: PatchViewDeps) {
   function onUp(e: PointerEvent): void {
     if (mode === 'wire' && wireFrom) {
       const target = deps.findPort(e)
-      if (target?.dir === 'in' && target.patchId !== wireFrom.patchId)
+      if (target?.dir === 'in' && target.patchId !== wireFrom.patchId) {
         patch.addConnection(wireFrom.patchId, wireFrom.portId, target.patchId, target.portId)
+      } else if (!target && deps.onWireDrop) {
+        deps.onWireDrop(wireFrom.patchId, wireFrom.portId, deps.canvasXY(e))
+      }
     }
     if (mode === 'boxSelect') {
       for (const p of project.project.patches) { if (nodeInBox(p)) selected.add(p.id) }
