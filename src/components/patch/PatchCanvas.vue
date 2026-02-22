@@ -70,6 +70,7 @@ import { useCanvasStore } from '@store/canvas'
 import { usePatchStore } from '@store/patch'
 import { usePatchInteraction } from '@composables/usePatchInteraction'
 import PatchNode from './PatchNode.vue'
+import { ADD_GROUPS, WIRE_MENU_TYPES, LAYER_TYPES, ACTION_TYPES, type AddItem } from './patchToolbarDefs'
 
 const project = useProjectStore()
 const canvas = useCanvasStore()
@@ -150,15 +151,6 @@ function onWireDrop(fromPatchId: string, fromPortId: string, pos: { x: number; y
 }
 
 // 拖线菜单里只显示有 In 端口的节点类型（可以接收连线）
-const WIRE_MENU_TYPES: AddItem[] = [
-  { type: 'switch',         label: 'Switch', name: '切换' },
-  { type: 'condition',      label: 'If',     name: '条件' },
-  { type: 'toggleVariable', label: 'Toggle', name: 'Toggle' },
-  { type: 'delay',          label: 'Delay',  name: '延迟' },
-  { type: 'to',             label: 'To',     name: 'To' },
-  { type: 'setTo',          label: 'SetTo',  name: 'SetTo' },
-  { type: 'setVariable',    label: 'SetVar', name: 'SetVar' },
-]
 
 function onWireMenuPick(t: AddItem): void {
   const cfg: Record<string, string> = {}
@@ -225,35 +217,6 @@ watch(() => [...ix.selected], (ids) => {
 })
 
 // ── 节点添加 ──
-
-type AddItem = { type: PatchType; label: string; name: string }
-type AddGroup = { group: string; items: AddItem[] }
-
-const ADD_GROUPS: AddGroup[] = [
-  { group: '触发', items: [
-    { type: 'touch',     label: 'Touch', name: 'Touch' },
-    { type: 'longPress', label: 'Long',  name: '长按' },
-  ]},
-  { group: '逻辑', items: [
-    { type: 'condition',      label: 'If',     name: '条件' },
-    { type: 'toggleVariable', label: 'Toggle', name: 'Toggle' },
-    { type: 'delay',          label: 'Delay',  name: '延迟' },
-    { type: 'setVariable',    label: 'SetVar', name: 'SetVar' },
-  ]},
-  { group: '动作', items: [
-    { type: 'switch', label: 'Switch', name: '切换' },
-    { type: 'to',    label: 'To',    name: 'To' },
-    { type: 'setTo', label: 'SetTo', name: 'SetTo' },
-  ]},
-  { group: '行为', items: [
-    { type: 'behaviorDrag',   label: 'Drag',   name: '拖拽行为' },
-    { type: 'behaviorScroll', label: 'Scroll', name: '滚动行为' },
-    { type: 'transition',     label: 'Trans',  name: '驱动插值' },
-  ]},
-]
-
-const LAYER_TYPES = new Set<PatchType>(['touch', 'longPress', 'drag', 'behaviorDrag', 'behaviorScroll'])
-const ACTION_TYPES = new Set<PatchType>(['to', 'setTo', 'switch'])
 
 let addIdx = 0
 function onAddNode(type: PatchType, name: string): void {
