@@ -19,6 +19,8 @@ export function usePatchNodeConfig(getPatch: () => Patch) {
   const cfgFromStateId = computed(() => { const v = c(); return v.type === 'transition' ? v.fromStateId : undefined })
   const cfgToStateId = computed(() => { const v = c(); return v.type === 'transition' ? v.toStateId : undefined })
   const cfgInputRange = computed(() => { const v = c(); return v.type === 'transition' ? v.inputRange : undefined })
+  const cfgSwitchStateA = computed(() => { const v = c(); return v.type === 'switch' ? v.stateA : undefined })
+  const cfgSwitchStateB = computed(() => { const v = c(); return v.type === 'switch' ? v.stateB : undefined })
 
   const layers = computed(() => Object.values(project.project.layers).map(l => ({ id: l.id, name: l.name })))
   const groups = computed(() => project.project.stateGroups.map(g => ({ id: g.id, name: g.name })))
@@ -58,6 +60,9 @@ export function usePatchNodeConfig(getPatch: () => Patch) {
   function onToStatePick(e: Event): void { const cc = cfg(); if (cc?.type === 'transition') cc.toStateId = (e.target as HTMLSelectElement).value || undefined }
   function onRangeLoChange(e: Event): void { const cc = cfg(); if (cc?.type === 'transition') { cc.inputRange = [Number((e.target as HTMLInputElement).value) || 0, cc.inputRange?.[1] ?? 1] } }
   function onRangeHiChange(e: Event): void { const cc = cfg(); if (cc?.type === 'transition') { cc.inputRange = [cc.inputRange?.[0] ?? 0, Number((e.target as HTMLInputElement).value) || 1] } }
+  function onSwitchStatePick(e: Event, key: 'stateA' | 'stateB'): void {
+    const cc = cfg(); if (cc?.type === 'switch') cc[key] = (e.target as HTMLSelectElement).value || undefined
+  }
   function onAddVar(): void {
     const n = vars.value.length
     const v = patchStore.addVariable(n === 0 ? 'isToggled' : `isToggled_${n + 1}`, 'boolean', false)
@@ -67,9 +72,10 @@ export function usePatchNodeConfig(getPatch: () => Patch) {
   return {
     cfgLayerId, cfgGroupId, cfgStateId, cfgDuration, cfgVariableId,
     cfgCompareValue, cfgValue, cfgAxis, cfgFromStateId, cfgToStateId, cfgInputRange,
+    cfgSwitchStateA, cfgSwitchStateB,
     layers, groups, states, vars,
     onLayerPick, onGroupPick, onStatePick, onDelayChange, onVarPick,
     onCompareChange, onValueChange, onAxisPick, onFromStatePick, onToStatePick,
-    onRangeLoChange, onRangeHiChange, onAddVar,
+    onRangeLoChange, onRangeHiChange, onAddVar, onSwitchStatePick,
   }
 }

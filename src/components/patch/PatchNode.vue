@@ -181,6 +181,29 @@
           option(value="both" :selected="cfgAxis === 'both'") 双轴
           option(value="x" :selected="cfgAxis === 'x'") X
           option(value="y" :selected="cfgAxis === 'y'") Y
+
+    //- Switch → 图层 + 组 + 状态A/B
+    template(v-if="patch.type === 'switch'")
+      .cfg-row
+        .cfg-label 图层
+        select.cfg-select(@change="onLayerPick")
+          option(value="" :selected="!cfgLayerId") 选择…
+          option(v-for="l in layers" :key="l.id" :value="l.id" :selected="cfgLayerId === l.id") {{ l.name }}
+      .cfg-row
+        .cfg-label 组
+        select.cfg-select(@change="onGroupPick")
+          option(value="" :selected="!cfgGroupId") 选择…
+          option(v-for="g in groups" :key="g.id" :value="g.id" :selected="cfgGroupId === g.id") {{ g.name }}
+      .cfg-row
+        .cfg-label A
+        select.cfg-select(@change="e => onSwitchStatePick(e, 'stateA')" :disabled="!cfgGroupId")
+          option(value="" :selected="!cfgSwitchStateA") 选择…
+          option(v-for="s in states" :key="s.id" :value="s.id" :selected="cfgSwitchStateA === s.id") {{ s.name }}
+      .cfg-row
+        .cfg-label B
+        select.cfg-select(@change="e => onSwitchStatePick(e, 'stateB')" :disabled="!cfgGroupId")
+          option(value="" :selected="!cfgSwitchStateB") 选择…
+          option(v-for="s in states" :key="s.id" :value="s.id" :selected="cfgSwitchStateB === s.id") {{ s.name }}
 </template>
 
 <script setup lang="ts">
@@ -195,17 +218,18 @@ const category = patchCategory(props.patch.type)
 const CONFIG_TYPES = [
   'touch', 'drag', 'to', 'setTo', 'delay',
   'condition', 'toggleVariable', 'setVariable',
-  'behaviorDrag', 'behaviorScroll', 'transition',
+  'behaviorDrag', 'behaviorScroll', 'transition', 'switch',
 ]
 const showConfig = CONFIG_TYPES.includes(props.patch.type)
 
 const {
   cfgLayerId, cfgGroupId, cfgStateId, cfgDuration, cfgVariableId,
   cfgCompareValue, cfgValue, cfgAxis, cfgFromStateId, cfgToStateId, cfgInputRange,
+  cfgSwitchStateA, cfgSwitchStateB,
   layers, groups, states, vars,
   onLayerPick, onGroupPick, onStatePick, onDelayChange, onVarPick,
   onCompareChange, onValueChange, onAxisPick, onFromStatePick, onToStatePick,
-  onRangeLoChange, onRangeHiChange, onAddVar,
+  onRangeLoChange, onRangeHiChange, onAddVar, onSwitchStatePick,
 } = usePatchNodeConfig(() => props.patch)
 </script>
 

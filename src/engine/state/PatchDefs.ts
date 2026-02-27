@@ -69,6 +69,9 @@ const DEFS: Record<PatchType, PortDef> = {
   transition: { inputs: [
     { id: 'value', name: 'Value', dataType: 'number' },
   ], outputs: [] },
+
+  // 合并节点: 一个节点完成切换
+  switch: { inputs: [IN], outputs: [DONE] },
 }
 
 // ── 节点分类 (用于 UI 着色) ──
@@ -76,7 +79,7 @@ const DEFS: Record<PatchType, PortDef> = {
 export type PatchCategory = 'trigger' | 'logic' | 'action' | 'behavior'
 
 const TRIGGER_TYPES: PatchType[] = ['touch', 'longPress', 'drag', 'scroll', 'timer', 'variableChange']
-const ACTION_TYPES: PatchType[]  = ['to', 'setTo', 'setVariable', 'transition']
+const ACTION_TYPES: PatchType[]  = ['to', 'setTo', 'setVariable', 'transition', 'switch']
 const BEHAVIOR_TYPES: PatchType[] = ['behaviorDrag', 'behaviorScroll']
 
 export function patchCategory(type: PatchType): PatchCategory {
@@ -106,6 +109,7 @@ function defaultConfig(type: PatchType): PatchConfig {
     behaviorDrag:   () => ({ type: 'behaviorDrag', axis: 'both', layerId: '' }),
     behaviorScroll: () => ({ type: 'behaviorScroll', axis: 'y', overscroll: true, layerId: '' }),
     transition:     () => ({ type: 'transition', layerId: '', groupId: '', fromStateId: '', toStateId: '', inputRange: [0, 1] }),
+    switch:         () => ({ type: 'switch', layerId: '', groupId: '' }),
   }
   return map[type]()
 }

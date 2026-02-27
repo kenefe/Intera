@@ -68,3 +68,18 @@ export function execDrive(ctx: ExecContext, cfg: CfgOf<'transition'>, inputValue
   const t = Math.max(0, Math.min(1, (inputValue - lo) / delta))
   ctx.onDrive?.(cfg.layerId, cfg.fromStateId, cfg.toStateId, t)
 }
+
+// Switch 内部 toggle 状态 (per patch id)
+const switchStates = new Map<string, boolean>()
+
+export function execSwitch(ctx: ExecContext, patch: Patch): void {
+  const cfg = patch.config as CfgOf<'switch'>
+  if (!cfg.groupId || !cfg.stateA || !cfg.stateB) return
+  const cur = switchStates.get(patch.id) ?? false
+  switchStates.set(patch.id, !cur)
+  const targetState = cur ? cfg.stateA : cfg.stateB
+  ctx.onTransition(cfg.groupId, targetState)
+  ctx.fire(patch.id, 'done')
+}
+
+export function resetSwitchStates(): void { switchStates.clear() }

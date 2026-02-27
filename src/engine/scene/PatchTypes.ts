@@ -14,6 +14,7 @@ export type PatchType =
   | 'to' | 'setTo' | 'setVariable'
   | 'behaviorDrag' | 'behaviorScroll'
   | 'transition'
+  | 'switch'
 
 export interface PatchPort {
   id: string
@@ -66,6 +67,16 @@ export interface BehaviorScrollConfig {
   snapPoints?: number[]
 }
 
+/** Switch 合并节点: 一个节点完成 toggle+condition+to×2 */
+export interface SwitchConfig {
+  type: 'switch'
+  layerId?: string
+  groupId?: string
+  stateA?: string   // 状态 A id
+  stateB?: string   // 状态 B id
+  trigger?: 'tap' | 'down' | 'up'  // 触发事件
+}
+
 export type PatchConfig =
   | TouchConfig | LongPressConfig | DragConfig | ScrollConfig
   | TimerConfig | VarChangeConfig
@@ -73,6 +84,7 @@ export type PatchConfig =
   | ToConfig | SetToConfig | SetVarConfig
   | BehaviorDragConfig | BehaviorScrollConfig
   | PatchTransitionConfig
+  | SwitchConfig
 
 export type ConfigFor<T extends PatchType> =
   T extends 'touch' ? TouchConfig :
@@ -91,6 +103,7 @@ export type ConfigFor<T extends PatchType> =
   T extends 'behaviorDrag' ? BehaviorDragConfig :
   T extends 'behaviorScroll' ? BehaviorScrollConfig :
   T extends 'transition' ? PatchTransitionConfig :
+  T extends 'switch' ? SwitchConfig :
   never
 
 // ── Patch 节点 ──

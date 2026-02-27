@@ -21,6 +21,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   const panY = ref(0)
   const selectedLayerIds = ref<string[]>([])
   const activeGroupId = ref('group_main')
+  const highlightLayerId = ref<string | null>(null)
 
   // ── 衍生 ──
 
@@ -92,7 +93,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   }
 
   return {
-    zoom, panX, panY, selectedLayerIds, hasSelection, activeGroupId,
+    zoom, panX, panY, selectedLayerIds, hasSelection, activeGroupId, highlightLayerId,
     setZoom, setPan, resetViewport, fitToViewport,
     select, addToSelection, removeFromSelection, toggleSelection, clearSelection,
     setActiveGroup, focusOnLayer,

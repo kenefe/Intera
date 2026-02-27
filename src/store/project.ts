@@ -43,6 +43,7 @@ function createEmptyProject(): Project {
     patches: [],
     connections: [],
     components: [],
+    intents: [],
   }
 }
 
@@ -177,6 +178,15 @@ export const useProjectStore = defineStore('project', () => {
     states.clearOverride(stateId, layerId, prop)
   }
 
+  // ── Intent (Level 0) ──
+  function addIntent(intent: import('@engine/scene/IntentTypes').Intent): void {
+    project.intents.push(intent)
+  }
+  function removeIntent(id: string): void {
+    const idx = project.intents.findIndex(i => i.id === id)
+    if (idx >= 0) project.intents.splice(idx, 1)
+  }
+
   return {
     project, scene, states,
     liveStateId: transition.liveStateId,
@@ -194,6 +204,7 @@ export const useProjectStore = defineStore('project', () => {
     clearLiveTransition: transition.clearLiveTransition,
     clearPreviewLiveTransition: transition.clearPreviewLiveTransition,
     setOverride, clearOverride,
+    addIntent, removeIntent,
     ...comp,
   }
 })
